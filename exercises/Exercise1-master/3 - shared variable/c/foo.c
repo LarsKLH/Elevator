@@ -13,6 +13,7 @@ void* incrementingThreadFunction(){
     pthread_mutex_lock(&mutex1);
     for(int j = 0; j < 100000; j++){
         i ++;
+        printf("The magic number has been increased to: %d\n", i);
     }
     pthread_mutex_unlock(&mutex1);
     return NULL;
@@ -23,6 +24,7 @@ void* decrementingThreadFunction(){
     pthread_mutex_lock(&mutex1);
     for(int j = 0; j < 100000; j++){
         i --;
+        printf("The magic number has been decreased to: %d\n", i);
     }
     pthread_mutex_unlock(&mutex1);
     return NULL;
