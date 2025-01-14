@@ -1,0 +1,1 @@
+/home/gia2/yuuuuge_programs/yuge_stud/sanntidsprogramering/git_repo_dir/TTK4515-2025-Gruppe26/exercises/Exercise1-master/5\ -\ bounded\ buffer/rust/bounded_buffer/target/debug/bounded_buffer: /home/gia2/yuuuuge_programs/yuge_stud/sanntidsprogramering/git_repo_dir/TTK4515-2025-Gruppe26/exercises/Exercise1-master/5\ -\ bounded\ buffer/rust/bounded_buffer/src/main.rs
