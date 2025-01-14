@@ -1,0 +1,3 @@
+[submodule "exercises/Exercise1"]
+	path = exercises/Exercise1
+	url = https://github.com/TTK4145/Exercise1.git
