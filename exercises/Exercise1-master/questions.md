@@ -17,15 +17,15 @@ Race condition is errors occuring due to the timing of tasks, and is a semantic 
 ### Engineering
 
 Why would we use multiple threads? What kinds of problems do threads solve?
-> Threads solve the problem of not solving problems when no other task is running
+> Threads solve the innefficiency of some tasks requirering inactivity (waiting / reading from disk) and enabling several different prosecess to "run simuntaniusly" 
 
 Some languages support "fibers" (sometimes called "green threads") or "coroutines"? What are they, and why would we rather use them over threads?
-> Fibers are abstrahaded threads running innenvironments such as virual machines, that allow for more control of scheduling
+> Fibers are abstracted threads running in environments such as virual machines, that allow for more control of scheduling
 
 Does creating concurrent programs make the programmer's life easier? Harder? Maybe both?
-> Depending on the implementation a programmers life can become either easier or harder. If concurency is acheived by complexity hardship is very possible.
+> Depending on the implementation a programmers life can become either easier or harder. Concurency can dratically simplify a problem though it can also add a lot of complexity and hardship
 
 What do you think is best - *shared variables* or *message passing*?
-> Not knowing to much i imagine message passing is best bc its simplicity.
+> From our standpoint we prefer message passing in an abstracted sense as it simplifies the program structure. Though shared variables may be prefarable in cases like global states.
 
 
