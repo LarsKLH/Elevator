@@ -1,0 +1,1 @@
+/home/gia2/yuuuuge_programs/yuge_stud/sanntidsprogramering/git_repo_dir/TTK4515-2025-Gruppe26/exercises/Exercise2-master/exercise2_udp/target/debug/exercise2_udp: /home/gia2/yuuuuge_programs/yuge_stud/sanntidsprogramering/git_repo_dir/TTK4515-2025-Gruppe26/exercises/Exercise2-master/exercise2_udp/src/main.rs
