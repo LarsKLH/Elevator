@@ -26,6 +26,6 @@ fn main() {
         };
     });
 
-    joiner_lisner.join();
+    let _ = joiner_lisner.join();
 
 }

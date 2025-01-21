@@ -1,1 +1,0 @@
-C:\Users\Bruker\Documents\Semester_6\Sanntid\TTK4515-2025-Gruppe26\exercises\Exercise2-master\exercise2_tcp\target\debug\exercise2_tcp.exe: C:\Users\Bruker\Documents\Semester_6\Sanntid\TTK4515-2025-Gruppe26\exercises\Exercise2-master\exercise2_tcp\src\main.rs
