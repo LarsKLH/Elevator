@@ -23,22 +23,29 @@ fn handle_stream(mut stream: TcpStream){
 }
 
 fn main() {
-    // Bind the listener to the local address
-    let listener = TcpListener::bind("10.100.23.204:33546").expect("Couldn't bind to the address..."); //34933
-    let mut sender = TcpStream::connect("10.100.23.204:33546").expect("Couldn't connect to the server...");
-    
-    
-    std::thread::spawn(move || {
-        for i in 0 .. 10 {
-            let message = format!("Message number: {}\n", i);
+
+    //let listener = TcpListener::bind("0.0.0.0:8032").expect("Couldn't bind to the address..."); //34933
+    let mut sender = TcpStream::connect("10.100.23.204:34933").expect("Couldn't connect to the server...");
+    for i in 0 .. 10 {
+            let mut buffer = [0; 1024];
+            sender.read(&mut buffer).expect("Couldn't read data from the stream...");
+
+            let received_data = String::from_utf8_lossy(&buffer);
+            println!("Data received: {}", received_data);
+            
+            sleep(std::time::Duration::from_millis(1000));
+            let message = format!("Message number: {}\0", i);
             sender.write(message.as_bytes()).expect("Couldn't write data to the listener...");
             println!("[Stream] sending: {}", message);
+            
         }
-    });
-
-    //let mut stream = TcpStream::connect("127.0.0.1:34254")?;
     
-    for stream in listener.incoming(){
+    //std::thread::spawn(move || {
+
+    }//);
+
+    
+   /*  for stream in listener.incoming(){
         match stream{
             Ok(stream) => {
                 std::thread::spawn(move ||
@@ -49,6 +56,7 @@ fn main() {
                 }
     
 //let stream = TcpStream::connect("127.0.0.1:8080").expect("Couldn't connect to the server...");
-            }
-        }
-    }
+      */
+          
+        
+    
