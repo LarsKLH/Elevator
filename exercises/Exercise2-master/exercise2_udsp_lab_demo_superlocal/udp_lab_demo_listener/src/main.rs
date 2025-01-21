@@ -11,6 +11,12 @@ fn main() {
 
     let socket_lisner = UdpSocket::bind(chosen_ip_sock).unwrap();
 
+    socket_lisner.set_broadcast(true).unwrap();
+
+    println!("Connected on port {}", chosen_ip_sock);
+    println!("Broadcast: {:?}", socket_lisner.broadcast());
+    println!("Timeout: {:?}", socket_lisner.read_timeout());
+
     loop {
         let mut buf_lisner = [0;50];
 
@@ -19,7 +25,7 @@ fn main() {
 
         let message = str::from_utf8(&buf_lisner).unwrap();
         println!("Messege contents: {}", message);
-        //sleep(lisnr_sleep_time);
+        sleep(lisnr_sleep_time);
     }
 
 
