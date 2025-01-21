@@ -1,6 +1,6 @@
 use std::{str, net::UdpSocket, thread::{self, sleep}, time::Duration};
 
-const chosen_ip_sock: &str = "127.0.0.8:30000";
+const chosen_ip_sock: &str = "127.0.0.8:30005";
 
 const lisnr_sleep_time: Duration = Duration::from_millis(100);
 
@@ -26,6 +26,6 @@ fn main() {
         };
     });
 
-    joiner_lisner.join();
+    let _ = joiner_lisner.join();
 
 }

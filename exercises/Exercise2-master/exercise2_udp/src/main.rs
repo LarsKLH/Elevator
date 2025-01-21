@@ -21,10 +21,10 @@ fn main() {
             let buf_sendr = "Message from sending thread".as_bytes();
 
             println!("Sending from thred");
-            socket_sender.send_to(buf_sendr, chosen_ip_sock).expect("couldn't send data");
+            socket_sender.send(buf_sendr).expect("couldn't send data");
 
             let buf_sendr = "Sending a second message".as_bytes();
-            socket_sender.send_to(buf_sendr, chosen_ip_sock).expect("couldn't send data");
+            socket_sender.send(buf_sendr).expect("couldn't send data");
 
             sleep(sendr_sleep_time);
         };
