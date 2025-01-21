@@ -24,8 +24,8 @@ fn handle_stream(mut stream: TcpStream){
 
 fn main() {
     // Bind the listener to the local address
-    let listener = TcpListener::bind("127.0.0.1:80").expect("Couldn't bind to the address...");
-    let mut sender = TcpStream::connect("127.0.0.1:80").expect("Couldn't connect to the server...");
+    let listener = TcpListener::bind("10.100.23.204:33546").expect("Couldn't bind to the address..."); //34933
+    let mut sender = TcpStream::connect("10.100.23.204:33546").expect("Couldn't connect to the server...");
     
     
     std::thread::spawn(move || {
