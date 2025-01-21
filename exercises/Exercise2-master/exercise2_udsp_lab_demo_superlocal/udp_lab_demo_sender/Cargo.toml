@@ -1,0 +1,6 @@
+[package]
+name = "udp_lab_demo_sender"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
