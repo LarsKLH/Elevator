@@ -5,3 +5,6 @@ Vi går for en løsning ved bruk av Rust, av flere grunner. Eksempelvis da stand
 Vi skal bruke UDP kommunikasjon i et Peer-to-Peer nettverk.
 
 For å hindre tap av ordre ved strømtap vil hver heis kommunisere ut sin ordreliste, slik at ved tilkobling kan gjenoppta tidligere ordre
+
+
+Være selektiv / konservativ med når en skrur på lys
