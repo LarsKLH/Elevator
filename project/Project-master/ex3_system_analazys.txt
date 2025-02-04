@@ -1,0 +1,35 @@
+ - Analysis:
+   - Identify the inputs of the system, and consider them as discrete (in time) events
+
+            Buttonpresses (up/down any floor cab in any elevator any floor)
+            floor sensor any floor
+            stop button
+            obstruction
+
+            recieve network messages
+
+   - Identify the outputs of the system
+
+            Change direction
+            Turn on lights any floor
+            turn on floor indicator any floor
+            open door light
+            stop buttonn light
+
+            send network message
+
+   - Combine all inputs & outputs and store them (the "state") from one event to the next
+     - This creates a combinatorial "explosion" of possible internal state
+
+            
+
+   - Eliminate combinations that are redundant, impossible (according to reality), and undesirable (according to the specification)
+     - This should give you a "minimal representation" of the possible internal state
+   - Give names to the new minimal combined-input-output states
+     - These typically identify how the system "behaves" when responding to the next event
+     - Leave any un-combined data alone
+ - Implementation:
+   - Create a "handler" for each event (function, message receive-case, etc.)
+   - Switch/match on the behavior-state (within each event handler)
+   - Call a (preferably pure) function that computes the next state and output actions
+   - Perform the output actions and save the new state
