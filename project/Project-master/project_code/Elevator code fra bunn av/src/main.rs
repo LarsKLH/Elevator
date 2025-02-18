@@ -42,18 +42,41 @@ fn main() -> std::io::Result<()> {
     // Run button checker thread
     // - Checks buttons, and sends to state machine thread
 
+    {
+        spawn(move || subfunctions::state_machine_check());
+    }
+
     // Run memory thread
     // - Accesses memory, other functions message it to write or read
     let (memory_tx, memory_rx) = cbc::unbounded::<bool>(); 
+    {
+        let memory_tx = memory_tx.clone();
+        let memory_rx = memory_rx.clone();
+        spawn(move || subfunctions::memory(memory_tx, memory_rx));
+    }
 
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
+    {
+        let memory_tx = memory_tx.clone();
+        spawn(move || subfunctions::motor_controller(memory_tx));
+    }
 
     // Run Reciever thread
     // - Recieves broadcasts and sends to sanity check
 
+    {
+        spawn(move || subfunctions::rx());
+    }
+
     // Run sanity check thread
     // - Checks whether changes in order list makes sense
+
+    {
+        let memory_tx = memory_tx.clone();
+        let memory_rx = memory_rx.clone();
+        spawn(move || subfunctions::sanity_check(memory_tx, memory_rx));
+    }
 
     // Run State machine thread
     // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
@@ -67,6 +90,18 @@ fn main() -> std::io::Result<()> {
     // Run Transmitter thread
     // - Constantly sends elevator direction, last floor and call list
 
+    {
+        let memory_tx = memory_tx.clone();
+        let memory_rx = memory_rx.clone();
+        spawn(move || subfunctions::tx(memory_tx, memory_rx));
+    }
+
     // Run elevator logic thread
     // - Controls whether to stop, go up or down and open door. Sends to motor controller
+
+    {
+        let memory_tx = memory_tx.clone();
+        let memory_rx = memory_rx.clone();
+        spawn(move || subfunctions::elevator_logic(memory_tx, memory_rx));
+    }
 }
