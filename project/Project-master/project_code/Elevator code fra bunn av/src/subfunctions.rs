@@ -48,7 +48,7 @@ enum Memory_message {
     // TODO krangle om hvordan endre state med update
 }
 
-fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Memory_message>) -> () {
+pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Memory_message>) -> () {
     memory = Memory::new();
 
     loop {
@@ -69,30 +69,30 @@ fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Memory_
     }
 }
 
-fn state_machine_check(memory_tx: Sender<>, memory_rx: Receiver<>) -> () {
+pub fn state_machine_check(memory_tx: Sender<>, memory_rx: Receiver<>) -> () {
 
 }
 
-fn sanity_check() -> () {
+pub fn sanity_check() -> () {
 
 }
 
-fn rx() -> () {
+pub fn rx() -> () {
 
 }
 
-fn tx() -> () {
+pub fn tx() -> () {
 
 }
 
-fn motor_controller() -> () {
+pub fn motor_controller() -> () {
 
 }
 
-fn elevator_logic() -> () {
+pub fn elevator_logic() -> () {
 
 }
 
-fn button_checker() -> () {
+pub fn button_checker() -> () {
 
 }
