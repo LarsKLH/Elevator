@@ -3,8 +3,11 @@
 
 use driver_rust::elevio;
 
+use crossbeam_channel::Receiver;
+use crossbeam_channel::Sender;
+use crossbeam_channel as cbc;
 
-
+mod subfunctions;
 
 
 fn main() -> std::io::Result<()> {
@@ -36,27 +39,34 @@ fn main() -> std::io::Result<()> {
         spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, poll_period));
     }
 
-    // Run elevator button thread
-    // Recieves orders and packages them correctly
+    // Run button checker thread
+    // - Checks buttons, and sends to state machine thread
 
     // Run memory thread
-    // Accesses memory, other functions message it to write or read
+    // - Accesses memory, other functions message it to write or read
+    let (memory_tx, memory_rx) = cbc::unbounded::<bool>(); 
 
     // Run motor controller thread
-    // Accesses motor controls, other functions command it and it updates direction in memory
+    // - Accesses motor controls, other functions command it and it updates direction in memory
 
     // Run Reciever thread
-    // Recieves broadcasts and sends to sanity check
+    // - Recieves broadcasts and sends to sanity check
 
     // Run sanity check thread
-    // Checks whether changes in order list makes sense
+    // - Checks whether changes in order list makes sense
 
     // Run State machine thread
-    // Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
+    // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
+
+    {
+        let memory_tx = memory_tx.clone();
+        let memory_rx = memory_rx.clone();
+        spawn(move || subfunctions::state_machine_check(memory_tx, memory_rx));
+    }
 
     // Run Transmitter thread
-    // Constantly sends elevator direction, last floor and call list
+    // - Constantly sends elevator direction, last floor and call list
 
     // Run elevator logic thread
-    // Controls whether to stop, go up or down and open door. Sends to motor controller
+    // - Controls whether to stop, go up or down and open door. Sends to motor controller
 }
