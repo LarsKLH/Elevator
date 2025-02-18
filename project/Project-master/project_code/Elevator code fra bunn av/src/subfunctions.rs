@@ -42,6 +42,33 @@ struct Memory {
     state_list: HashSet<State>
 }
 
+enum Memory_message {
+    Request,
+    Update(State)
+    // TODO krangle om hvordan endre state med update
+}
+
+fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Memory_message>) -> () {
+    memory = Memory::new();
+
+    loop {
+        cbc::select! {
+            recv(memory_request_rx) -> raw => {
+                request = raw.unwrap();
+                match request {
+                    Memory_message::Request => {
+                        memory_recieve_tx.send(memory).unwrap();
+                    }
+                    Memory_message::Update(s) => {
+                        // Change the requested state in memory
+                        memory.state_list(s.id) = s;
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn state_machine_check(memory_tx: Sender<>, memory_rx: Receiver<>) -> () {
 
 }
@@ -67,9 +94,5 @@ fn elevator_logic() -> () {
 }
 
 fn button_checker() -> () {
-
-}
-
-fn memory() -> () {
 
 }

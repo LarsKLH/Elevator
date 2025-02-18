@@ -48,7 +48,7 @@ fn main() -> std::io::Result<()> {
 
     // Run memory thread
     // - Accesses memory, other functions message it to write or read
-    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<()>();
+    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<subfunctions::Memory_message>();
     let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<subfunctions::Memory>();
     {
         let memory_request_rx = memory_request_rx.clone();
