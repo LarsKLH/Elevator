@@ -46,6 +46,9 @@ enum Memory_message {
     Request,
     Update(State)
     // TODO krangle om hvordan endre state med update
+    // TODO gj;re requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
+    
+    // Mulig fix, gj;re update slik at den sender en init update som l[ser databasen til den blir skrevet til igjen
 }
 
 fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Memory_message>) -> () {
