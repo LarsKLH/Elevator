@@ -1,13 +1,24 @@
 
+use std::default;
+use std::hash::Hash;
+use std::thread::*;
+use std::time::*;
+use std::collections::HashSet;
+use std::u8;
+use std::sync::*;
+use std::cmp::max;
+
+use driver_rust::elevio;
+
 use crossbeam_channel::Receiver;
 use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
 
 enum States {
-    nothing,
-    new,
-    confirmed,
-    pending_removal
+    Nothing,
+    New,
+    Confirmed,
+    PendingRemoval
 }
 
 struct Call {
@@ -37,34 +48,53 @@ impl Hash for State {
     }
 }
 
-struct Memory {
+pub struct Memory {
     my_id: Macaddr, // Jens fikser
     state_list: HashSet<State>
 }
 
-enum Memory_message {
+pub enum MemoryMessage {
     Request,
-    Update(State)
+    UpdateOwnDirection(u8),
+    UpdateOwnCall(Call),
+    UpdateOthersState(State)
     // TODO krangle om hvordan endre state med update
-    // TODO gj;re requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
+    // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
     
-    // Mulig fix, gj;re update slik at den sender en init update som l[ser databasen til den blir skrevet til igjen
+    // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
 
-pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Memory_message>) -> () {
+pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
     memory = Memory::new();
 
     loop {
         cbc::select! {
             recv(memory_request_rx) -> raw => {
-                request = raw.unwrap();
+                let request = raw.unwrap();
                 match request {
-                    Memory_message::Request => {
+                    MemoryMessage::Request => {
                         memory_recieve_tx.send(memory).unwrap();
                     }
-                    Memory_message::Update(s) => {
+                    MemoryMessage::Update_own_direction(dirn) => {
+
                         // Change the requested state in memory
-                        memory.state_list(s.id) = s;
+                        
+                        // Syntaks er definitivt feil, men dette viser ideen
+                        memory.state_list(memory.my_id).direction = dirn;
+                    }
+                    MemoryMessage::Update_own_call(call) => {
+
+                        // Change the requested state in memory
+                        
+                        // Syntaks er definitivt feil, men dette viser ideen
+                        memory.state_list(memory.my_id).call_list(call) = call;
+                    }
+                    MemoryMessage::Update_others_state(state) => {
+
+                        // Change the requested state in memory
+
+                        // Syntaks er definitivt feil, men dette viser ideen
+                        memory.state_list(state.id) = state;
                     }
                 }
             }

@@ -1,5 +1,12 @@
 
-
+use std::default;
+use std::hash::Hash;
+use std::thread::*;
+use std::time::*;
+use std::collections::HashSet;
+use std::u8;
+use std::sync::*;
+use std::cmp::max;
 
 use driver_rust::elevio;
 
@@ -13,6 +20,9 @@ mod subfunctions;
 fn main() -> std::io::Result<()> {
     let num_floors = 4;
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
+
+    // Set poll period for buttons and sensors
+    let poll_period = Duration::from_millis(25);
 
     // Initialize button sensors
     let (call_button_tx, call_button_rx) = cbc::unbounded::<elevio::poll::CallButton>(); // Initialize call buttons
@@ -43,12 +53,12 @@ fn main() -> std::io::Result<()> {
     // - Checks buttons, and sends to state machine thread
 
     {
-        spawn(move || subfunctions::state_machine_check());
+        spawn(move || subfunctions::button_checker());
     }
 
     // Run memory thread
     // - Accesses memory, other functions message it to write or read
-    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<subfunctions::Memory_message>();
+    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<subfunctions::MemoryMessage>();
     let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<subfunctions::Memory>();
     {
         let memory_request_rx = memory_request_rx.clone();
@@ -59,8 +69,8 @@ fn main() -> std::io::Result<()> {
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
     {
-        let memory_tx = memory_tx.clone();
-        spawn(move || subfunctions::motor_controller(memory_tx));
+        let memory_request_tx = memory_request_tx.clone();
+        spawn(move || subfunctions::motor_controller(memory_request_tx));
     }
 
     // Run Reciever thread
@@ -74,35 +84,39 @@ fn main() -> std::io::Result<()> {
     // - Checks whether changes in order list makes sense
 
     {
-        let memory_tx = memory_tx.clone();
-        let memory_rx = memory_rx.clone();
-        spawn(move || subfunctions::sanity_check(memory_tx, memory_rx));
+        let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
+        spawn(move || subfunctions::sanity_check(memory_request_tx, memory_recieve_rx));
     }
 
     // Run State machine thread
     // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
 
     {
-        let memory_tx = memory_tx.clone();
-        let memory_rx = memory_rx.clone();
-        spawn(move || subfunctions::state_machine_check(memory_tx, memory_rx));
+        let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
+        spawn(move || subfunctions::state_machine_check(memory_request_tx, memory_recieve_rx));
     }
 
     // Run Transmitter thread
     // - Constantly sends elevator direction, last floor and call list
 
     {
-        let memory_tx = memory_tx.clone();
-        let memory_rx = memory_rx.clone();
-        spawn(move || subfunctions::tx(memory_tx, memory_rx));
+        let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
+        spawn(move || subfunctions::tx(memory_request_tx, memory_recieve_rx));
     }
 
     // Run elevator logic thread
     // - Controls whether to stop, go up or down and open door. Sends to motor controller
 
     {
-        let memory_tx = memory_tx.clone();
-        let memory_rx = memory_rx.clone();
-        spawn(move || subfunctions::elevator_logic(memory_tx, memory_rx));
+        let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
+        spawn(move || subfunctions::elevator_logic(memory_request_tx, memory_recieve_rx));
+    }
+    loop {
+        sleep(Duration::from_millis(1000));
+        // Do nothing
     }
 }
