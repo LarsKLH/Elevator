@@ -48,11 +48,12 @@ fn main() -> std::io::Result<()> {
 
     // Run memory thread
     // - Accesses memory, other functions message it to write or read
-    let (memory_tx, memory_rx) = cbc::unbounded::<bool>(); 
+    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<()>();
+    let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<subfunctions::Memory>();
     {
-        let memory_tx = memory_tx.clone();
-        let memory_rx = memory_rx.clone();
-        spawn(move || subfunctions::memory(memory_tx, memory_rx));
+        let memory_request_rx = memory_request_rx.clone();
+        let memory_recieve_tx = memory_recieve_tx.clone();
+        spawn(move || subfunctions::memory(memory_recieve_tx, memory_request_rx));
     }
 
     // Run motor controller thread
