@@ -69,16 +69,18 @@ fn main() -> std::io::Result<()> {
         spawn(move || subfunctions::memory(memory_recieve_tx, memory_request_rx));
     }
 
-    // Initialize motor contorller channel
+    // Initialize motor controller channel
     // - Only goes one way
-    let (motor_controller_send, motor_controller_receive) = cbc::unbounded::<u8>();
+    let (motor_controller_send, motor_controller_receive) = cbc::unbounded::<subfunctions::MotorMessage>();
 
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
     {
+        let elevator = elevator.clone();
+
         let memory_request_tx = memory_request_tx.clone();
         let motor_controller_receive = motor_controller_receive.clone();
-        spawn(move || subfunctions::motor_controller(memory_request_tx, motor_controller_receive));
+        spawn(move || subfunctions::motor_controller(memory_request_tx, motor_controller_receive, elevator));
     }
 
     // Initialize rx channel
