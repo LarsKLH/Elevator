@@ -56,42 +56,53 @@ fn main() -> std::io::Result<()> {
         spawn(move || subfunctions::button_checker());
     }
 
-    // Run memory thread
-    // - Accesses memory, other functions message it to write or read
+    // Initialize memory access channels
+    // - One for requests, one for receiving
     let (memory_request_tx, memory_request_rx) = cbc::unbounded::<subfunctions::MemoryMessage>();
     let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<subfunctions::Memory>();
+
+    // Run memory thread
+    // - Accesses memory, other functions message it to write or read
     {
         let memory_request_rx = memory_request_rx.clone();
         let memory_recieve_tx = memory_recieve_tx.clone();
         spawn(move || subfunctions::memory(memory_recieve_tx, memory_request_rx));
     }
 
+    // Initialize motor contorller channel
+    // - Only goes one way
+    let (motor_controller_send, motor_controller_receive) = cbc::unbounded::<u8>();
+
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
     {
         let memory_request_tx = memory_request_tx.clone();
-        spawn(move || subfunctions::motor_controller(memory_request_tx));
+        let motor_controller_receive = motor_controller_receive.clone();
+        spawn(move || subfunctions::motor_controller(memory_request_tx, motor_controller_receive));
     }
+
+    // Initialize rx channel
+    // - Only goes one way
+    let (rx_send, rx_get) = cbc::unbounded::<subfunctions::State>();
 
     // Run Reciever thread
     // - Recieves broadcasts and sends to sanity check
-
     {
-        spawn(move || subfunctions::rx());
+        let rx_send = rx_send.clone();
+        spawn(move || subfunctions::rx(rx_send));
     }
 
     // Run sanity check thread
     // - Checks whether changes in order list makes sense
-
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || subfunctions::sanity_check(memory_request_tx, memory_recieve_rx));
+        let rx_get = rx_get.clone();
+        spawn(move || subfunctions::sanity_check(memory_request_tx, memory_recieve_rx, rx_get));
     }
 
     // Run State machine thread
     // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
-
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
@@ -100,7 +111,6 @@ fn main() -> std::io::Result<()> {
 
     // Run Transmitter thread
     // - Constantly sends elevator direction, last floor and call list
-
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
@@ -109,12 +119,13 @@ fn main() -> std::io::Result<()> {
 
     // Run elevator logic thread
     // - Controls whether to stop, go up or down and open door. Sends to motor controller
-
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         spawn(move || subfunctions::elevator_logic(memory_request_tx, memory_recieve_rx));
     }
+
+    // Loop forever, error handling goes here somewhere
     loop {
         sleep(Duration::from_millis(1000));
         // Do nothing

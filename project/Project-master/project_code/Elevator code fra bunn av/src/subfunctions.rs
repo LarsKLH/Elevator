@@ -1,6 +1,7 @@
 
 use std::default;
 use std::hash::Hash;
+use std::hash::Hasher;
 use std::thread::*;
 use std::time::*;
 use std::collections::HashSet;
@@ -14,6 +15,7 @@ use crossbeam_channel::Receiver;
 use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
 
+#[derive(Eq, PartialEq)]
 enum States {
     Nothing,
     New,
@@ -21,6 +23,7 @@ enum States {
     PendingRemoval
 }
 
+#[derive(Eq, PartialEq)]
 struct Call {
     direction: u8,
     floor: u8,
@@ -34,7 +37,8 @@ impl Hash for Call {
     }
 }
 
-struct State {
+#[derive(Eq, PartialEq)]
+pub struct State {
     id: Macaddr, // Jens fikser
     direction: u8,
     last_floor: u8,
@@ -65,7 +69,7 @@ pub enum MemoryMessage {
 }
 
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
-    memory = Memory::new();
+    let memory = Memory::new();
 
     loop {
         cbc::select! {
@@ -75,26 +79,23 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                     MemoryMessage::Request => {
                         memory_recieve_tx.send(memory).unwrap();
                     }
-                    MemoryMessage::Update_own_direction(dirn) => {
+                    MemoryMessage::UpdateOwnDirection(dirn) => {
 
                         // Change the requested state in memory
                         
-                        // Syntaks er definitivt feil, men dette viser ideen
                         memory.state_list(memory.my_id).direction = dirn;
                     }
-                    MemoryMessage::Update_own_call(call) => {
+                    MemoryMessage::UpdateOwnCall(call) => {
 
                         // Change the requested state in memory
                         
-                        // Syntaks er definitivt feil, men dette viser ideen
-                        memory.state_list(memory.my_id).call_list(call) = call;
+                        memory.state_list(memory.my_id).call_list.replace(call);
                     }
-                    MemoryMessage::Update_others_state(state) => {
+                    MemoryMessage::UpdateOthersState(state) => {
 
                         // Change the requested state in memory
 
-                        // Syntaks er definitivt feil, men dette viser ideen
-                        memory.state_list(state.id) = state;
+                        memory.state_list.replace(state);
                     }
                 }
             }
@@ -102,27 +103,40 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
     }
 }
 
-pub fn state_machine_check(memory_tx: Sender<>, memory_rx: Receiver<>) -> () {
+pub fn state_machine_check(memory_request_tx: Sender<MemoryMessage>, memory_recieve_rx: Receiver<Memory>) -> () {
 
 }
 
-pub fn sanity_check() -> () {
+pub fn sanity_check(memory_request_tx: Sender<MemoryMessage>, memory_recieve_rx: Receiver<Memory>, rx_get: Receiver<State>) -> () {
+
+    loop {
+        cbc::select! {
+            recv(rx_get) -> rx => {
+                memory_request_tx.send(MemoryMessage::Request).unwrap();
+                let old_memory = memory_recieve_rx.recv().unwrap();
+
+                let recieved_state = rx.unwrap();
+                let old_calls = old_memory.state_list.get(recieved_state.id).unwrap().call_list;
+                let changes = recieved_state.call_list.difference(&old_calls);
+                
+            }
+        }
+    }
+}
+
+pub fn rx(rx_send: Sender<State>) -> () {
 
 }
 
-pub fn rx() -> () {
+pub fn tx(memory_request_tx: Sender<MemoryMessage>, memory_recieve_rx: Receiver<Memory>) -> () {
 
 }
 
-pub fn tx() -> () {
+pub fn motor_controller(memory_request_tx: Sender<MemoryMessage>, motor_controller_receive: Receiver<u8>) -> () {
 
 }
 
-pub fn motor_controller() -> () {
-
-}
-
-pub fn elevator_logic() -> () {
+pub fn elevator_logic(memory_request_tx: Sender<MemoryMessage>, memory_recieve_rx: Receiver<Memory>) -> () {
 
 }
 
