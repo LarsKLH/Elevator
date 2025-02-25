@@ -6,6 +6,7 @@ use std::thread::*;
 
 
 
+use crossbeam_channel::RecvTimeoutError;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 
@@ -101,7 +102,14 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             restart_elevator(memory_request_tx, memory_recieve_rx, my_state_copy);
         }
         else {
-            
+            cbc::select! {
+                recv(floor_sensor_rx) -> a => {
+                    
+                },
+                recv(cbc::after(Duration::from_millis(100))) -> a => {
+                    
+                },
+            }
         }
 
     }
