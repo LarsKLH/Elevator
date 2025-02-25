@@ -1,6 +1,7 @@
 
 use std::default;
 use std::hash::Hash;
+use std::net::Ipv6Addr;
 use std::thread::*;
 use std::time::*;
 use std::collections::HashSet;
@@ -131,8 +132,7 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        let motor_controller_send = motor_controller_send.clone();
-        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, motor_controller_send));
+        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx));
     }
 
     // Loop forever, error handling goes here somewhere

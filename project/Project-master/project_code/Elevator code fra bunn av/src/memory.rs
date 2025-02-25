@@ -18,17 +18,9 @@ pub struct Memory {
 }
 
 
-impl Memory {
-    fn get_state_from_id(&self, id: Ipv6Addr) -> State {
-        *self.state_list.get(State::new(id)).unwrap().clone()
-    }
-}
-
-
-
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone)]
 pub struct State {
-    pub id: Ipv6Addr, // Jens fikser
+    pub id: Ipv6Addr, // Jens fiksers
     pub direction: u8,
     pub last_floor: u8,
     pub call_list: HashSet<Call>,
@@ -36,29 +28,16 @@ pub struct State {
 }
 
 
-impl Hash for State { // todo 
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
 
-
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 struct Call {
     pub direction: u8,
     pub floor: u8,
-    pub call_state: States
+    pub call_state: CallState
 }
 
-impl Hash for Call {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.direction.hash(state);
-        self.floor.hash(state);
-    }
-}
-
-#[derive(Eq, PartialEq)]
-enum States {
+#[derive(Eq, PartialEq, Clone, Copy)]
+enum CallState {
     Nothing,
     New,
     Confirmed,
@@ -77,8 +56,49 @@ pub enum MemoryMessage {
     // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
 
+<<<<<<< HEAD
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
     let memory = Memory::new();
+=======
+
+impl Hash for Call {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.direction.hash(state);
+        self.floor.hash(state);
+    }
+}
+
+impl From<Ipv6Addr> for Memory {
+    fn from (ip: Ipv6Addr) -> Self {
+        !todo!()
+    }
+    
+}
+
+impl Memory {
+    pub fn get_state_from_id(&self, id: Ipv6Addr) -> State {
+        self.state_list.get(&State::new(id)).unwrap().clone()
+    }
+}
+
+impl Hash for State { // todo 
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+impl State {
+    fn new (id: Ipv6Addr) -> Self {
+        !todo!()
+    }
+}
+
+
+
+
+pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv6: Ipv6Addr) -> () {
+    let memory = Memory::from(ipv6);
+>>>>>>> b8c3b1a7aca2f0fafed0f425ccfc7e15e422cf97
     
     loop {
         cbc::select! {
@@ -89,7 +109,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         memory_recieve_tx.send(memory).unwrap();
                     }
                     MemoryMessage::UpdateOwnDirection(dirn) => {
-
+                        
                         // Change own direction in memory
                         
                         memory.state_list(memory.my_id).direction = dirn;
@@ -100,7 +120,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         
                         memory.state_list(memory.my_id).last_floor = floor;
                     }
-
+                    
                     MemoryMessage::UpdateOwnCall(call) => {
 
                         // Update a single call in memory
@@ -108,9 +128,9 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         memory.state_list(memory.my_id).call_list.replace(call); // todo add aceptence test
                     }
                     MemoryMessage::UpdateOthersState(state) => {
-
+                        
                         // Change the requested state in memory
-
+                        
                         memory.state_list.replace(state);
                     }
                 }
@@ -124,5 +144,4 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
 
 }
-
 
