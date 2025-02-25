@@ -105,6 +105,9 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             cbc::select! {
                 recv(floor_sensor_rx) -> a => {
                     println!("New floor received, checking whether or not to stop");
+                    if should_I_stop(a.unwrap(), my_state) {
+
+                    }
                 }
                 recv(cbc::after(Duration::from_millis(100))) -> _a => {
                     println!("No new floor received, refreshing");
@@ -116,6 +119,11 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
 fn restart_elevator(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: mem::State) -> () {
 
+}
+
+fn should_I_stop(new_floor: u8, my_state: &mem::State) -> bool {
+    
+    return true;
 }
 
 
