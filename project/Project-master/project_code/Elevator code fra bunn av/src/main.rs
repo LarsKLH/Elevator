@@ -1,6 +1,7 @@
 
 use std::default;
 use std::hash::Hash;
+use std::net::Ipv6Addr;
 use std::thread::*;
 use std::time::*;
 use std::collections::HashSet;
@@ -23,7 +24,7 @@ mod network_communication;
 use crate::memory as mem;
 
 
-fn main() -> std::io::Result<()> {
+fn main(ipv6: Ipv6Addr) -> std::io::Result<()> {
     let num_floors = 4;
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
 
@@ -131,8 +132,7 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        let motor_controller_send = motor_controller_send.clone();
-        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, motor_controller_send));
+        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx));
     }
 
     // Loop forever, error handling goes here somewhere
