@@ -2,6 +2,7 @@
 use std::default;
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::net::Ipv6Addr;
 use std::thread::*;
 use std::time::*;
 use std::collections::HashSet;
@@ -41,7 +42,7 @@ impl Hash for Call {
 
 #[derive(Eq, PartialEq)]
 pub struct State {
-    id: Macaddr, // Jens fikser
+    id: Ipv4Addr, // Jens fikser
     direction: u8,
     last_floor: u8,
     call_list: HashSet<Call>,
@@ -55,7 +56,7 @@ impl Hash for State {
 }
 
 pub struct Memory {
-    my_id: Macaddr, // Jens fikser
+    my_id: Ipv4Addr, // Jens fikser
     state_list: HashSet<State>
 }
 
@@ -99,7 +100,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 
                         // Update a single call in memory
                         
-                        memory.state_list(memory.my_id).call_list.replace(call);
+                        memory.state_list(memory.my_id).call_list.replace(call); // todo add aceptence test
                     }
                     MemoryMessage::UpdateOthersState(state) => {
 
