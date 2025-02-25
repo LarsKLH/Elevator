@@ -19,6 +19,8 @@ mod memory;
 mod motor_controller;
 mod network_communication;
 
+use crate::memory as mem;
+
 
 fn main() -> std::io::Result<()> {
     let num_floors = 4;
@@ -69,7 +71,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_rx = memory_request_rx.clone();
         let memory_recieve_tx = memory_recieve_tx.clone();
-        spawn(move || subfunctions::memory(memory_recieve_tx, memory_request_rx));
+        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx));
     }
 
     // Initialize motor controller channel
