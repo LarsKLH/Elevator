@@ -18,6 +18,13 @@ pub struct Memory {
 }
 
 
+impl Memory {
+    fn get_state_from_id(&self, id: Ipv6Addr) -> State {
+        *self.state_list.get(State::new(id)).unwrap().clone()
+    }
+}
+
+
 
 #[derive(Eq, PartialEq)]
 pub struct State {
@@ -27,6 +34,7 @@ pub struct State {
     pub call_list: HashSet<Call>,
     pub cab_calls: HashSet<u8>
 }
+
 
 impl Hash for State { // todo 
     fn hash<H: Hasher>(&self, state: &mut H) {
