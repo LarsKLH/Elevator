@@ -26,25 +26,10 @@ use crate::network_communication as netwrk;
 
 
 
-pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
-
-}
 
 
 
-pub fn rx(rx_send: Sender<mem::State>) -> () {
-
-}
-
-pub fn tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
-
-}
 
 
-pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
 
-}
 
-pub fn button_checker() -> () {
-
-}

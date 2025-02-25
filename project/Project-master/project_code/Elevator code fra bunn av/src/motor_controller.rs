@@ -14,6 +14,11 @@ use crossbeam_channel as cbc;
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 use crate::memory as mem;
 
+
+
+
+
+
 enum MotorMessage {
     Up,
     Down,
@@ -79,4 +84,14 @@ pub fn motor_controller(memory_request_tx: Sender<mem::MemoryMessage>, motor_con
             }
         }
     }
+}
+
+
+
+pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
+
+}
+
+pub fn button_checker() -> () {
+
 }

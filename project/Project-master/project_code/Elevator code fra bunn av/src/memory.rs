@@ -17,16 +17,19 @@ pub struct Memory {
 
 
 
-
-
-
 #[derive(Eq, PartialEq)]
 pub struct State {
-    id: Ipv6Addr, // Jens fikser
+    pub id: Ipv6Addr, // Jens fikser
     direction: u8,
     last_floor: u8,
-    call_list: HashSet<Call>,
+    pub call_list: HashSet<Call>,
     cab_calls: HashSet<u8>
+}
+
+impl Hash for State { // todo 
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
 }
 
 
@@ -113,5 +116,10 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
     }
 }
 
+
+
+pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
+
+}
 
 
