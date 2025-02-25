@@ -1,12 +1,10 @@
 use std::net::Ipv6Addr;
 
-use std::hash::Hash;
-use std::hash::Hasher;
+use std::hash::{Hash,Hasher};
 use std::collections::HashSet;
 
 
-use crossbeam_channel::Receiver;
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Receiver, Sender};
 
 use crossbeam_channel as cbc;
 
@@ -14,19 +12,21 @@ use crossbeam_channel as cbc;
 
 pub struct Memory {
     my_id: Ipv6Addr, // Jens fikser
-    state_list: HashSet<State>
+    pub state_list: HashSet<State>
 }
 
-pub enum MemoryMessage {
-    Request,
-    UpdateOwnDirection(u8),
-    UpdateOwnFloor(u8),
-    UpdateOwnCall(Call),
-    UpdateOthersState(State)
-    // TODO krangle om hvordan endre state med update
-    // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
-    
-    // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
+
+
+
+
+
+#[derive(Eq, PartialEq)]
+pub struct State {
+    id: Ipv6Addr, // Jens fikser
+    direction: u8,
+    last_floor: u8,
+    call_list: HashSet<Call>,
+    cab_calls: HashSet<u8>
 }
 
 
@@ -53,19 +53,27 @@ enum States {
 }
 
 
-#[derive(Eq, PartialEq)]
-pub struct State {
-    id: Ipv6Addr, // Jens fikser
-    direction: u8,
-    last_floor: u8,
-    call_list: HashSet<Call>,
-    cab_calls: HashSet<u8>
+
+pub enum MemoryMessage {
+    Request,
+    UpdateOwnDirection(u8),
+    UpdateOwnFloor(u8),
+    UpdateOwnCall(Call),
+    UpdateOthersState(State)
+    // TODO krangle om hvordan endre state med update
+    // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
+    
+    // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
+
+
+
+
 
 
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
     let memory = Memory::new();
-
+    
     loop {
         cbc::select! {
             recv(memory_request_rx) -> raw => {
@@ -104,3 +112,6 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
         }
     }
 }
+
+
+

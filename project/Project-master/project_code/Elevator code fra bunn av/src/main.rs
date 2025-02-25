@@ -16,6 +16,8 @@ use crossbeam_channel as cbc;
 
 mod subfunctions;
 mod memory;
+mod motor_controller;
+mod network_communication;
 
 
 fn main() -> std::io::Result<()> {
