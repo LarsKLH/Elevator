@@ -57,7 +57,9 @@ enum MotorMessage {
     StopAndOpen
 }
 
-pub fn motor_controller(memory_request_tx: Sender<mem::MemoryMessage>, motor_controller_receive: Receiver<MotorMessage>, elevator: Elevator) -> () {
+// Motor controller function. Takes controller messages and sends them to the elevator
+// controller. Also updates the memory with the current direction of the elevator
+pub fn motor_controller(memory_request_tx: Sender<MemoryMessage>, motor_controller_receive: Receiver<MotorMessage>, elevator: Elevator) -> () {
     // Create direction variable and send elevator down until it hits a floor
     let mut direction = elevio::elev::DIRN_DOWN;
     elevator.motor_direction(direction);
