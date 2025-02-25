@@ -11,6 +11,7 @@ use crossbeam_channel as cbc;
 
 
 
+use driver_rust::elevio::elev::DIRN_STOP;
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 use crate::memory as mem;
 
@@ -19,7 +20,7 @@ use crate::memory as mem;
 
 
 
-enum MotorMessage {
+pub enum MotorMessage {
     Up,
     Down,
     EmergencyStop,
@@ -86,12 +87,32 @@ pub fn motor_controller(memory_request_tx: Sender<mem::MemoryMessage>, motor_con
     }
 }
 
+// The main elevator logic. Determines where to go next and sends commands to the motor controller
+pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
+    loop {
+        memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
+        let memory = memory_recieve_rx.recv().unwrap();
+        let my_state = memory.state_list.iter().find(|state| state.id == memory.my_id).unwrap();
+        let current_direction = my_state.direction;
+        if current_direction == elevio::elev::DIRN_STOP {
+            let memory_request_tx = memory_request_tx.clone();
+            let memory_recieve_rx = memory_recieve_rx.clone();
+            let my_state_copy = my_state.clone();
+            restart_elevator(memory_request_tx, memory_recieve_rx, my_state_copy);
+        }
+        else {
+            
+        }
 
+    }
+}
 
-pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
+fn restart_elevator(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: &mem::State) -> () {
 
 }
 
+
+// Probably not needed
 pub fn button_checker() -> () {
 
 }

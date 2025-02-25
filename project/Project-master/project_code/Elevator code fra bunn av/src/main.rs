@@ -13,6 +13,7 @@ use driver_rust::elevio;
 use crossbeam_channel::Receiver;
 use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
+use motor_controller::motor_controller;
 
 mod subfunctions;
 mod memory;
@@ -58,13 +59,13 @@ fn main() -> std::io::Result<()> {
     // - Checks buttons, and sends to state machine thread
 
     {
-        spawn(move || subfunctions::button_checker());
+        spawn(move || motor_controller::button_checker());
     }
 
     // Initialize memory access channels
     // - One for requests, one for receiving
-    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<subfunctions::MemoryMessage>();
-    let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<subfunctions::Memory>();
+    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<mem::MemoryMessage>();
+    let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<mem::Memory>();
 
     // Run memory thread
     // - Accesses memory, other functions message it to write or read
@@ -76,7 +77,7 @@ fn main() -> std::io::Result<()> {
 
     // Initialize motor controller channel
     // - Only goes one way
-    let (motor_controller_send, motor_controller_receive) = cbc::unbounded::<subfunctions::MotorMessage>();
+    let (motor_controller_send, motor_controller_receive) = cbc::unbounded::<motor_controller::MotorMessage>();
 
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
@@ -85,18 +86,18 @@ fn main() -> std::io::Result<()> {
 
         let memory_request_tx = memory_request_tx.clone();
         let motor_controller_receive = motor_controller_receive.clone();
-        spawn(move || subfunctions::motor_controller(memory_request_tx, motor_controller_receive, elevator));
+        spawn(move || motor_controller::motor_controller(memory_request_tx, motor_controller_receive, elevator));
     }
 
     // Initialize rx channel
     // - Only goes one way
-    let (rx_send, rx_get) = cbc::unbounded::<subfunctions::State>();
+    let (rx_send, rx_get) = cbc::unbounded::<mem::State>();
 
     // Run Reciever thread
     // - Recieves broadcasts and sends to sanity check
     {
         let rx_send = rx_send.clone();
-        spawn(move || subfunctions::rx(rx_send));
+        spawn(move || network_communication::rx(rx_send));
     }
 
     // Run sanity check thread
@@ -105,7 +106,7 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let rx_get = rx_get.clone();
-        spawn(move || subfunctions::sanity_check(memory_request_tx, memory_recieve_rx, rx_get));
+        spawn(move || network_communication::sanity_check_incomming_message(memory_request_tx, memory_recieve_rx, rx_get));
     }
 
     // Run State machine thread
@@ -113,7 +114,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || subfunctions::state_machine_check(memory_request_tx, memory_recieve_rx));
+        spawn(move || mem::state_machine_check(memory_request_tx, memory_recieve_rx));
     }
 
     // Run Transmitter thread
@@ -121,7 +122,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || subfunctions::tx(memory_request_tx, memory_recieve_rx));
+        spawn(move || network_communication::tx(memory_request_tx, memory_recieve_rx));
     }
 
     // Run elevator logic thread
@@ -129,7 +130,8 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || subfunctions::elevator_logic(memory_request_tx, memory_recieve_rx));
+        let floor_sensor_rx = floor_sensor_rx.clone();
+        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx));
     }
 
     // Loop forever, error handling goes here somewhere

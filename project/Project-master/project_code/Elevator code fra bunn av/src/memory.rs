@@ -8,10 +8,12 @@ use crossbeam_channel::{Receiver, Sender};
 
 use crossbeam_channel as cbc;
 
+use crate::memory as mem;
+
 
 
 pub struct Memory {
-    my_id: Ipv6Addr, // Jens fikser
+    pub my_id: Ipv6Addr, // Jens fikser
     pub state_list: HashSet<State>
 }
 
@@ -20,10 +22,10 @@ pub struct Memory {
 #[derive(Eq, PartialEq)]
 pub struct State {
     pub id: Ipv6Addr, // Jens fikser
-    direction: u8,
-    last_floor: u8,
+    pub direction: u8,
+    pub last_floor: u8,
     pub call_list: HashSet<Call>,
-    cab_calls: HashSet<u8>
+    pub cab_calls: HashSet<u8>
 }
 
 impl Hash for State { // todo 
@@ -35,9 +37,9 @@ impl Hash for State { // todo
 
 #[derive(Eq, PartialEq)]
 struct Call {
-    direction: u8,
-    floor: u8,
-    call_state: States
+    pub direction: u8,
+    pub floor: u8,
+    pub call_state: States
 }
 
 impl Hash for Call {
