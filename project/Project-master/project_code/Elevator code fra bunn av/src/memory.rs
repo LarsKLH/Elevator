@@ -74,7 +74,7 @@ impl From<Ipv6Addr> for Memory {
 }
 
 impl Memory {
-    fn get_state_from_id(&self, id: Ipv6Addr) -> State {
+    pub fn get_state_from_id(&self, id: Ipv6Addr) -> State {
         self.state_list.get(&State::new(id)).unwrap().clone()
     }
 }
@@ -94,8 +94,8 @@ impl State {
 
 
 
-pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
-    let memory = Memory::new();
+pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv6: Ipv6Addr) -> () {
+    let memory = Memory::from(ipv6);
     
     loop {
         cbc::select! {
