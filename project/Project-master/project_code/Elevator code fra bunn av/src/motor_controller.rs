@@ -6,6 +6,7 @@ use std::thread::*;
 
 
 
+use crossbeam_channel::RecvTimeoutError;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 
@@ -88,7 +89,7 @@ pub fn motor_controller(memory_request_tx: Sender<mem::MemoryMessage>, motor_con
 }
 
 // The main elevator logic. Determines where to go next and sends commands to the motor controller
-pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
+pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<MotorMessage>) -> () {
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
@@ -101,7 +102,14 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             restart_elevator(memory_request_tx, memory_recieve_rx, my_state_copy);
         }
         else {
-            
+            cbc::select! {
+                recv(floor_sensor_rx) -> a => {
+                    
+                },
+                recv(cbc::after(Duration::from_millis(100))) -> a => {
+                    
+                },
+            }
         }
 
     }
