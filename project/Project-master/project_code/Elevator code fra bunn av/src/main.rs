@@ -73,7 +73,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_rx = memory_request_rx.clone();
         let memory_recieve_tx = memory_recieve_tx.clone();
-        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx));
+        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx, ipv6));
     }
 
     // Initialize motor controller channel
@@ -132,7 +132,8 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx));
+        let motor_controller_send = motor_controller_send.clone();
+        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, motor_controller_send));
     }
 
     // Loop forever, error handling goes here somewhere

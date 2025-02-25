@@ -109,7 +109,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         
                         // Change own direction in memory
                         
-                        memory.get_state_from_id(memory.my_id).direction = dirn;
+                        memory.state_list(memory.my_id).direction = dirn;
                     }
                     MemoryMessage::UpdateOwnFloor(floor) => {
 
