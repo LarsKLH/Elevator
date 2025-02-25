@@ -62,6 +62,7 @@ pub struct Memory {
 pub enum MemoryMessage {
     Request,
     UpdateOwnDirection(u8),
+    UpdateOwnFloor(u8),
     UpdateOwnCall(Call),
     UpdateOthersState(State)
     // TODO krangle om hvordan endre state med update
@@ -83,13 +84,20 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                     }
                     MemoryMessage::UpdateOwnDirection(dirn) => {
 
-                        // Change the requested state in memory
+                        // Change own direction in memory
                         
                         memory.state_list(memory.my_id).direction = dirn;
                     }
+                    MemoryMessage::UpdateOwnFloor(floor) => {
+
+                        // Change own floor in memory
+                        
+                        memory.state_list(memory.my_id).last_floor = floor;
+                    }
+
                     MemoryMessage::UpdateOwnCall(call) => {
 
-                        // Change the requested state in memory
+                        // Update a single call in memory
                         
                         memory.state_list(memory.my_id).call_list.replace(call);
                     }
