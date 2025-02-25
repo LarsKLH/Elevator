@@ -11,7 +11,7 @@ use crossbeam_channel as cbc;
 use crate::memory as mem;
 
 
-
+#[derive(Eq, PartialEq, Clone)]
 pub struct Memory {
     pub my_id: Ipv6Addr, // Jens fikser
     pub state_list: HashSet<State>
@@ -95,7 +95,7 @@ impl State {
 
 
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv6: Ipv6Addr) -> () {
-    let memory = Memory::from(ipv6);
+    let mut memory = Memory::from(ipv6);
     
     loop {
         cbc::select! {
@@ -103,13 +103,14 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                 let request = raw.unwrap();
                 match request {
                     MemoryMessage::Request => {
-                        memory_recieve_tx.send(memory).unwrap();
+                        let memory_copy = memory.clone();
+                        memory_recieve_tx.send(memory_copy).unwrap();
                     }
                     MemoryMessage::UpdateOwnDirection(dirn) => {
                         
                         // Change own direction in memory
                         
-                        memory.state_list(memory.my_id).direction = dirn;
+                        memory.get_state_from_id(memory.my_id).direction = dirn;
                     }
                     MemoryMessage::UpdateOwnFloor(floor) => {
 

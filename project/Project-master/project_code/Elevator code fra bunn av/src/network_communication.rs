@@ -20,7 +20,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let old_memory = memory_recieve_rx.recv().unwrap();
 
                 let recieved_state = rx.unwrap();
-                let old_calls = old_memory.state_list.get(recieved_state).unwrap().call_list;
+                let old_calls = old_memory.get_state_from_id(recieved_state.id).call_list;
                 let changes = recieved_state.call_list.difference(&old_calls);
                 
             }
