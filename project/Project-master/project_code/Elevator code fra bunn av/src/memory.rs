@@ -1,8 +1,19 @@
+use std::net::Ipv6Addr;
+
+use std::hash::Hash;
+use std::hash::Hasher;
+use std::collections::HashSet;
+
+
+use crossbeam_channel::Receiver;
+use crossbeam_channel::Sender;
+
+use crossbeam_channel as cbc;
 
 
 
 pub struct Memory {
-    my_id: Ipv4Addr, // Jens fikser
+    my_id: Ipv6Addr, // Jens fikser
     state_list: HashSet<State>
 }
 
@@ -44,7 +55,7 @@ enum States {
 
 #[derive(Eq, PartialEq)]
 pub struct State {
-    id: Ipv4Addr, // Jens fikser
+    id: Ipv6Addr, // Jens fikser
     direction: u8,
     last_floor: u8,
     call_list: HashSet<Call>,

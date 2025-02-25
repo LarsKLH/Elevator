@@ -2,10 +2,10 @@
 use std::default;
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::collections::HashSet;
 use std::net::Ipv6Addr;
 use std::thread::*;
 use std::time::*;
-use std::collections::HashSet;
 use std::u8;
 use std::sync::*;
 use std::cmp::max;
@@ -18,7 +18,10 @@ use crossbeam_channel as cbc;
 use driver_rust::elevio::elev;
 use driver_rust::elevio::elev::Elevator;
 
-use super::memory as mem;
+
+use crate::memory as mem;
+
+
 
 
 pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {

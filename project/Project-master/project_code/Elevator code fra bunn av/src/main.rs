@@ -15,6 +15,7 @@ use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
 
 mod subfunctions;
+mod memory;
 
 
 fn main() -> std::io::Result<()> {
