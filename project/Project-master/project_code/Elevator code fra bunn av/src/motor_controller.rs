@@ -93,7 +93,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
-        let my_state = memory.state_list.iter().find(|state| state.id == memory.my_id).unwrap();
+        let my_state = memory.get_state_from_id(memory.my_id);
         let current_direction = my_state.direction;
         if current_direction == elevio::elev::DIRN_STOP {
             let memory_request_tx = memory_request_tx.clone();
@@ -104,14 +104,13 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
         else {
             cbc::select! {
                 recv(floor_sensor_rx) -> a => {
-                    
-                },
-                recv(cbc::after(Duration::from_millis(100))) -> a => {
-                    
-                },
+                    println!("New floor received, checking whether or not to stop");
+                }
+                recv(cbc::after(Duration::from_millis(100))) -> _a => {
+                    println!("No new floor received, refreshing");
+                }
             }
         }
-
     }
 }
 

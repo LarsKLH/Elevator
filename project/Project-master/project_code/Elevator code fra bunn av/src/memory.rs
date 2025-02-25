@@ -65,8 +65,6 @@ enum States {
     PendingRemoval
 }
 
-
-
 pub enum MemoryMessage {
     Request,
     UpdateOwnDirection(u8),
@@ -78,11 +76,6 @@ pub enum MemoryMessage {
     
     // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
-
-
-
-
-
 
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
     let memory = Memory::new();
