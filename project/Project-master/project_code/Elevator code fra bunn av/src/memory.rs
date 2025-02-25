@@ -44,6 +44,8 @@ enum CallState {
     PendingRemoval
 }
 
+
+
 pub enum MemoryMessage {
     Request,
     UpdateOwnDirection(u8),
@@ -56,10 +58,6 @@ pub enum MemoryMessage {
     // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
 
-<<<<<<< HEAD
-pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>) -> () {
-    let memory = Memory::new();
-=======
 
 impl Hash for Call {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -98,7 +96,6 @@ impl State {
 
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv6: Ipv6Addr) -> () {
     let memory = Memory::from(ipv6);
->>>>>>> b8c3b1a7aca2f0fafed0f425ccfc7e15e422cf97
     
     loop {
         cbc::select! {
@@ -112,7 +109,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         
                         // Change own direction in memory
                         
-                        memory.state_list(memory.my_id).direction = dirn;
+                        memory.get_state_from_id(memory.my_id).direction = dirn;
                     }
                     MemoryMessage::UpdateOwnFloor(floor) => {
 
