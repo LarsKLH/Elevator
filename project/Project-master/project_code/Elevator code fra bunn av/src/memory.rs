@@ -1,7 +1,9 @@
+use core::hash;
 use std::net::Ipv6Addr;
 
 use std::hash::{Hash,Hasher};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::ops::Deref;
 
 
 use crossbeam_channel::{Receiver, Sender};
@@ -13,27 +15,26 @@ use crate::memory as mem;
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct Memory {
-    pub my_id: Ipv6Addr, // Jens fikser
-    pub state_list: HashSet<State>
+    pub my_id: Ipv6Addr,
+    pub state_list: HashMap<Ipv6Addr,State>
 }
 
 
 #[derive(Eq, PartialEq, Clone)]
 pub struct State {
     pub id: Ipv6Addr, // Jens fiksers
-    pub direction: u8,
+    pub direction: u8, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
-    pub call_list: HashSet<Call>,
-    pub cab_calls: HashSet<u8>
+    pub call_list: HashMap<Call, CallState>,
+    pub cab_calls: HashMap<u8, CallState>
 }
 
 
 
-#[derive(Eq, PartialEq, Clone, Copy)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash)]
 struct Call {
     pub direction: u8,
-    pub floor: u8,
-    pub call_state: CallState
+    pub floor: u8
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]
@@ -50,20 +51,12 @@ pub enum MemoryMessage {
     Request,
     UpdateOwnDirection(u8),
     UpdateOwnFloor(u8),
-    UpdateOwnCall(Call),
+    UpdateOwnCall(Call, CallState),
     UpdateOthersState(State)
     // TODO krangle om hvordan endre state med update
     // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
     
     // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
-}
-
-
-impl Hash for Call {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.direction.hash(state);
-        self.floor.hash(state);
-    }
 }
 
 impl From<Ipv6Addr> for Memory {
@@ -74,9 +67,7 @@ impl From<Ipv6Addr> for Memory {
 }
 
 impl Memory {
-    pub fn get_state_from_id(&self, id: Ipv6Addr) -> &State {
-        self.state_list.get(&State::new(id)).unwrap()
-    }
+
 }
 
 impl Hash for State { // todo 
@@ -110,26 +101,26 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         
                         // Change own direction in memory
                         
-                        memory.get_state_from_id(memory.my_id).direction = dirn;
+                        memory.state_list.get_mut(&memory.my_id).unwrap().direction = dirn;
                     }
                     MemoryMessage::UpdateOwnFloor(floor) => {
 
                         // Change own floor in memory
                         
-                        memory.get_state_from_id(memory.my_id).last_floor = floor;
+                        memory.state_list.get_mut(&memory.my_id).unwrap().last_floor = floor;
                     }
                     
-                    MemoryMessage::UpdateOwnCall(call) => {
+                    MemoryMessage::UpdateOwnCall(call, call_state) => {
 
                         // Update a single call in memory
                         
-                        memory.get_state_from_id(memory.my_id).call_list.replace(call); // todo add aceptence test
+                        memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test
                     }
                     MemoryMessage::UpdateOthersState(state) => {
                         
                         // Change the requested state in memory
                         
-                        memory.state_list.replace(state);
+                        memory.state_list.insert(state.id, state);
                     }
                 }
             }
