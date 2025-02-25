@@ -23,8 +23,17 @@ mod network_communication;
 
 use crate::memory as mem;
 
+use std::env;
+
+
+
 
 fn main() -> std::io::Result<()> {
+
+    let args: Vec<String> = env::args().collect();
+
+    let ipv6_id = Ipv6Addr::from(args[0]);
+
     let num_floors = 4;
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
 

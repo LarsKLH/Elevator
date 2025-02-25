@@ -115,14 +115,14 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 
                         // Change own floor in memory
                         
-                        memory.state_list(memory.my_id).last_floor = floor;
+                        memory.get_state_from_id(memory.my_id).last_floor = floor;
                     }
                     
                     MemoryMessage::UpdateOwnCall(call) => {
 
                         // Update a single call in memory
                         
-                        memory.state_list(memory.my_id).call_list.replace(call); // todo add aceptence test
+                        memory.get_state_from_id(memory.my_id).call_list.replace(call); // todo add aceptence test
                     }
                     MemoryMessage::UpdateOthersState(state) => {
                         
