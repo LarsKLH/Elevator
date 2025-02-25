@@ -74,8 +74,8 @@ impl From<Ipv6Addr> for Memory {
 }
 
 impl Memory {
-    pub fn get_state_from_id(&self, id: Ipv6Addr) -> State {
-        self.state_list.get(&State::new(id)).unwrap().clone()
+    pub fn get_state_from_id(&self, id: Ipv6Addr) -> &State {
+        self.state_list.get(&State::new(id)).unwrap()
     }
 }
 
