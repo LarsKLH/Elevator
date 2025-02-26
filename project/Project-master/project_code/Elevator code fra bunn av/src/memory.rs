@@ -131,6 +131,28 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 
 
 pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
+    
 
+    loop {
+        memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
+        let memory = memory_recieve_rx.recv().unwrap();
+        let my_state = memory.state_list.get(&memory.my_id).unwrap();
+        for call in &my_state.call_list {
+            match call.1 {
+                CallState::Nothing => {
+                    
+                }
+                CallState::New => {
+                    
+                }
+                CallState::Confirmed => {
+                    
+                }
+                CallState::PendingRemoval => {
+                    
+                }
+            }
+        }
+    }
 }
 
