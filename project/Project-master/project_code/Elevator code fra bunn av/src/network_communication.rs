@@ -85,6 +85,7 @@ fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list
     return state_to_change.clone();
 }
 
+// Gets the difference between two call lists
 fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<mem::Call, mem::CallState>) -> HashMap<mem::Call, mem::CallState> {
     let mut difference: HashMap<mem::Call, mem::CallState> = HashMap::new();
     for call in old_calls.keys() {
@@ -134,7 +135,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
             }
             // If we don't get a new state in decent time, this function runs
             default(Duration::from_millis(100)) => {
-                // Getting old memory and extracting my own state
+                // Getting old memory and extracting my own call list
                 let old_memory = memory_recieve_rx.recv().unwrap();
                 let my_call_list = old_memory.state_list.get(&old_memory.my_id).unwrap().clone().call_list;
 
