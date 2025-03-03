@@ -122,6 +122,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 }
                 recv(cbc::after(Duration::from_millis(100))) -> _a => {
                     println!("No new floor received, refreshing");
+                    sleep(Duration::from_millis(50));
                 }
             }
         }
@@ -129,7 +130,20 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 }
 
 fn restart_elevator(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: mem::State) -> () {
+    match my_state_copy.direction {
+        elevio::elev::DIRN_STOP => {
 
+        }
+        elevio::elev::DIRN_UP => {
+
+        }
+        elevio::elev::DIRN_DOWN => {
+
+        }
+        2_u8..=254_u8 => {
+            println!("Error: invalid direction")
+        }
+    }
 }
 
 // Check whether we should stop or not
