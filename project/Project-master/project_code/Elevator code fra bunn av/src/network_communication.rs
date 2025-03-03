@@ -7,6 +7,8 @@
 
 use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
 
+use std::collections::HashMap
+
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 
@@ -23,7 +25,15 @@ use postcard::to_stdvec;
 const MAXIMUM_BYTES_IN_PACKAGE: usize = 65_000;
 const BROADCAST_ADDRESS_bytes: [u8;4] = [255,255,255,255];
 
-
+fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<mem::Call, mem::CallState>) -> HashMap<mem::Call, mem::CallState> {
+    let mut difference: HashMap<mem::Call, mem::CallState> = HashMap::new();
+    for call in old_calls.keys() {
+        if new_calls.get(call) != old_calls.get(call) {
+            difference.insert(call.clone(), *new_calls.get(call).unwrap());
+        }
+    }
+    return difference;
+}
 
 pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::State>) -> () {
     loop {
@@ -31,10 +41,75 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
             recv(rx_get) -> rx => {
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let old_memory = memory_recieve_rx.recv().unwrap();
+                let my_state = old_memory.state_list.get(&old_memory.my_id).unwrap().clone();
 
                 let recieved_state = rx.unwrap();
                 let old_calls = old_memory.state_list.get(&recieved_state.id).unwrap().call_list.clone();
-                !todo!("get the changes in the ") //let changes = recieved_state.call_list.eq(&old_calls);
+                let new_calls = recieved_state.call_list.clone();
+
+                let difference = difference(old_calls.clone(), new_calls.clone());
+                let my_diff: HashMap<Call, CallState> = my_state.call_list.iter().filter(|x| difference.contains_key(&x.0)).collect();
+
+                for mut call in my_diff {
+                    match call.1 {
+                        mem::CallState::Nothing => {
+                            // If one of the others has a new order that passed sanity check, change our state to new
+                            for state in &memory.state_list {
+                                if *state.1.call_list.get(call.0).unwrap() == mem::CallState::New {
+                                    call.1 = &mem::CallState::New;
+                                    break;
+                                }
+                            }
+                        }
+                        mem::CallState::New => {
+                            // If all the others are either new or confirmed, change our state to confirmed
+                            let mut new = 0;
+                            let mut confirmed = 0;
+                            let mut total = 0;
+                            for state in &memory.state_list {
+                                total += 1;
+                                if *state.1.call_list.get(call.0).unwrap() == mem::CallState::New {
+                                    new += 1;
+                                }
+                                else if *state.1.call_list.get(call.0).unwrap() == mem::CallState::Confirmed {
+                                    confirmed += 1;
+                                }
+                            }
+                            if (new + confirmed) == total {
+                                call.1 = &mem::CallState::Confirmed;
+                            }
+                        }
+                        mem::CallState::Confirmed => {
+                            // If one of the others has removed an order that passed sanity check, change our state to new
+                            for state in &memory.state_list {
+                                if *state.1.call_list.get(call.0).unwrap() == mem::CallState::PendingRemoval {
+                                    call.1 = &mem::CallState::PendingRemoval;
+                                    break;
+                                }
+                            }
+                        }
+                        mem::CallState::PendingRemoval => {
+                            // If all the others are either pending or nothing, change our state to nothing
+                            // it an PendingRemoval is in memory it has to have passed the sanity check
+                            // TODO check if the sanity check allows other elevators to acsept PendingRemoval of other elevators
+                            let mut pending = 0;
+                            let mut nothing = 0;
+                            let mut total = 0;
+                            for state in &memory.state_list {
+                                total += 1;
+                                if *state.1.call_list.get(call.0).unwrap() == mem::CallState::PendingRemoval {
+                                    pending += 1;
+                                }
+                                else if *state.1.call_list.get(call.0).unwrap() == mem::CallState::Nothing {
+                                    nothing += 1;
+                                }
+                            }
+                            if (pending + nothing) == total {
+                                call.1 = &mem::CallState::Nothing;
+                            }
+                        }
+                    }
+                }
                 
             }
         }

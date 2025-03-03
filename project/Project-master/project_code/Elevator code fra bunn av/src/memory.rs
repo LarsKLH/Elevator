@@ -133,72 +133,13 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 
 
 
-pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
+/* pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
     
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
         let my_state = memory.state_list.get(&memory.my_id).unwrap();
-        for mut call in &my_state.call_list {
-            match call.1 {
-                CallState::Nothing => {
-                    // If one of the others has a new order that passed sanity check, change our state to new
-                    for state in &memory.state_list {
-                        if *state.1.call_list.get(call.0).unwrap() == CallState::New {
-                            call.1 = &CallState::New;
-                            break;
-                        }
-                    }
-                }
-                CallState::New => {
-                    // If all the others are either new or confirmed, change our state to confirmed
-                    let mut new = 0;
-                    let mut confirmed = 0;
-                    let mut total = 0;
-                    for state in &memory.state_list {
-                        total += 1;
-                        if *state.1.call_list.get(call.0).unwrap() == CallState::New {
-                            new += 1;
-                        }
-                        else if *state.1.call_list.get(call.0).unwrap() == CallState::Confirmed {
-                            confirmed += 1;
-                        }
-                    }
-                    if (new + confirmed) == total {
-                        call.1 = &CallState::Confirmed;
-                    }
-                }
-                CallState::Confirmed => {
-                    // If one of the others has removed an order that passed sanity check, change our state to new
-                    for state in &memory.state_list {
-                        if *state.1.call_list.get(call.0).unwrap() == CallState::PendingRemoval {
-                            call.1 = &CallState::PendingRemoval;
-                            break;
-                        }
-                    }
-                }
-                CallState::PendingRemoval => {
-                    // If all the others are either pending or nothing, change our state to nothing
-                    // it an PendingRemoval is in memory it has to have passed the sanity check
-                    // TODO check if the sanity check allows other elevators to acsept PendingRemoval of other elevators
-                    let mut pending = 0;
-                    let mut nothing = 0;
-                    let mut total = 0;
-                    for state in &memory.state_list {
-                        total += 1;
-                        if *state.1.call_list.get(call.0).unwrap() == CallState::PendingRemoval {
-                            pending += 1;
-                        }
-                        else if *state.1.call_list.get(call.0).unwrap() == CallState::Nothing {
-                            nothing += 1;
-                        }
-                    }
-                    if (pending + nothing) == total {
-                        call.1 = &CallState::Nothing;
-                    }
-                }
-            }
-        }
+        
     }
 }
-
+ */
