@@ -3,7 +3,7 @@ use std::default;
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::collections::HashSet;
-use std::net::Ipv6Addr;
+use std::net::Ipv4Addr;
 use std::thread::*;
 use std::time::*;
 use std::u8;
