@@ -32,13 +32,13 @@ pub struct State {
 
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
-struct Call {
+pub struct Call {
     pub direction: u8,
     pub floor: u8
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]
-enum CallState {
+pub enum CallState {
     Nothing,
     New,
     Confirmed,

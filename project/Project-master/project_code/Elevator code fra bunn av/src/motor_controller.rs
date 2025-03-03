@@ -96,6 +96,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
         let my_state = memory.state_list.get(&memory.my_id).unwrap();
         let current_direction = my_state.direction;
         if current_direction == elevio::elev::DIRN_STOP {
+            // If stopped restart elevator as needed
             let memory_request_tx = memory_request_tx.clone();
             let memory_recieve_rx = memory_recieve_rx.clone();
             let my_state_copy = my_state.clone();
@@ -105,8 +106,17 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             cbc::select! {
                 recv(floor_sensor_rx) -> a => {
                     println!("New floor received, checking whether or not to stop");
-                    if should_I_stop(a.unwrap(), my_state) {
+                    if should_i_stop(a.unwrap(), my_state) {
+                        // If we have determined to stop, stop, wait and restart
+                        println!("Should stop");
+                        motor_controller_send.send(MotorMessage::StopAndOpen).unwrap();
 
+                        sleep(Duration::from_millis(3000));
+
+                        let memory_request_tx = memory_request_tx.clone();
+                        let memory_recieve_rx = memory_recieve_rx.clone();
+                        let my_state_copy = my_state.clone();
+                        restart_elevator(memory_request_tx, memory_recieve_rx, my_state_copy);
                     }
                 }
                 recv(cbc::after(Duration::from_millis(100))) -> _a => {
@@ -121,9 +131,28 @@ fn restart_elevator(memory_request_tx: Sender<mem::MemoryMessage>, memory_reciev
 
 }
 
-fn should_I_stop(new_floor: u8, my_state: &mem::State) -> bool {
-    
-    return true;
+// Check whether we should stop or not
+fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
+    let check_call = mem::Call {
+        direction: my_state.direction,
+        floor: new_floor
+    };
+    // If the state of our current floor is confirmed, we should stop
+    if *my_state.call_list.get(&check_call).unwrap() == mem::CallState::Confirmed {
+        return true;
+    }
+    else if !lower_calls(new_floor, my_state) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+fn lower_calls(new_floor: u8, my_state: &mem::State) -> bool {
+    for floor in my_state.call_list {
+    }
+    return true
 }
 
 
