@@ -15,15 +15,10 @@ use crossbeam_channel as cbc;
 use crate::memory as mem;
 
 use postcard;
-use serde::{Serialize, Deserialize};
-use heapless;
-
-
-use postcard::to_stdvec;
 
 
 const MAXIMUM_BYTES_IN_PACKAGE: usize = 65_000;
-const BROADCAST_ADDRESS_bytes: [u8;4] = [255,255,255,255];
+const BROADCAST_ADDRESS_BYTES: [u8;4] = [255,255,255,255];
 
 fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<mem::Call, mem::CallState>) -> HashMap<mem::Call, mem::CallState> {
     let mut difference: HashMap<mem::Call, mem::CallState> = HashMap::new();
@@ -118,7 +113,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
 pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> (UdpSocket, SocketAddrV4) {
 
-    let target_ip = Ipv4Addr::from(BROADCAST_ADDRESS_bytes);
+    let target_ip = Ipv4Addr::from(BROADCAST_ADDRESS_BYTES);
 
     let target_socket = SocketAddrV4::new(target_ip, wanted_port);
 
