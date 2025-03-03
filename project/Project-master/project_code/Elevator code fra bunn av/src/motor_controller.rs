@@ -93,6 +93,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
+        
         let my_state = memory.get_state_from_id(memory.my_id);
         let current_direction = my_state.direction;
         if current_direction == elevio::elev::DIRN_STOP {

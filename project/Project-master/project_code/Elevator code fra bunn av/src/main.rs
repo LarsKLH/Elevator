@@ -1,7 +1,7 @@
 
 use std::default;
 use std::hash::Hash;
-use std::net::Ipv6Addr;
+use std::net::Ipv4Addr;
 use std::thread::*;
 use std::time::*;
 use std::collections::HashSet;
@@ -32,7 +32,9 @@ fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
 
-    let ipv6_id = Ipv6Addr::from(args[0]);
+    //let ipv4_id = Ipv4Addr::from(args[0].as_bytes()); TODO fix this so yyou can take ip as argument
+
+    let ipv4_id = Ipv4Addr::new(127,0,0,26);
 
     let num_floors = 4;
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
@@ -82,7 +84,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_rx = memory_request_rx.clone();
         let memory_recieve_tx = memory_recieve_tx.clone();
-        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx, ipv6_id));
+        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx, ipv4_id));
     }
 
     // Initialize motor controller channel
