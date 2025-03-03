@@ -1,9 +1,12 @@
 use core::hash;
-use std::net::Ipv6Addr;
+use std::{  net::Ipv4Addr,
+            hash::{Hash,Hasher},
+            collections::{HashMap, HashSet},
+            ops::Deref};
 
-use std::hash::{Hash,Hasher};
-use std::collections::{HashMap, HashSet};
-use std::ops::Deref;
+use postcard;
+use serde::{Serialize, Deserialize};
+
 
 
 use crossbeam_channel::{Receiver, Sender};
@@ -13,16 +16,16 @@ use crossbeam_channel as cbc;
 use crate::memory as mem;
 
 
-#[derive(Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Memory {
-    pub my_id: Ipv6Addr,
-    pub state_list: HashMap<Ipv6Addr,State>
+    pub my_id: Ipv4Addr,
+    pub state_list: HashMap<Ipv4Addr,State>
 }
 
 
-#[derive(Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct State {
-    pub id: Ipv6Addr, // Jens fiksers
+    pub id: Ipv4Addr, // Jens fiksers
     pub direction: u8, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>,
@@ -31,14 +34,24 @@ pub struct State {
 
 
 
+<<<<<<< HEAD
 #[derive(Eq, PartialEq, Clone, Copy, Hash)]
 pub struct Call {
+=======
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+struct Call {
+>>>>>>> fb9aba9e5525f69322a08fb2236ba0dbca3a52cd
     pub direction: u8,
     pub floor: u8
 }
 
+<<<<<<< HEAD
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum CallState {
+=======
+#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
+enum CallState {
+>>>>>>> fb9aba9e5525f69322a08fb2236ba0dbca3a52cd
     Nothing,
     New,
     Confirmed,
@@ -59,8 +72,8 @@ pub enum MemoryMessage {
     // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
 
-impl From<Ipv6Addr> for Memory {
-    fn from (ip: Ipv6Addr) -> Self {
+impl From<Ipv4Addr> for Memory {
+    fn from (ip: Ipv4Addr) -> Self {
         !todo!()
     }
     
@@ -77,7 +90,7 @@ impl Hash for State { // todo
 }
 
 impl State {
-    fn new (id: Ipv6Addr) -> Self {
+    fn new (id: Ipv4Addr) -> Self {
         !todo!()
     }
 }
@@ -85,8 +98,8 @@ impl State {
 
 
 
-pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv6: Ipv6Addr) -> () {
-    let mut memory = Memory::from(ipv6);
+pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv4: Ipv4Addr) -> () {
+    let mut memory = Memory::from(ipv4);
     
     loop {
         cbc::select! {
