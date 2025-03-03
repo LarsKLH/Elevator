@@ -21,12 +21,12 @@ use postcard;
 const MAXIMUM_BYTES_IN_PACKAGE: usize = 65_000;
 const BROADCAST_ADDRESS_BYTES: [u8;4] = [255,255,255,255];
 
-fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
     for mut call in &state_to_change {
         match call.1 {
             mem::CallState::Nothing => {
                 // If one of the others has a new order that passed sanity check, change our state to new
-                for state in &state_list {
+                for state in state_list {
                     if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::New {
                         call.1 = &mem::CallState::New;
                         break;
@@ -38,7 +38,7 @@ fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list
                 let mut new = 0;
                 let mut confirmed = 0;
                 let mut total = 0;
-                for state in &state_list {
+                for state in state_list {
                     total += 1;
                     if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::New {
                         new += 1;
@@ -53,7 +53,7 @@ fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list
             }
             mem::CallState::Confirmed => {
                 // If one of the others has removed an order that passed sanity check, change our state to new
-                for state in &state_list {
+                for state in state_list {
                     if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::PendingRemoval {
                         call.1 = &mem::CallState::PendingRemoval;
                         break;
@@ -67,7 +67,7 @@ fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list
                 let mut pending = 0;
                 let mut nothing = 0;
                 let mut total = 0;
-                for state in &state_list {
+                for state in state_list {
                     total += 1;
                     if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::PendingRemoval {
                         pending += 1;
@@ -100,29 +100,54 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
     loop {
         cbc::select! {
             recv(rx_get) -> rx => {
+                // Getting old memory and extracting my own state
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let old_memory = memory_recieve_rx.recv().unwrap();
                 let my_state = old_memory.state_list.get(&old_memory.my_id).unwrap().clone();
 
+                // Getting new state from rx, extracting both old and new calls for comparison
                 let received_state = rx.unwrap();
                 let old_calls = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone();
                 let new_calls = received_state.call_list.clone();
 
-                let state_list_without_received: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.into_iter().filter(|x| x.0 != received_state.id).collect();
+                // Getting the difference between the old and new calls
+                let differences = difference(old_calls.clone(), new_calls.clone());
+                // Getting the relevant calls from my state
+                let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| differences.contains_key(&x.0)).collect();
 
-                let difference = difference(old_calls.clone(), new_calls.clone());
-                let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| difference.contains_key(&x.0)).collect();
+                // Copying the old state list and adding the changes
+                let mut state_list_with_changes = old_memory.state_list.clone();
+                for change in &differences {
+                    state_list_with_changes.get_mut(&received_state.id).unwrap().call_list.insert(change.0.clone(), change.1.clone());
+                }
 
-                
-                let my_diff_changed = state_machine(my_diff, state_list_without_received);
+                // Running the state machine on only the changed calls
+                let my_diff_changed = state_machine(my_diff.clone(), &state_list_with_changes);
+
+                // Extracting the calls that were actually changed to minimize memory changing and avoid errors
+                let changed_calls = difference(my_diff, my_diff_changed);
+
+                // Sending the changes to memory one after the other
+                for change in changed_calls {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).unwrap();
+                }
             }
+            // If we don't get a new state in decent time, this function runs
             default(Duration::from_millis(100)) => {
+                // Getting old memory and extracting my own state
                 let old_memory = memory_recieve_rx.recv().unwrap();
                 let my_call_list = old_memory.state_list.get(&old_memory.my_id).unwrap().clone().call_list;
 
-                let state_list_without_mine: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.into_iter().filter(|x| x.0 != old_memory.my_id).collect();
-                
-                let new_state_list = state_machine(my_call_list, state_list_without_mine);
+                // Running the state machine on my own calls
+                let new_call_list = state_machine(my_call_list.clone(), &old_memory.state_list);
+
+                // Extracting the calls that were actually changed to minimize memory changing and avoid errors
+                let changed_calls = difference(my_call_list, new_call_list);
+
+                // Sending the changes to memory one after the other
+                for change in changed_calls {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).unwrap();
+                }
             }
         }
     }
