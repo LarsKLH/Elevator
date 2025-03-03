@@ -90,6 +90,7 @@ pub fn motor_controller(memory_request_tx: Sender<mem::MemoryMessage>, motor_con
 
 // The main elevator logic. Determines where to go next and sends commands to the motor controller
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<MotorMessage>) -> () {
+
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
@@ -133,6 +134,7 @@ fn restart_elevator(memory_request_tx: Sender<mem::MemoryMessage>, memory_reciev
 
 // Check whether we should stop or not
 fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
+
     let check_call = mem::Call {
         direction: my_state.direction,
         floor: new_floor
@@ -141,7 +143,8 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     if *my_state.call_list.get(&check_call).unwrap() == mem::CallState::Confirmed {
         return true;
     }
-    else if !lower_calls(new_floor, my_state) {
+    // if there are no more floors below us, we should stop
+    else if !lower_calls(new_floor, my_state.clone()) {
         return true;
     }
     else {
@@ -149,8 +152,26 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     }
 }
 
-fn lower_calls(new_floor: u8, my_state: &mem::State) -> bool {
-    for floor in my_state.call_list {
+fn lower_calls(new_floor: u8, my_state: mem::State) -> bool {
+
+    match my_state.direction {
+        elevio::elev::DIRN_UP => {
+            for call in my_state.call_list {
+                if call.0.floor > new_floor && call.1 == mem::CallState::Confirmed {
+                    return false;
+                }
+            }
+        }
+        elevio::elev::DIRN_DOWN => {
+            for call in my_state.call_list {
+                if call.0.floor < new_floor && call.1 == mem::CallState::Confirmed {
+                    return false;
+                }
+            }
+        }
+        0_u8|2_u8..=254_u8 => {
+            println!("Error: Direction not valid");
+        }
     }
     return true
 }
