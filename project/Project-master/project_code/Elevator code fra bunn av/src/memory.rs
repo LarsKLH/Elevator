@@ -177,6 +177,8 @@ pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory
                 }
                 CallState::PendingRemoval => {
                     // If all the others are either pending or nothing, change our state to nothing
+                    // it an PendingRemoval is in memory it has to have passed the sanity check
+                    // TODO check if the sanity check allows other elevators to acsept PendingRemoval of other elevators
                     let mut pending = 0;
                     let mut nothing = 0;
                     let mut total = 0;
