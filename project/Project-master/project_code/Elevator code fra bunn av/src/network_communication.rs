@@ -7,7 +7,7 @@
 
 use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
 
-use std::collections::HashMap
+use std::collections::HashMap;
 
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
@@ -48,7 +48,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let new_calls = recieved_state.call_list.clone();
 
                 let difference = difference(old_calls.clone(), new_calls.clone());
-                let my_diff: HashMap<Call, CallState> = my_state.call_list.iter().filter(|x| difference.contains_key(&x.0)).collect();
+                let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.iter().filter(|x| difference.contains_key(&x.0)).collect();
 
                 for mut call in my_diff {
                     match call.1 {
@@ -56,7 +56,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                             // If one of the others has a new order that passed sanity check, change our state to new
                             for state in &memory.state_list {
                                 if *state.1.call_list.get(call.0).unwrap() == mem::CallState::New {
-                                    call.1 = &mem::CallState::New;
+                                    call.1 = mem::CallState::New;
                                     break;
                                 }
                             }
