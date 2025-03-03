@@ -34,24 +34,14 @@ pub struct State {
 
 
 
-<<<<<<< HEAD
-#[derive(Eq, PartialEq, Clone, Copy, Hash)]
-pub struct Call {
-=======
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
-struct Call {
->>>>>>> fb9aba9e5525f69322a08fb2236ba0dbca3a52cd
+pub struct Call{
     pub direction: u8,
     pub floor: u8
 }
 
-<<<<<<< HEAD
-#[derive(Eq, PartialEq, Clone, Copy)]
-pub enum CallState {
-=======
 #[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
-enum CallState {
->>>>>>> fb9aba9e5525f69322a08fb2236ba0dbca3a52cd
+pub enum CallState {
     Nothing,
     New,
     Confirmed,
