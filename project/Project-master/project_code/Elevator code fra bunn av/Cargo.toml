@@ -12,6 +12,5 @@ crossbeam-channel = "0.5"
 postcard = {version = "1.1.1", features = ["use-std"]}
 serde = { version = "1.0.*", default-features = true }
 serde_with = "1.5.1"
-heapless = "0.8.0"
 
 
