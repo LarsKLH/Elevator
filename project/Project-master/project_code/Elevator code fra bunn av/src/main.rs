@@ -164,8 +164,7 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        let elevator_controller_send = elevator_controller_send.clone();
-        spawn(move || brain::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, elevator_controller_send));
+        spawn(move || brain::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx));
     }
 
     // Loop forever, error handling goes here somewhere

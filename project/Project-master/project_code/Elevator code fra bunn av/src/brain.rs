@@ -19,7 +19,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 
 
 // The main elevator logic. Determines where to go next and sends commands to the motor controller
-pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, elevator_controller_send: Sender<elevint::MovementState>) -> () {
+pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
 
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();

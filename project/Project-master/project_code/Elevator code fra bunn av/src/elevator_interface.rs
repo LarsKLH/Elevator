@@ -27,7 +27,7 @@ pub enum Direction {
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub enum MovementState {
-    Dir(Direction),
+    Moving(Direction),
     StopDoorClosed,
     StopAndOpen
 }
@@ -46,7 +46,7 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
     elevator.motor_direction(direction);
 
     // Update direction in memory
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Dir(Direction::Down))).unwrap();
+    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
 
     // Infinite loop checking for elevator controller messages
     loop {
@@ -54,7 +54,7 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
             recv(elevator_controller_receive) -> state_to_mirror => {
                 let received_state_to_mirror = state_to_mirror.unwrap();
                 match received_state_to_mirror.move_state {
-                    MovementState::Dir(dirn) => {
+                    MovementState::Moving(dirn) => {
                         match dirn {
                             Direction::Down => {
                                 // Turn off elevator light before starting
@@ -65,7 +65,7 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
                                 // Change direction and update memory
                                 direction = elevio::elev::DIRN_DOWN;
                                 elevator.motor_direction(direction);
-                                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Dir(Direction::Down))).unwrap();
+                                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
                             }
                             Direction::Up => {
                                 // Turn off elevator light before starting
@@ -75,7 +75,7 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
                                 // Change direction and update memory
                                 direction = elevio::elev::DIRN_UP;
                                 elevator.motor_direction(direction);
-                                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Dir(Direction::Down))).unwrap();
+                                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
                             }
                         }
                     }
