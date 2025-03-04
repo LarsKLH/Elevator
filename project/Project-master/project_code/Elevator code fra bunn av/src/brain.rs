@@ -25,13 +25,38 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
         let my_state = memory.state_list.get(&memory.my_id).unwrap();
-        let current_direction = my_state.direction;
+        let my_movementstate = my_state.move_state;
+        match my_movementstate {
+            elevint::MovementState::Dir(dir) => {
+                match dir {
+                    elevint::Direction::Up => {
+                        println!("Going up");
+
+                    }
+                    elevint::Direction::Down => {
+                        println!("Going down");
+                    }
+                }
+            }
+            elevint::MovementState::StopDoorClosed => {
+                println!("Stopping and closing door");
+            }
+            elevint::MovementState::StopAndOpen => {
+                println!("Stopping and opening door");
+                //send to memory::
+                //elevator_controller_send.send(elevint::MovementState::StopAndOpen).unwrap();
+                //thread::sleep(Duration::from_millis(3000));
+
+                //continuing(memory_request_tx.clone(), memory_recieve_rx.clone(), my_state.clone());   
+            }
+            
+        }
         if current_direction == elevio::elev::DIRN_STOP {
             // If stopped restart elevator as needed
             let memory_request_tx = memory_request_tx.clone();
             let memory_recieve_rx = memory_recieve_rx.clone();
             let my_state_copy = my_state.clone();
-            continue(memory_request_tx, memory_recieve_rx, my_state_copy);
+            continuing(memory_request_tx, memory_recieve_rx, my_state_copy);
         }
         else {
             cbc::select! { 
@@ -57,7 +82,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                         let memory_recieve_rx = memory_recieve_rx.clone();
                         let motor_controller_send = motor_controller_send.clone();
                         let my_state_copy = my_state.clone();
-                        continue(memory_request_tx, memory_recieve_rx, my_state_copy, motor_controller_send);
+                        continuing(memory_request_tx, memory_recieve_rx, my_state_copy, motor_controller_send);
                     }
                 }
                 recv(cbc::after(Duration::from_millis(100))) -> _a => {
@@ -69,7 +94,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
     }
 }
 
-fn continue(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: mem::State, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
+fn continuing(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: mem::State, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     match my_state_copy.direction {
         elevio::elev::DIRN_STOP => (),
         elevio::elev::DIRN_UP => {
