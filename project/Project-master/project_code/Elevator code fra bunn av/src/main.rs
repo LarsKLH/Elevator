@@ -14,14 +14,16 @@ use driver_rust::elevio;
 use crossbeam_channel::Receiver;
 use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
-use motor_controller::motor_controller;
 
 mod subfunctions;
 mod memory;
 mod motor_controller;
 mod network_communication;
+mod brain;
+mod sanity;
 
 use crate::memory as mem;
+use crate::motor_controller as motcon;
 
 use std::env;
 
@@ -126,7 +128,7 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let rx_get = rx_get.clone();
-        spawn(move || network_communication::sanity_check_incomming_message(memory_request_tx, memory_recieve_rx, rx_get));
+        spawn(move || sanity::sanity_check_incomming_message(memory_request_tx, memory_recieve_rx, rx_get));
     }
 
 
@@ -160,7 +162,7 @@ fn main() -> std::io::Result<()> {
         let memory_recieve_rx = memory_recieve_rx.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
         let motor_controller_send = motor_controller_send.clone();
-        spawn(move || motor_controller::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, motor_controller_send));
+        spawn(move || brain::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, motor_controller_send));
     }
 
     // Loop forever, error handling goes here somewhere
