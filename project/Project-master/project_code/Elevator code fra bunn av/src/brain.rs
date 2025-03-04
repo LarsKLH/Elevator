@@ -31,10 +31,10 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             let memory_request_tx = memory_request_tx.clone();
             let memory_recieve_rx = memory_recieve_rx.clone();
             let my_state_copy = my_state.clone();
-            restart_elevator(memory_request_tx, memory_recieve_rx, my_state_copy);
+            continue(memory_request_tx, memory_recieve_rx, my_state_copy);
         }
         else {
-            cbc::select! {
+            cbc::select! { 
                 recv(floor_sensor_rx) -> a => {
                     println!("New floor received, checking whether or not to stop");
                     if should_i_stop(a.unwrap(), my_state) {
@@ -44,10 +44,20 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
                         thread::sleep(Duration::from_millis(3000));
 
+
+                        // Close door
+                        motor_controller_send.send(motcon::MotorMessage::StopDoorClosed).unwrap();
+                        thread::sleep(Duration::from_millis(100)); // Is this needed?
+
+                        // Removing call by setting CallState to PendingRemoval and sending UpdateOwnCall to memory as message,
+                        //cyclic_counter used by sanity_check_incomming_message within sanity.rs for updates across all elevators
+                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(mem::Call {direction: my_state.direction, my_state.last_floor}, mem::CallState::PendingRemoval)).unwrap();
+                        
                         let memory_request_tx = memory_request_tx.clone();
                         let memory_recieve_rx = memory_recieve_rx.clone();
+                        let motor_controller_send = motor_controller_send.clone();
                         let my_state_copy = my_state.clone();
-                        restart_elevator(memory_request_tx, memory_recieve_rx, my_state_copy);
+                        continue(memory_request_tx, memory_recieve_rx, my_state_copy, motor_controller_send);
                     }
                 }
                 recv(cbc::after(Duration::from_millis(100))) -> _a => {
@@ -59,16 +69,14 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
     }
 }
 
-fn restart_elevator(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: mem::State) -> () {
+fn continue(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, my_state_copy: mem::State, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     match my_state_copy.direction {
-        elevio::elev::DIRN_STOP => {
-
-        }
+        elevio::elev::DIRN_STOP => (),
         elevio::elev::DIRN_UP => {
-
+            motor_controller_send.send(motcon::MotorMessage::Up).unwrap();
         }
         elevio::elev::DIRN_DOWN => {
-
+            motor_controller_send.send(motcon::MotorMessage::Down).unwrap();
         }
         2_u8..=254_u8 => {
             println!("Error: invalid direction")
@@ -119,3 +127,11 @@ fn lower_calls(new_floor: u8, my_state: mem::State) -> bool {
     }
     return true
 }
+
+/*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
+    // TODO
+    println!("Restarting elevator");
+    memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
+    let memory = memory_recieve_rx.recv().unwrap();
+    let my_state = memory.state_list.get(&memory.my_id).unwrap();
+}*/
