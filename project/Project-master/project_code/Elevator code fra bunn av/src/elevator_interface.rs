@@ -191,6 +191,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 let button_pressed = call_button_notif.unwrap();
 
                 todo!("have to update the cyclic counter for this floor")
+                // juct check if the current state is nothing then chnage to new, if else do nothing
             }
 
             recv(floor_sensor_rx) -> floor_sensor_notif => {
@@ -198,6 +199,9 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
 
                 // might be a bad thing too do
                 memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(floor_sensed)).unwrap();
+                // NEED to send to brain as this circumwent memory as of now
+                
+                //this is a hardware thing, if we cant trust it we cant trust anything
             }
 
             recv(stop_button_rx) -> stop_button_notif => {
@@ -210,6 +214,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 let obstruction_sensed = obstruction_notif.unwrap();
 
                 todo!("we need to figure out how to do here")
+                // add new move state obstructed that wil force us to do nothing, but check if obstr gets removed
             }
         }
 
