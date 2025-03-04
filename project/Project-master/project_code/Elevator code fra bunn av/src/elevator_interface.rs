@@ -10,10 +10,12 @@ use crossbeam_channel::RecvTimeoutError;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 
+use driver_rust::elevio::elev::HALL_DOWN;
 use serde::{Serialize, Deserialize};
 
 use driver_rust::elevio::elev::DIRN_STOP;
 use driver_rust::elevio::{self, elev::{self, Elevator}};
+use crate::memory::CallState;
 use crate::memory::State;
 use crate::memory as mem;
 
@@ -54,6 +56,8 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
                 let received_state_to_mirror = state_to_mirror.unwrap();
 
                 mirror_movement_state(received_state_to_mirror.move_state, &elevator);
+                
+                mirror_lights(received_state_to_mirror, &elevator);
 
 
                 
@@ -108,8 +112,35 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
 
 fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
     
-    // update floor indicator
+    // update call button lighs
+    for (cab_call_floor, cab_call_state) in state_to_mirror.cab_calls {
+        match cab_call_state {
+            CallState::Nothing | CallState::New => elevator.call_button_light(cab_call_floor, elevio::elev::CAB, false),
+            CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(cab_call_floor, elevio::elev::CAB, true),
+        }
+    }
+
+    for (spesific_call, call_state) in state_to_mirror.call_list {
+        // Talk to Seb about doing this in a sensible way
+        match spesific_call.direction {
+            Direction::Up  => {
+                match call_state {
+                    CallState::Nothing | CallState::New => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_UP, false),
+                    CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_UP, true),
+            }}
+            Direction::Down => {
+                match call_state {
+                    CallState::Nothing | CallState::New => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_DOWN, false),
+                    CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_DOWN, true),
+                }
+            }
+        }
+    }
+
+    elevator.floor_indicator(state_to_mirror.last_floor);
+
     
+
 }
 
 
