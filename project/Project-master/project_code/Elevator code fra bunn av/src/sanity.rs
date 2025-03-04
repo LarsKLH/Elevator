@@ -132,10 +132,11 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
                 for state in state_list_with_changes.values() {
                     if *state.call_list.get(&change.0.clone()).unwrap() == change.1 {
                         others_agree = true;
+                        break;
                     }
                 }
 
-                if received_state.last_floor != change.0.floor || others_agree {
+                if received_state.last_floor != change.0.floor || !others_agree {
                     new_differences.remove(&change.0);
                 }
             }
@@ -161,7 +162,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let old_calls = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone();
                 let new_calls = received_state.call_list.clone();
 
-                // Getting the difference between the old and new calls
+                // Getting the difference between the old and new calls to get what calls have changed since last time
                 let mut differences = difference(old_calls.clone(), new_calls.clone());
 
                 // Getting a new state list with the changes added
@@ -169,7 +170,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 state_list_with_changes.insert(received_state.id, received_state.clone());
 
                 // Check whether the changed orders are valid or not
-                differences = insanity(differences, received_state.clone(), state_list_with_changes);
+                differences = insanity(differences, received_state.clone(), state_list_with_changes.clone());
 
                 // Getting the relevant calls from my state
                 let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| differences.contains_key(&x.0)).collect();
