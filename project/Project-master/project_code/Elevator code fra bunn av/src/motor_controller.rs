@@ -24,7 +24,7 @@ use crate::memory as mem;
 pub enum MotorMessage {
     Up,
     Down,
-    EmergencyStop,
+    StopDoorClosed,
     StopAndOpen
 }
 
@@ -64,7 +64,7 @@ pub fn motor_controller(memory_request_tx: Sender<mem::MemoryMessage>, motor_con
                         elevator.motor_direction(direction);
                         memory_request_tx.send(mem::MemoryMessage::UpdateOwnDirection(direction)).unwrap();
                     }
-                    MotorMessage::EmergencyStop => {
+                    MotorMessage::StopDoorClosed => {
                         // Turn off elevator light just in case
                         elevator.door_light(false);
 

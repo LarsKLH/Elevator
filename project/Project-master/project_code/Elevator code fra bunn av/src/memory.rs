@@ -25,7 +25,6 @@ pub struct Memory {
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct State {
-    pub id: Ipv4Addr, // Jens fiksers
     pub direction: u8, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>,
@@ -109,15 +108,14 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                     MemoryMessage::UpdateOwnFloor(floor) => {
 
                         // Change own floor in memory
-                        
                         memory.state_list.get_mut(&memory.my_id).unwrap().last_floor = floor;
                     }
                     
                     MemoryMessage::UpdateOwnCall(call, call_state) => {
+                        // This works becouase the call is a cyclic counter, so it can only advance around
 
                         // Update a single call in memory
-                        
-                        memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test
+                        memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test, sanity check?
                     }
                     MemoryMessage::UpdateOthersState(state) => {
                         
