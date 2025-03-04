@@ -47,13 +47,6 @@ fn main() -> std::io::Result<()> {
 
     
 
-    // Run button checker thread
-    // - Checks buttons, and sends to state machine thread
-
-    {
-        spawn(move || elevator_interface::button_checker());
-    }
-
     // Initialize memory access channels
     // - One for requests, one for receiving
     let (memory_request_tx, memory_request_rx) = cbc::unbounded::<mem::MemoryMessage>();
@@ -79,6 +72,17 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let elevator_controller_receive = elevator_controller_receive.clone();
         spawn(move || elevator_interface::elevator_controller(memory_request_tx, elevator_controller_receive, elevator));
+    }
+
+    // Run button checker thread
+    // - Checks buttons, and sends to state machine thread
+
+    {
+        let elevator = elevator.clone();
+
+        let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
+        spawn(move || elevator_interface::elevator_inputs(memory_request_tx, memory_recieve_rx, elevator));
     }
 
 
