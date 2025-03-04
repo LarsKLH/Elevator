@@ -62,7 +62,7 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
 }
 
 
-pub fn net_rx(rx_sender_to_memory: Sender<mem::State>, net_config: NetWorkConfig) -> () {
+pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfig) -> () {
     let mut recieve_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
 
     let recv_socket = net_config.listning_socket;
