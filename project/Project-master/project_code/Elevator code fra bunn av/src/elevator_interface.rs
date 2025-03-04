@@ -42,8 +42,7 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
     // TODO: jens want to remove the next two lines
     
     // Create direction variable and send elevator down until it hits a floor
-    let mut direction = elevio::elev::DIRN_DOWN;
-    elevator.motor_direction(direction);
+    elevator.motor_direction(elevio::elev::DIRN_DOWN);
 
     // Update direction in memory
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
@@ -55,6 +54,8 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
                 let received_state_to_mirror = state_to_mirror.unwrap();
 
                 mirror_movement_state(received_state_to_mirror.move_state, &elevator);
+
+
                 
             }
         }
@@ -103,6 +104,12 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
             elevator.door_light(true);
         }
     }
+}
+
+fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
+    
+    // update floor indicator
+    
 }
 
 
