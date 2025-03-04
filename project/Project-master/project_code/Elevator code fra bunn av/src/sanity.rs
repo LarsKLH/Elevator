@@ -10,7 +10,7 @@ use crate::memory as mem;
 
 
 // TODO: Give better name or make a description
-fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+fn cyclic_counter(state_to_change: HashMap<mem::Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
     for mut call in &state_to_change {
         match call.1 {
             mem::CallState::Nothing => {
@@ -90,17 +90,52 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
     for change in differences {
         match change.1 {
             mem::CallState::Nothing => {
-                
+                let mut pending = 0;
+                let mut new = 0;
+                let mut total = 0;
+                for state in state_list_with_changes.clone(){
+                    total += 1;
+                    if *state.1.call_list.get(&change.0).unwrap() == mem::CallState::PendingRemoval {
+                        pending += 1;
+                    }
+                    else if *state.1.call_list.get(&change.0).unwrap() == mem::CallState::New {
+                        new += 1;
+                    }
+                }
+                if (pending + new) != total {
+                    new_differences.remove(&change.0);
+                }
             }
             mem::CallState::New => {
                 // Do nothing, new button presses are always legit
             }
             mem::CallState::Confirmed => {
-                
+                let mut new = 0;
+                let mut confirmed = 0;
+                let mut total = 0;
+                for state in state_list_with_changes.clone(){
+                    total += 1;
+                    if *state.1.call_list.get(&change.0).unwrap() == mem::CallState::New {
+                        new += 1;
+                    }
+                    else if *state.1.call_list.get(&change.0).unwrap() == mem::CallState::Confirmed {
+                        confirmed += 1;
+                    }
+                }
+                if (new + confirmed) != total {
+                    new_differences.remove(&change.0);
+                }
             }
             mem::CallState::PendingRemoval => {
-                
-                if received_state.last_floor != change.0.floor {
+
+                let mut others_agree = false;
+                for state in state_list_with_changes.values() {
+                    if *state.call_list.get(&change.0.clone()).unwrap() == change.1 {
+                        others_agree = true;
+                    }
+                }
+
+                if received_state.last_floor != change.0.floor || others_agree {
                     new_differences.remove(&change.0);
                 }
             }
@@ -140,7 +175,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| differences.contains_key(&x.0)).collect();
 
                 // Running the state machine on only the changed calls
-                let my_diff_changed = state_machine(my_diff.clone(), &state_list_with_changes);
+                let my_diff_changed = cyclic_counter(my_diff.clone(), &state_list_with_changes);
 
                 // Extracting the calls that were actually changed to minimize memory changing and avoid errors
                 let changed_calls = difference(my_diff, my_diff_changed);
@@ -157,7 +192,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let my_call_list = old_memory.state_list.get(&old_memory.my_id).unwrap().clone().call_list;
 
                 // Running the state machine on my own calls
-                let new_call_list = state_machine(my_call_list.clone(), &old_memory.state_list);
+                let new_call_list = cyclic_counter(my_call_list.clone(), &old_memory.state_list);
 
                 // Extracting the calls that were actually changed to minimize memory changing and avoid errors
                 let changed_calls = difference(my_call_list, new_call_list);
