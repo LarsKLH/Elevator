@@ -25,7 +25,7 @@ pub enum Direction {
     Down
 }
 
-#[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum MovementState {
     Moving(Direction),
     StopDoorClosed,
