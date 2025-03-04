@@ -35,11 +35,11 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                         println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.unwrap(), my_state) {
                             // Send StopAndOpen to memory to stop the elevator and open the door
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(mem::MovementState::StopAndOpen)).unwrap();
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).unwrap();
                         }
                         else {
                             // If we should continue, send the current movement state to memory
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(mem::MovementState::Moving(dirn))).unwrap();
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).unwrap();
                         }
                     }
                     recv(cbc::after(Duration::from_millis(100))) -> _a => {
