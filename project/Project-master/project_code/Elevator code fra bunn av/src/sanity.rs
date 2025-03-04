@@ -148,7 +148,7 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
 }
 
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
-pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::State>) -> () {
+pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::Memory>) -> () {
     loop {
         cbc::select! {
             recv(rx_get) -> rx => {
@@ -158,7 +158,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let my_state = old_memory.state_list.get(&old_memory.my_id).unwrap().clone();
 
                 // Getting new state from rx, extracting both old and new calls for comparison
-                let received_state = rx.unwrap();
+                let received_memory = rx.unwrap();
+                let received_state = received_memory.state_list.get(&received_memory.my_id).unwrap();
                 let old_calls = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone();
                 let new_calls = received_state.call_list.clone();
 

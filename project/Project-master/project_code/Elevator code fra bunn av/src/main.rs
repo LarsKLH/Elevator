@@ -115,7 +115,7 @@ fn main() -> std::io::Result<()> {
 
     // Initialize rx channel
     // - Only goes one way
-    let (rx_send, rx_get) = cbc::unbounded::<mem::State>();
+    let (rx_send, rx_get) = cbc::unbounded::<mem::Memory>();
 
     // Run Reciever thread
     // - Recieves broadcasts and sends to sanity check
