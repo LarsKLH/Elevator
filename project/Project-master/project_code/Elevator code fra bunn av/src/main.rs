@@ -45,36 +45,7 @@ fn main() -> std::io::Result<()> {
     let num_floors = 4;
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
 
-    // Set poll period for buttons and sensors
-    let poll_period = Duration::from_millis(25);
-
-    // Initialize button sensors
-    let (call_button_tx, call_button_rx) = cbc::unbounded::<elevio::poll::CallButton>(); // Initialize call buttons
-    {
-        let elevator = elevator.clone();
-        spawn(move || elevio::poll::call_buttons(elevator, call_button_tx, poll_period));
-    }
-
-     // Initialize floor sensor
-     let (floor_sensor_tx, floor_sensor_rx) = cbc::unbounded::<u8>(); 
-    {
-        let elevator = elevator.clone();
-        spawn(move || elevio::poll::floor_sensor(elevator, floor_sensor_tx, poll_period));
-    }
     
-    // Initialize stop button
-    let (stop_button_tx, stop_button_rx) = cbc::unbounded::<bool>(); 
-    {
-        let elevator = elevator.clone();
-        spawn(move || elevio::poll::stop_button(elevator, stop_button_tx, poll_period));
-    }
-    
-    // Initialize obstruction switch
-    let (obstruction_tx, obstruction_rx) = cbc::unbounded::<bool>(); 
-    {
-        let elevator = elevator.clone();
-        spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, poll_period));
-    }
 
     // Run button checker thread
     // - Checks buttons, and sends to state machine thread
