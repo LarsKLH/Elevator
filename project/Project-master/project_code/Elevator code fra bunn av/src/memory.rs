@@ -13,7 +13,8 @@ use crossbeam_channel::{Receiver, Sender};
 
 use crossbeam_channel as cbc;
 
-use crate::memory as mem;
+use crate::{elevator_interface::MovementState, memory as mem};
+use crate::elevator_interface as elevint;
 
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
@@ -25,7 +26,8 @@ pub struct Memory {
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct State {
-    pub direction: u8, // Jens: alle u8 i denne burde endres til typer tror jeg
+    pub id: Ipv4Addr,
+    pub move_state: elevint::MovementState, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>,
     pub cab_calls: HashMap<u8, CallState>
@@ -35,7 +37,7 @@ pub struct State {
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub struct Call{
-    pub direction: u8,
+    pub direction: elevint::Direction,
     pub floor: u8
 }
 
@@ -51,7 +53,7 @@ pub enum CallState {
 
 pub enum MemoryMessage {
     Request,
-    UpdateOwnDirection(u8),
+    UpdateOwnMovementState(MovementState),
     UpdateOwnFloor(u8),
     UpdateOwnCall(Call, CallState),
     UpdateOthersState(State)
@@ -72,11 +74,6 @@ impl Memory {
 
 }
 
-impl Hash for State { // todo 
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
 
 impl State {
     fn new (id: Ipv4Addr) -> Self {
@@ -99,11 +96,11 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         let memory_copy = memory.clone();
                         memory_recieve_tx.send(memory_copy).unwrap();
                     }
-                    MemoryMessage::UpdateOwnDirection(dirn) => {
+                    MemoryMessage::UpdateOwnMovementState(new_move_state) => {
                         
                         // Change own direction in memory
                         
-                        memory.state_list.get_mut(&memory.my_id).unwrap().direction = dirn;
+                        memory.state_list.get_mut(&memory.my_id).unwrap().move_state = new_move_state;
                     }
                     MemoryMessage::UpdateOwnFloor(floor) => {
 

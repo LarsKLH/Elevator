@@ -19,7 +19,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 
 use crate::memory as mem;
 
-use crate::motor_controller as mot;
+use crate::elevator_interface as mot;
 
 use crate::network_communication as netwrk;
 

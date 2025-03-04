@@ -10,7 +10,7 @@ use crossbeam_channel as cbc;
 
 
 use crate::memory as mem;
-use crate::motor_controller as motcon;
+use crate::elevator_interface as elevint;
 
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 
@@ -19,7 +19,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 
 
 // The main elevator logic. Determines where to go next and sends commands to the motor controller
-pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
+pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, elevator_controller_send: Sender<elevint::MovementState>) -> () {
 
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
@@ -40,7 +40,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                     if should_i_stop(a.unwrap(), my_state) {
                         // If we have determined to stop, stop, wait and restart
                         println!("Should stop");
-                        motor_controller_send.send(motcon::MotorMessage::StopAndOpen).unwrap();
+                        elevator_controller_send.send(elevint::MovementState::StopAndOpen).unwrap();
 
                         thread::sleep(Duration::from_millis(3000));
 

@@ -17,15 +17,18 @@ use crossbeam_channel as cbc;
 
 mod subfunctions;
 mod memory;
-mod motor_controller;
+mod elevator_interface;
 mod network_communication;
 mod brain;
 mod sanity;
 
 use crate::memory as mem;
-use crate::motor_controller as motcon;
+use crate::elevator_interface as elevint;
 
 use std::env;
+
+
+// TODO: change all intences of unwrap to expect with sensible error messages
 
 
 
@@ -77,7 +80,7 @@ fn main() -> std::io::Result<()> {
     // - Checks buttons, and sends to state machine thread
 
     {
-        spawn(move || motor_controller::button_checker());
+        spawn(move || elevator_interface::button_checker());
     }
 
     // Initialize memory access channels
@@ -95,7 +98,7 @@ fn main() -> std::io::Result<()> {
 
     // Initialize motor controller channel
     // - Only goes one way
-    let (motor_controller_send, motor_controller_receive) = cbc::unbounded::<motor_controller::MotorMessage>();
+    let (elevator_controller_send, elevator_controller_receive) = cbc::unbounded::<mem::State>();
 
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
@@ -103,8 +106,8 @@ fn main() -> std::io::Result<()> {
         let elevator = elevator.clone();
 
         let memory_request_tx = memory_request_tx.clone();
-        let motor_controller_receive = motor_controller_receive.clone();
-        spawn(move || motor_controller::motor_controller(memory_request_tx, motor_controller_receive, elevator));
+        let elevator_controller_receive = elevator_controller_receive.clone();
+        spawn(move || elevator_interface::elevator_controller(memory_request_tx, elevator_controller_receive, elevator));
     }
 
 
@@ -161,8 +164,8 @@ fn main() -> std::io::Result<()> {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        let motor_controller_send = motor_controller_send.clone();
-        spawn(move || brain::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, motor_controller_send));
+        let elevator_controller_send = elevator_controller_send.clone();
+        spawn(move || brain::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx, elevator_controller_send));
     }
 
     // Loop forever, error handling goes here somewhere

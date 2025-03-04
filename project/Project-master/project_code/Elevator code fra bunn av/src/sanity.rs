@@ -134,7 +134,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 state_list_with_changes.insert(received_state.id, received_state.clone());
 
                 // Check whether the changed orders are valid or not
-                differences = insanity(differences, received_state.clone(), state_list_with_changes);
+                differences = insanity(differences, received_state.clone(), state_list_with_changes.clone());
 
                 // Getting the relevant calls from my state
                 let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| differences.contains_key(&x.0)).collect();
