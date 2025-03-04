@@ -139,6 +139,8 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
 
     elevator.floor_indicator(state_to_mirror.last_floor);
 
+    // might want to also add the stop light 
+
     
 
 }
