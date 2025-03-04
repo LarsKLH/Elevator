@@ -25,6 +25,7 @@ pub struct Memory {
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct State {
+    pub id: Ipv4Addr,
     pub direction: u8, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>,
