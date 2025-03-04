@@ -21,6 +21,17 @@ use postcard;
 const MAXIMUM_BYTES_IN_PACKAGE: usize = 65_000;
 const BROADCAST_ADDRESS_BYTES: [u8;4] = [255,255,255,255];
 
+
+pub struct NetWorkConfig {
+    sending_socket: UdpSocket,
+    listning_socket: UdpSocket,
+    target_socket: SocketAddrV4,
+
+}
+
+
+
+// TODO: Give better name or make a description
 fn state_machine(state_to_change: HashMap<mem::Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
     for mut call in &state_to_change {
         match call.1 {
@@ -154,25 +165,34 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
     }
 }
 
-pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> (UdpSocket, SocketAddrV4) {
+pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
 
     let target_ip = Ipv4Addr::from(BROADCAST_ADDRESS_BYTES);
 
-    let target_socket = SocketAddrV4::new(target_ip, wanted_port);
+    let socket_to_target = SocketAddrV4::new(target_ip, wanted_port);
 
-    let native_socket = UdpSocket::bind((ipv4, wanted_port)).unwrap();
+    let native_send_socket = UdpSocket::bind((ipv4, wanted_port)).unwrap();
+    let native_list_socket = native_send_socket.try_clone().unwrap();
 
-    return (native_socket, target_socket);
+    let net_config = NetWorkConfig {
+        sending_socket: native_send_socket,
+        listning_socket: native_list_socket,
+        target_socket: socket_to_target
+    };
+
+    return net_config
 }
 
 
-pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, listning_socket: UdpSocket) -> () {
+pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfig) -> () {
     let mut recieve_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
 
-    listning_socket.set_nonblocking(false).unwrap();
+    let recv_socket = net_config.listning_socket;
+
+    recv_socket.set_nonblocking(false).unwrap();
 
     loop{
-        listning_socket.recv(&mut recieve_buffer);
+        recv_socket.recv(&mut recieve_buffer);
 
         let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).unwrap();
     
@@ -181,7 +201,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, listning_socket: UdpSock
 
 }
 
-pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, sending_socket: UdpSocket, target_socket: SocketAddrV4) -> () {
+pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, net_config: NetWorkConfig) -> () {
     memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
     let memory = memory_recieve_rx.recv().unwrap();
 
@@ -189,6 +209,9 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
 
     let written_card= postcard::to_slice(&memory, &mut card_buffer).unwrap();
 
-    sending_socket.send_to(&written_card, target_socket);
+    let from_socket = net_config.sending_socket;
+    let to_socket = net_config.target_socket;
+
+    from_socket.send_to(&written_card, to_socket);
 
 }
