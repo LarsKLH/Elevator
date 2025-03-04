@@ -29,6 +29,19 @@ pub struct NetWorkConfig {
 
 }
 
+impl NetWorkConfig {
+    pub fn try_clone(&self) -> Self {
+       let new_send = self.sending_socket.try_clone().unwrap();
+       let new_list = self.listning_socket.try_clone().unwrap();
+       let new_target = self.target_socket;
+       NetWorkConfig{
+        sending_socket: new_send,
+        listning_socket: new_list,
+        target_socket: new_target
+       }
+    }
+}
+
 
 
 // TODO: Give better name or make a description
@@ -184,7 +197,7 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
 }
 
 
-pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfig) -> () {
+pub fn net_rx(rx_sender_to_memory: Sender<mem::State>, net_config: NetWorkConfig) -> () {
     let mut recieve_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
 
     let recv_socket = net_config.listning_socket;
@@ -194,7 +207,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
     loop{
         recv_socket.recv(&mut recieve_buffer);
 
-        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).unwrap();
+        let recieved_memory: mem::State  = postcard::from_bytes(&recieve_buffer).unwrap();
     
         rx_sender_to_memory.send(recieved_memory);    
     }

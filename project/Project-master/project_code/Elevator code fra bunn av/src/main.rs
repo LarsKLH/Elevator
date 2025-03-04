@@ -35,6 +35,7 @@ fn main() -> std::io::Result<()> {
     //let ipv4_id = Ipv4Addr::from(args[0].as_bytes()); TODO fix this so yyou can take ip as argument
 
     let ipv4_id = Ipv4Addr::new(127,0,0,26);
+    let socket_number:u16 = 20026;
 
     let num_floors = 4;
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
@@ -48,18 +49,21 @@ fn main() -> std::io::Result<()> {
         let elevator = elevator.clone();
         spawn(move || elevio::poll::call_buttons(elevator, call_button_tx, poll_period));
     }
+
      // Initialize floor sensor
      let (floor_sensor_tx, floor_sensor_rx) = cbc::unbounded::<u8>(); 
     {
         let elevator = elevator.clone();
         spawn(move || elevio::poll::floor_sensor(elevator, floor_sensor_tx, poll_period));
     }
+    
     // Initialize stop button
     let (stop_button_tx, stop_button_rx) = cbc::unbounded::<bool>(); 
     {
         let elevator = elevator.clone();
         spawn(move || elevio::poll::stop_button(elevator, stop_button_tx, poll_period));
     }
+    
     // Initialize obstruction switch
     let (obstruction_tx, obstruction_rx) = cbc::unbounded::<bool>(); 
     {
@@ -101,6 +105,9 @@ fn main() -> std::io::Result<()> {
         spawn(move || motor_controller::motor_controller(memory_request_tx, motor_controller_receive, elevator));
     }
 
+
+    let net_config = network_communication::net_init_udp_socket(ipv4_id, socket_number);
+
     // Initialize rx channel
     // - Only goes one way
     let (rx_send, rx_get) = cbc::unbounded::<mem::State>();
@@ -109,7 +116,8 @@ fn main() -> std::io::Result<()> {
     // - Recieves broadcasts and sends to sanity check
     {
         let rx_send = rx_send.clone();
-        spawn(move || network_communication::rx(rx_send));
+        let rx_net_config = net_config.try_clone();
+        spawn(move || network_communication::net_rx(rx_send, rx_net_config));
     }
 
     // Run sanity check thread
@@ -121,6 +129,11 @@ fn main() -> std::io::Result<()> {
         spawn(move || network_communication::sanity_check_incomming_message(memory_request_tx, memory_recieve_rx, rx_get));
     }
 
+
+    /* 
+
+    Deprecated code
+
     // Run State machine thread
     // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
     {
@@ -128,13 +141,16 @@ fn main() -> std::io::Result<()> {
         let memory_recieve_rx = memory_recieve_rx.clone();
         spawn(move || mem::state_machine_check(memory_request_tx, memory_recieve_rx));
     }
+    */
+
 
     // Run Transmitter thread
     // - Constantly sends elevator direction, last floor and call list
     {
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || network_communication::tx(memory_request_tx, memory_recieve_rx));
+        let tx_net_config = net_config.try_clone();
+        spawn(move || network_communication::net_tx(memory_request_tx, memory_recieve_rx, tx_net_config));
     }
 
     // Run elevator logic thread
