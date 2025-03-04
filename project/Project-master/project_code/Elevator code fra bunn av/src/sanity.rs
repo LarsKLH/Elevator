@@ -4,7 +4,7 @@ use std::net::Ipv4Addr;
 
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use crate::memory as mem;
 
@@ -224,6 +224,7 @@ fn insanity_cab_calls(differences: HashMap<u8, mem::CallState>, received_state: 
 
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
 pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::Memory>) -> () {
+    let mut last_received: HashMap<Ipv4Addr, SystemTime> = HashMap::new();
     loop {
         cbc::select! {
             recv(rx_get) -> rx => {
@@ -235,6 +236,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 // Getting new state from rx, extracting both old and new calls for comparison
                 let received_memory = rx.unwrap();
                 let received_state = received_memory.state_list.get(&received_memory.my_id).unwrap();
+                last_received.insert(received_state.id, SystemTime::now());
 
 
                 // Dealing with hall calls from other elevator
