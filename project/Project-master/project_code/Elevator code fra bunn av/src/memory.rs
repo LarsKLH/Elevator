@@ -56,6 +56,7 @@ pub enum MemoryMessage {
     UpdateOwnMovementState(MovementState),
     UpdateOwnFloor(u8),
     UpdateOwnCall(Call, CallState),
+    UpdateOwnCabCall(u8, CallState),
     UpdateOthersState(State)
     // TODO krangle om hvordan endre state med update
     // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
@@ -113,6 +114,12 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 
                         // Update a single call in memory
                         memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test, sanity check?
+                    }
+                    MemoryMessage::UpdateOwnCabCall(floor, call_state) => {
+                        // This works becouase the call is a cyclic counter, so it can only advance around
+
+                        // Update a single call in memory
+                        memory.state_list.get_mut(&memory.my_id).unwrap().cab_calls.insert(floor, call_state); // todo add aceptence test, sanity check?
                     }
                     MemoryMessage::UpdateOthersState(state) => {
                         
