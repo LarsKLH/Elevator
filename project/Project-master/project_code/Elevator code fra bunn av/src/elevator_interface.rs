@@ -53,52 +53,9 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
         cbc::select! {
             recv(elevator_controller_receive) -> state_to_mirror => {
                 let received_state_to_mirror = state_to_mirror.unwrap();
-                match received_state_to_mirror.move_state {
-                    MovementState::Moving(dirn) => {
-                        match dirn {
-                            Direction::Down => {
-                                // Turn off elevator light before starting
-                                elevator.door_light(false);
-                                sleep(Duration::from_millis(500));
-                                
 
-                                // Change direction and update memory
-                                direction = elevio::elev::DIRN_DOWN;
-                                elevator.motor_direction(direction);
-                                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
-                            }
-                            Direction::Up => {
-                                // Turn off elevator light before starting
-                                elevator.door_light(false);
-                                sleep(Duration::from_millis(500));
-
-                                // Change direction and update memory
-                                direction = elevio::elev::DIRN_UP;
-                                elevator.motor_direction(direction);
-                                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
-                            }
-                        }
-                    }
-
-                    MovementState::StopDoorClosed => {
-                        // Turn off elevator light just in case
-                        elevator.door_light(false);
-
-                        // Change direction and update memory
-                        direction = elevio::elev::DIRN_STOP;
-                        elevator.motor_direction(direction);
-                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::StopDoorClosed)).unwrap();
-                    }
-                    MovementState::StopAndOpen => {
-                        // Change direction and update memory
-                        direction = elevio::elev::DIRN_STOP;
-                        elevator.motor_direction(direction);
-                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::StopAndOpen)).unwrap();
-
-                        // Turn on light for now
-                        elevator.door_light(true);
-                    }
-                }
+                mirror_movement_state(received_state_to_mirror.move_state, &elevator);
+                
             }
         }
     }
@@ -106,7 +63,50 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
 
 
 
-// Probably not needed
-pub fn button_checker() -> () {
+fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
+    match new_move_state {
+        MovementState::Moving(dirn) => {
+            match dirn {
+                Direction::Down => {
+                    // Turn off elevator light before starting
+                    elevator.door_light(false);
+                    sleep(Duration::from_millis(500));
+                    
 
+                    // Change direction and update memory
+                    elevator.motor_direction(elevio::elev::DIRN_DOWN);
+                }
+                Direction::Up => {
+                    // Turn off elevator light before starting
+                    elevator.door_light(false);
+                    sleep(Duration::from_millis(500));
+
+                    // Change direction and update memory
+                    elevator.motor_direction(elevio::elev::DIRN_UP);
+                }
+            }
+        }
+
+        MovementState::StopDoorClosed => {
+            // Turn off elevator light just in case
+            elevator.door_light(false);
+
+            // Change direction and update memory
+            elevator.motor_direction(elevio::elev::DIRN_STOP);
+        }
+        MovementState::StopAndOpen => {
+
+            // Change direction and update memory
+            elevator.motor_direction(elevio::elev::DIRN_STOP);
+
+            // Turn on light for now
+            elevator.door_light(true);
+        }
+    }
 }
+
+
+
+
+
+
