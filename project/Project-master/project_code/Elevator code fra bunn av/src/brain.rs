@@ -75,7 +75,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     match my_state.move_state {
         elevint::MovementState::Moving(dirn) => {
             let check_call = mem::Call {
-                direction: dirn,
+                direction: mem::CallType::Hall(dirn),
                 floor: new_floor
             };
         }
@@ -99,7 +99,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
 // Fix my_state.direction as it was done in the function above, or pass it as an argument
 fn lower_calls(new_floor: u8, my_state: mem::State) -> bool {
 
-    match my_state.direction {
+    match my_state.move_state {
         elevio::elev::DIRN_UP => {
             for call in my_state.call_list {
                 if call.0.floor > new_floor && call.1 == mem::CallState::Confirmed {

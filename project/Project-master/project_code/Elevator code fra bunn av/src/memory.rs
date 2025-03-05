@@ -30,14 +30,18 @@ pub struct State {
     pub move_state: elevint::MovementState, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>,
-    pub cab_calls: HashMap<u8, CallState>
+    pub cab_calls: HashMap<Call, CallState>
 }
 
-
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+pub enum CallType {
+    Cab,
+    Hall(elevint::Direction) 
+}
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub struct Call{
-    pub direction: elevint::Direction,
+    pub direction: CallType,
     pub floor: u8
 }
 
@@ -56,7 +60,7 @@ pub enum MemoryMessage {
     UpdateOwnMovementState(MovementState),
     UpdateOwnFloor(u8),
     UpdateOwnCall(Call, CallState),
-    UpdateOwnCabCall(u8, CallState),
+    UpdateOwnCabCall(Call, CallState),
     UpdateOthersState(State)
     // TODO krangle om hvordan endre state med update
     // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
@@ -115,11 +119,11 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         // Update a single call in memory
                         memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test, sanity check?
                     }
-                    MemoryMessage::UpdateOwnCabCall(floor, call_state) => {
+                    MemoryMessage::UpdateOwnCabCall(call, call_state) => {
                         // This works becouase the call is a cyclic counter, so it can only advance around
 
                         // Update a single call in memory
-                        memory.state_list.get_mut(&memory.my_id).unwrap().cab_calls.insert(floor, call_state); // todo add aceptence test, sanity check?
+                        memory.state_list.get_mut(&memory.my_id).unwrap().cab_calls.insert(call, call_state); // todo add aceptence test, sanity check?
                     }
                     MemoryMessage::UpdateOthersState(state) => {
                         
