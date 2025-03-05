@@ -6,19 +6,32 @@ use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 use std::time::{Duration, SystemTime};
 
-use crate::memory as mem;
+use crate::memory::{self as mem, Call};
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+enum CallContainer {
+    cab(u8),
+    hall(mem::Call)
+}
 
 // Iterates the cyclic counter correctly
-fn cyclic_counter(state_to_change: HashMap<mem::Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+fn cyclic_counter(state_to_change: HashMap<CallContainer, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<CallContainer, mem::CallState> {
     for mut call in &state_to_change {
         match call.1 {
             mem::CallState::Nothing => {
                 // If one of the others has a new order that passed sanity check, change our state to new
                 for state in state_list {
-                    if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::New {
-                        call.1 = &mem::CallState::New;
-                        break;
+                    if let CallContainer::cab(floor) = call.0 {
+                        if *state.1.cab_calls.get(floor).unwrap() == mem::CallState::New {
+                            call.1 = &mem::CallState::New;
+                            break;
+                        }
+                    }
+                    else if let CallContainer::hall(hall) = call.0 {
+                        if *state.1.call_list.get(&hall).unwrap() == mem::CallState::New {
+                            call.1 = &mem::CallState::New;
+                            break;
+                        }
                     }
                 }
             }
@@ -29,11 +42,21 @@ fn cyclic_counter(state_to_change: HashMap<mem::Call, mem::CallState>, state_lis
                 let mut total = 0;
                 for state in state_list {
                     total += 1;
-                    if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::New {
-                        new += 1;
+                    if let CallContainer::cab(floor) = call.0 {
+                        if *state.1.cab_calls.get(floor).unwrap() == mem::CallState::New {
+                            new += 1;
+                        }
+                        else if *state.1.cab_calls.get(floor).unwrap() == mem::CallState::Confirmed {
+                            confirmed += 1;
+                        }
                     }
-                    else if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::Confirmed {
-                        confirmed += 1;
+                    else if let CallContainer::hall(hall) = call.0 {
+                        if *state.1.call_list.get(&hall).unwrap() == mem::CallState::New {
+                            new += 1;
+                        }
+                        else if *state.1.call_list.get(&hall).unwrap() == mem::CallState::Confirmed {
+                            confirmed += 1;
+                        }
                     }
                 }
                 if (new + confirmed) == total {
@@ -43,9 +66,17 @@ fn cyclic_counter(state_to_change: HashMap<mem::Call, mem::CallState>, state_lis
             mem::CallState::Confirmed => {
                 // If one of the others has removed an order that passed sanity check, change our state to new
                 for state in state_list {
-                    if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::PendingRemoval {
-                        call.1 = &mem::CallState::PendingRemoval;
-                        break;
+                    if let CallContainer::cab(floor) = call.0 {
+                        if *state.1.cab_calls.get(floor).unwrap() == mem::CallState::PendingRemoval {
+                            call.1 = &mem::CallState::PendingRemoval;
+                            break;
+                        }
+                    }
+                    else if let CallContainer::hall(hall) = call.0 {
+                        if *state.1.call_list.get(&hall).unwrap() == mem::CallState::PendingRemoval {
+                            call.1 = &mem::CallState::PendingRemoval;
+                            break;
+                        }
                     }
                 }
             }
@@ -58,11 +89,21 @@ fn cyclic_counter(state_to_change: HashMap<mem::Call, mem::CallState>, state_lis
                 let mut total = 0;
                 for state in state_list {
                     total += 1;
-                    if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::PendingRemoval {
-                        pending += 1;
+                    if let CallContainer::cab(floor) = call.0 {
+                        if *state.1.cab_calls.get(floor).unwrap() == mem::CallState::PendingRemoval {
+                            pending += 1;
+                        }
+                        else if *state.1.cab_calls.get(floor).unwrap() == mem::CallState::Nothing {
+                            nothing += 1;
+                        }
                     }
-                    else if *state.1.call_list.get(&call.0).unwrap() == mem::CallState::Nothing {
-                        nothing += 1;
+                    else if let CallContainer::hall(hall) = call.0 {
+                        if *state.1.call_list.get(&hall).unwrap() == mem::CallState::PendingRemoval {
+                            pending += 1;
+                        }
+                        else if *state.1.call_list.get(&hall).unwrap() == mem::CallState::Nothing {
+                            nothing += 1;
+                        }
                     }
                 }
                 if (pending + nothing) == total {
@@ -75,11 +116,18 @@ fn cyclic_counter(state_to_change: HashMap<mem::Call, mem::CallState>, state_lis
 }
 
 // Gets the difference between two call lists
-fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<mem::Call, mem::CallState>) -> HashMap<mem::Call, mem::CallState> {
-    let mut difference: HashMap<mem::Call, mem::CallState> = HashMap::new();
-    for call in old_calls.keys() {
-        if new_calls.get(call) != old_calls.get(call) {
-            difference.insert(call.clone(), *new_calls.get(call).unwrap());
+fn difference(old_calls: HashMap<CallContainer, mem::CallState>, new_calls: HashMap<CallContainer, mem::CallState>) -> HashMap<CallContainer, mem::CallState> {
+    let mut difference = old_calls.clone();
+    for call in old_calls {
+        if let CallContainer::cab(floor) = call.0 {
+            if new_calls.get(floor) == old_calls.get(floor) {
+                difference.insert(call.clone(), *new_calls.get(call).unwrap());
+            }
+        }
+        else if let CallContainer::hall(hall) = call.0 {
+            if new_calls.get(&hall) == old_calls.get(&hall) {
+                difference.insert(call.clone(), *new_calls.get(call).unwrap());
+            }
         }
     }
     return difference;
@@ -146,6 +194,37 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
 
     return new_differences;
         
+}
+
+fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+     // Dealing with hall calls from other elevator
+     let old_calls = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone();
+     let new_calls = received_state.call_list.clone();
+
+     // Getting the difference between the old and new calls to get what calls have changed since last time
+     let mut differences = difference(old_calls.clone(), new_calls.clone());
+
+     // Check whether the changed orders are valid or not
+     differences = insanity(differences, received_state.clone(), state_list_with_changes.clone());
+
+
+     // Changing our hall calls based on the changes to the received state
+
+     // Getting the relevant calls from my state
+     let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| differences.contains_key(&x.0)).collect();
+
+     // Running the state machine on only the changed calls
+     let my_diff_changed = cyclic_counter(my_diff.clone(), &state_list_with_changes);
+
+     // Extracting the calls that were actually changed to minimize memory changing and avoid errors
+     let changed_calls = difference(my_diff, my_diff_changed);
+
+     // Sending the changes to memory one after the other
+     for change in changed_calls {
+         memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).unwrap();
+     }
+
+     return differences;
 }
 
 // Gets the difference between two cab call lists
@@ -222,6 +301,23 @@ fn insanity_cab_calls(differences: HashMap<u8, mem::CallState>, received_state: 
         
 }
 
+fn handle_cab_calls(old_memory: mem::Memory, received_state: mem::State, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<u8, mem::CallState> {
+    // Dealing with cab calls from other elevator
+    let old_cab_calls = old_memory.state_list.get(&received_state.id).unwrap().cab_calls.clone();
+    let new_cab_calls = received_state.cab_calls.clone();
+
+    // Getting the difference between the old and new cab calls to get what calls have changed since last time
+    let mut differences_cab = difference_cab(old_cab_calls.clone(), new_cab_calls.clone());
+
+    // Check whether the changed cab calls are valid or not
+    differences_cab = insanity_cab_calls(differences_cab, received_state.clone(), state_list_with_changes.clone());
+
+    // Checking for cab calls concerning our elevator
+
+
+    return differences_cab;
+}
+
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
 pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::Memory>) -> () {
     let mut last_received: HashMap<Ipv4Addr, SystemTime> = HashMap::new();
@@ -238,65 +334,29 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let received_state = received_memory.state_list.get(&received_memory.my_id).unwrap();
                 last_received.insert(received_state.id, SystemTime::now());
 
-
-                // Dealing with hall calls from other elevator
-                let old_calls = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone();
-                let new_calls = received_state.call_list.clone();
-
-                // Getting the difference between the old and new calls to get what calls have changed since last time
-                let mut differences = difference(old_calls.clone(), new_calls.clone());
-
                 // Getting a new state list with the changes added
                 let mut state_list_with_changes = old_memory.state_list.clone();
                 state_list_with_changes.insert(received_state.id, received_state.clone());
 
-                // Check whether the changed orders are valid or not
-                differences = insanity(differences, received_state.clone(), state_list_with_changes.clone());
+                let differences_in_hall = handle_hall_calls(old_memory.clone(), received_state.clone(), my_state.clone(), memory_request_tx.clone(), state_list_with_changes.clone());
 
 
-                // Changing our hall calls based on the changes to the received state
-
-                // Getting the relevant calls from my state
-                let my_diff: HashMap<mem::Call, mem::CallState> = my_state.call_list.into_iter().filter(|x| differences.contains_key(&x.0)).collect();
-
-                // Running the state machine on only the changed calls
-                let my_diff_changed = cyclic_counter(my_diff.clone(), &state_list_with_changes);
-
-                // Extracting the calls that were actually changed to minimize memory changing and avoid errors
-                let changed_calls = difference(my_diff, my_diff_changed);
-
-                // Sending the changes to memory one after the other
-                for change in changed_calls {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).unwrap();
-                }
-
-
-                // Dealing with cab calls from other elevator
-                let old_cab_calls = old_memory.state_list.get(&received_state.id).unwrap().cab_calls.clone();
-                let new_cab_calls = received_state.cab_calls.clone();
-
-                // Getting the difference between the old and new cab calls to get what calls have changed since last time
-                let mut differences_cab = difference_cab(old_cab_calls.clone(), new_cab_calls.clone());
-
-                // Check whether the changed cab calls are valid or not
-                differences_cab = insanity_cab_calls(differences_cab, received_state.clone(), state_list_with_changes.clone());
+                let differences_in_cab = handle_cab_calls(old_memory.clone(), received_state.clone(), state_list_with_changes.clone());
 
                 
                 // Summing up all accepted changes and commiting to memory
-
                 let mut received_state_new = received_state.clone();
-                for change in differences {
+                for change in differences_in_hall {
                     received_state_new.call_list.insert(change.0, change.1);
                 }
-                for change in differences_cab {
+                for change in differences_in_cab {
                     received_state_new.cab_calls.insert(change.0, change.1);
                 }
 
                 // Sending the new state to memory
                 memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_new)).unwrap_or(println!("Error in requesting memory"));
-                
-
             }
+
             // If we don't get a new state in decent time, this function runs
             default(Duration::from_millis(100)) => {
                 // Getting old memory and extracting my own call list

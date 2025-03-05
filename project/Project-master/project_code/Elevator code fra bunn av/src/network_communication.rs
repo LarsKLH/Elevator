@@ -92,4 +92,6 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
 
     from_socket.send_to(&written_card, to_socket);
 
+    // Dersom vi er obstructed burde vi ikke sende noe så de andre heisene antar at vi er døde
+
 }
