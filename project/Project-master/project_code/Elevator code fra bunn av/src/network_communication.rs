@@ -72,7 +72,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
     loop{
         recv_socket.recv(&mut recieve_buffer);
 
-        let recieved_memory: mem::State  = postcard::from_bytes(&recieve_buffer).unwrap();
+        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).unwrap();
     
         rx_sender_to_memory.send(recieved_memory);
     }
