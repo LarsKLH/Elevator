@@ -4,9 +4,11 @@ use std::net::Ipv4Addr;
 
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
+use driver_rust::elevio::elev;
 use std::time::{Duration, SystemTime};
 
 use crate::memory::{self as mem, Call};
+use crate::elevator_interface as elevint;
 
 // Iterates the cyclic counter correctly
 fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<Call, mem::CallState> {
@@ -149,8 +151,17 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
 
 fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
      // Dealing with hall calls from other elevator
-     let old_calls = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone();
-     let new_calls = received_state.call_list.clone();
+     let old_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_state.id).unwrap().call_list
+     .clone()
+     .into_iter()
+     .filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Down) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Up))
+     .collect();
+
+     let new_calls: HashMap<mem::Call, mem::CallState> = received_state.call_list
+     .clone()
+     .into_iter()
+     .filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Down) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Up))
+     .collect();
 
      // Getting the difference between the old and new calls to get what calls have changed since last time
      let mut differences = difference(old_calls.clone(), new_calls.clone());
@@ -180,8 +191,8 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_sta
 
 fn handle_cab_calls(old_memory: mem::Memory, received_state: mem::State, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
     // Dealing with cab calls from other elevator
-    let old_cab_calls = old_memory.state_list.get(&received_state.id).unwrap().cab_calls.clone();
-    let new_cab_calls = received_state.cab_calls.clone();
+    let old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+    let new_cab_calls: HashMap<mem::Call, mem::CallState> = received_state.call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
 
     // Getting the difference between the old and new cab calls to get what calls have changed since last time
     let mut differences_cab = difference(old_cab_calls.clone(), new_cab_calls.clone());
@@ -227,7 +238,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     received_state_new.call_list.insert(change.0, change.1);
                 }
                 for change in differences_in_cab {
-                    received_state_new.cab_calls.insert(change.0, change.1);
+                    received_state_new.call_list.insert(change.0, change.1);
                 }
 
                 // Sending the new state to memory

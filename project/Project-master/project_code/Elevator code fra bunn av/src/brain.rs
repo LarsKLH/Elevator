@@ -75,7 +75,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     match my_state.move_state {
         elevint::MovementState::Moving(dirn) => {
             let check_call = mem::Call {
-                direction: mem::CallType::Hall(dirn),
+                call_type: mem::CallType::Hall(dirn),
                 floor: new_floor
             };
         }
