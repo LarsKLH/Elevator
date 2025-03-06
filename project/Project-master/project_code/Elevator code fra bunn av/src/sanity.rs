@@ -157,6 +157,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
         
 }
 
+// Does as it says on the tin, handles hall calls. Returns hall calls for other elevator
 fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
      
      // Dealing with hall calls from other elevator
@@ -197,9 +198,11 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_sta
          memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).unwrap();
      }
 
+     // Returning the hall call changes for the other elevator so it can be included in a state update later
      return differences;
 }
 
+// Does as it says on the tin, handles cab calls. Returns cab calls for other elevator
 fn handle_cab_calls(old_memory: mem::Memory, received_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> HashMap<mem::Call, mem::CallState> {
     
     //  Dealing with the cab calls for the other elevator
