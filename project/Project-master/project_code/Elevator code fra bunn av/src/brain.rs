@@ -12,7 +12,7 @@ use crate::elevator_interface::{self as elevint, Direction};
 
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 
-// The symbol ¤ is used where the code is not yet implemented and needs to be done later, or i have questions about the code
+// The symbol # is used where the code is not yet implemented and needs to be done later, or i have questions about the code
 
 
 // The main elevator logic. Determines where to go next and sends commands to the motor controller
@@ -53,23 +53,23 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             } 
             elevint::MovementState::StopDoorClosed => {
                 println!("Stopping and closing door");
-                //  ¤Determine next direction using should_i_go and send to memory
+                //  #Determine next direction using should_i_go and send to memory
             }
             elevint::MovementState::StopAndOpen => {
                 println!("Stopping and opening door");
-                // ¤Change callstate to PendingRemoval in memory
-                // ¤Determine next direction using should_i_go and send to memory
+                // #Change callstate to PendingRemoval in memory
+                // #Determine next direction using should_i_go and send to memory
             }
 
             elevint::MovementState::Obstructed => {
                 println!("Elevator is obstructed");
-                // ¤Determine next direction using should_i_go and send to memory         
+                // #Determine next direction using should_i_go and send to memory         
                 // dont allow for ANY movement until the obstruction is removed
 
             }
 
-            // ¤Questions for later: Should the elevator remember the last direction it was moving in?
-            // ¤Can obstructions occur both when in motion and when standing still (with or without open doors)?
+            // #Questions for later: Should the elevator remember the last direction it was moving in?
+            // #Can obstructions occur both when in motion and when standing still (with or without open doors)?
 
         }
     }
@@ -101,7 +101,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     // Check if there are no confirmed floors in the direction of the elevator -> stop
     let no_confirmed_calls_in_direction = calls.iter()
         .filter(|(call, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
-        .all(|(call, _)| match my_direction {                   // ¤should maybe use .any() instead of .all() here
+        .all(|(call, _)| match my_direction {                   // #should maybe use .any() instead of .all() here
             elevint::Direction::Up => call.floor <= my_floor,
             elevint::Direction::Down => call.floor >= my_floor,
         });
@@ -119,12 +119,12 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
 // should_i_go, checks if the elevator should go up or down or if another elevator should take the call
 fn should_i_go(my_state: mem::State) -> () {
 
-    // ¤This function needs to check both cab_calls and call_list (I advice cab_calls take president over call_list) 
-    // ¤for determining the next direction of the elevator
-    // ¤Also needs to check if another elevator is closer to the call than this elevator
-    // ¤May need to use the distance function from the memory.rs file ??
-    // ¤May need to take the direction of the elevator into account when checking if another elevator is closer and if 
-    // ¤the elevator is moving or not (and which floor is more advantageous to go to)
+    // #This function needs to check both cab_calls and call_list (I advice cab_calls take president over call_list) 
+    // #for determining the next direction of the elevator
+    // #Also needs to check if another elevator is closer to the call than this elevator
+    // #May need to use the distance function from the memory.rs file ??
+    // #May need to take the direction of the elevator into account when checking if another elevator is closer and if 
+    // #the elevator is moving or not (and which floor is more advantageous to go to)
 
     println!("Checking if I should go");
     let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
@@ -137,12 +137,12 @@ fn should_i_go(my_state: mem::State) -> () {
             None
         }
     };
-    
+
     // Check if elevator is obstructed, 
-    //¤or maybe this should be done in the elevator_logic function so that the elevator does not move at all
+    //#or maybe this should be done in the elevator_logic function so that the elevator does not move at all
     let is_obstructed = my_state.obstructed;
 
-    // Check if elevator holds any cab calls
+    // Check if elevator holds any cab or hall calls
     let cab_calls = calls.iter()
         .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
 
