@@ -132,13 +132,14 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                     }
                     MemoryMessage::UpdateOthersState(state) => {
                         
-                        // Change the requested state in memory
+                        // Change the requested state in memory, should never be called on our own state or we are fucked
                         
                         memory.state_list.insert(state.id, state);
                     }
                     MemoryMessage::DeclareDead(id) => {
                         
                         // Declare the requested elevator dead
+                        
                         memory.state_list.get_mut(&id).unwrap().timed_out = true;
                     }
                 }
