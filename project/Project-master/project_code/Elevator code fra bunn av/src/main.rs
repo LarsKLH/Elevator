@@ -32,7 +32,7 @@ use std::env;
 
 
 
-// Argument list order methinks should be ./elevator_code {number of floors} {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}
+// Argument list order methinks should be ./elevator_code {number of floors} {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to} {elevator server }
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
@@ -72,8 +72,9 @@ fn main() -> std::io::Result<()> {
         let elevator = elevator.clone();
 
         let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
         let elevator_outputs_receive = elevator_outputs_receive.clone();
-        spawn(move || elevator_interface::elevator_outputs(memory_request_tx, elevator_outputs_receive, elevator));
+        spawn(move || elevator_interface::elevator_outputs(memory_request_tx, memory_recieve_rx, elevator_outputs_receive, elevator));
     }
 
     // Run button checker thread

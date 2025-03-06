@@ -40,7 +40,7 @@ pub enum MovementState {
 
 // Motor controller function. Takes controller messages and sends them to the elevator
 // controller. Also updates the memory with the current direction of the elevator
-pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, elevator_outputs_receive: Receiver<State>, elevator: Elevator) -> () {
+pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, elevator_outputs_receive: Receiver<State>, elevator: Elevator) -> () {
     
     
     // TODO: jens want to remove the next two lines
@@ -63,6 +63,16 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, elevator_
 
 
                 
+            }
+            default(Duration::from_millis(100))  => {
+                memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
+                let current_memory = memory_recieve_rx.recv().unwrap();
+
+                let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap();
+
+                mirror_movement_state(current_state.move_state, &elevator);
+                
+                mirror_lights(current_state.clone(), &elevator);
             }
         }
     }
