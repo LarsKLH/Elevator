@@ -1,6 +1,7 @@
 
 
 
+use std::collections::HashMap;
 use std::time::*;
 use std::thread::*;
 
@@ -113,10 +114,10 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
 fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
     
     // update call button lighs
-    for (cab_call_floor, cab_call_state) in state_to_mirror.cab_calls {
+    for (cab_call, cab_call_state) in state_to_mirror.call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect() {
         match cab_call_state {
-            CallState::Nothing | CallState::New => elevator.call_button_light(cab_call_floor, elevio::elev::CAB, false),
-            CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(cab_call_floor, elevio::elev::CAB, true),
+            CallState::Nothing | CallState::New => elevator.call_button_light(cab_call.floor, elevio::elev::CAB, false),
+            CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(cab_call.floor, elevio::elev::CAB, true),
         }
     }
 
