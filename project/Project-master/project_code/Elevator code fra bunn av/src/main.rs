@@ -77,12 +77,14 @@ fn main() -> std::io::Result<()> {
     // Run button checker thread
     // - Checks buttons, and sends to state machine thread
 
+    let (floor_sensor_tx, floor_sensor_rx) = cbc::unbounded::<u8>();
+
     {
         let elevator = elevator.clone();
 
         let memory_request_tx = memory_request_tx.clone();
         let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || elevator_interface::elevator_inputs(memory_request_tx, memory_recieve_rx, elevator));
+        spawn(move || elevator_interface::elevator_inputs(memory_request_tx, memory_recieve_rx, floor_sensor_tx,elevator));
     }
 
 
