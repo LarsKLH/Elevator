@@ -90,7 +90,7 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
                     sleep(Duration::from_millis(500));
                     
 
-                    // Change direction and update memory
+                    // Change direction
                     elevator.motor_direction(elevio::elev::DIRN_DOWN);
                 }
                 Direction::Up => {
@@ -98,7 +98,7 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
                     elevator.door_light(false);
                     sleep(Duration::from_millis(500));
 
-                    // Change direction and update memory
+                    // Change direction
                     elevator.motor_direction(elevio::elev::DIRN_UP);
                 }
             }
@@ -108,12 +108,12 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
             // Turn off elevator light just in case
             elevator.door_light(false);
 
-            // Change direction and update memory
+            // Change direction
             elevator.motor_direction(elevio::elev::DIRN_STOP);
         }
         MovementState::StopAndOpen => {
 
-            // Change direction and update memory
+            // Change direction
             elevator.motor_direction(elevio::elev::DIRN_STOP);
 
             // Turn on light for now

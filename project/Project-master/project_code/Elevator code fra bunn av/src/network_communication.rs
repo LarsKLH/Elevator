@@ -8,6 +8,7 @@
 use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
 
 use std::collections::HashMap;
+use std::thread::sleep;
 use std::time::Duration;
 
 use crossbeam_channel::{Receiver, Sender};
@@ -70,28 +71,33 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
     recv_socket.set_nonblocking(false).unwrap();
 
     loop{
-        recv_socket.recv(&mut recieve_buffer);
+        recv_socket.recv(&mut recieve_buffer).unwrap();
 
         let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).unwrap();
     
-        rx_sender_to_memory.send(recieved_memory);
+        rx_sender_to_memory.send(recieved_memory).unwrap();
     }
 
 }
 
 pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, net_config: NetWorkConfig) -> () {
-    memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-    let memory = memory_recieve_rx.recv().unwrap();
-
     let mut card_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
-
-    let written_card= postcard::to_slice(&memory, &mut card_buffer).unwrap();
-
     let from_socket = net_config.sending_socket;
     let to_socket = net_config.target_socket;
 
-    from_socket.send_to(&written_card, to_socket);
+    loop {
+        memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
+        let memory = memory_recieve_rx.recv().unwrap();
 
-    // Dersom vi er obstructed burde vi ikke sende noe så de andre heisene antar at vi er døde
+
+        let written_card= postcard::to_slice(&memory, &mut card_buffer).unwrap();
+        
+
+        from_socket.send_to(&written_card, to_socket).unwrap();
+
+        // Dersom vi er obstructed burde vi ikke sende noe så de andre heisene antar at vi er døde
+        sleep(Duration::from_millis(69)); // Walter made me do it
+    }
+    
 
 }
