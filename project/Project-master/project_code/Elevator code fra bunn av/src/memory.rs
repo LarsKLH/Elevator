@@ -70,19 +70,20 @@ pub enum MemoryMessage {
 
 impl From<Ipv4Addr> for Memory {
     fn from (ip: Ipv4Addr) -> Self {
-        !todo!()
+        Self { my_id: ip,
+            state_list: HashMap::from([(ip, State::new(ip))]) 
+        } 
     }
     
 }
 
-impl Memory {
-
-}
-
-
 impl State {
-    fn new (id: Ipv4Addr) -> Self {
-        !todo!()
+    fn new (id_of_new: Ipv4Addr) -> Self {
+        Self {  id: id_of_new,
+                move_state: elevint::MovementState::StopDoorClosed,
+                last_floor: 0,
+                call_list: HashMap::new() // need to intitialize with the required number of floors that requires we pass the number of floors 
+            }
     }
 }
 
