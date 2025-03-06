@@ -112,27 +112,11 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
 }
 
 fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
-    
+
     // update call button lighs
-    for (cab_call, cab_call_state) in state_to_mirror.call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect() {
-        match cab_call_state {
-            CallState::Nothing | CallState::New => elevator.call_button_light(cab_call.floor, elevio::elev::CAB, false),
-            CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(cab_call.floor, elevio::elev::CAB, true),
-        }
-    }
-
+    
     for (spesific_call, call_state) in state_to_mirror.call_list {
-
-        let calldir =   match spesific_call.direction {
-                                Direction::Up => elevio::elev::HALL_UP,
-                                Direction::Down => elevio::elev::HALL_DOWN,
-                            };
-
-        match call_state {
-            CallState::Nothing | CallState::New => elevator.call_button_light(spesific_call.floor, calldir, false),
-            CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(spesific_call.floor, calldir, true),
-        }
-
+        elevator.call_button_light(spesific_call.floor, spesific_call.call_type.into_elevio_call_type(), call_state.into_elevio_light_state());
     }
 
     elevator.floor_indicator(state_to_mirror.last_floor);

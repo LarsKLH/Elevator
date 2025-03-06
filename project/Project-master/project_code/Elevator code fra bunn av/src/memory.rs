@@ -4,6 +4,7 @@ use std::{  net::Ipv4Addr,
             collections::{HashMap, HashSet},
             ops::Deref};
 
+use driver_rust::elevio;
 use postcard;
 use serde::{Serialize, Deserialize};
 
@@ -32,10 +33,12 @@ pub struct State {
     pub call_list: HashMap<Call, CallState>
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
-pub enum CallType {
-    Cab,
-    Hall(elevint::Direction) 
+#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub enum CallState {
+    Nothing,
+    New,
+    Confirmed,
+    PendingRemoval
 }
 
 #[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
@@ -44,13 +47,12 @@ pub struct Call{
     pub floor: u8
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
-pub enum CallState {
-    Nothing,
-    New,
-    Confirmed,
-    PendingRemoval
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+pub enum CallType {
+    Cab,
+    Hall(elevint::Direction) 
 }
+
 
 
 
@@ -68,19 +70,39 @@ pub enum MemoryMessage {
 
 impl From<Ipv4Addr> for Memory {
     fn from (ip: Ipv4Addr) -> Self {
-        !todo!()
+        Self { my_id: ip,
+            state_list: HashMap::from([(ip, State::new(ip))]) 
+        } 
     }
     
 }
 
-impl Memory {
-
+impl State {
+    fn new (id_of_new: Ipv4Addr) -> Self {
+        Self {  id: id_of_new,
+                move_state: elevint::MovementState::StopDoorClosed,
+                last_floor: 0,
+                call_list: HashMap::new() // need to intitialize with the required number of floors that requires we pass the number of floors 
+            }
+    }
 }
 
+impl CallState {
+    pub fn into_elevio_light_state(&self) -> bool {
+        match self {
+            Self::Nothing | Self::New => false,
+            Self::Confirmed | Self::PendingRemoval => true,
+        }
+    }
+}
 
-impl State {
-    fn new (id: Ipv4Addr) -> Self {
-        !todo!()
+impl CallType {
+    pub fn into_elevio_call_type(&self) -> u8 {
+        match self {
+            Self::Cab => elevio::elev::CAB,
+            Self::Hall(elevint::Direction::Up) => elevio::elev::HALL_UP,
+            Self::Hall(elevint::Direction::Down) => elevio::elev::HALL_DOWN,
+        }
     }
 }
 
