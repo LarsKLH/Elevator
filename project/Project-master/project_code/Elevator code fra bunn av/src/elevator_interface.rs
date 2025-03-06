@@ -121,20 +121,17 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
     }
 
     for (spesific_call, call_state) in state_to_mirror.call_list {
-        // Talk to Seb about doing this in a sensible way
-        match spesific_call.direction {
-            Direction::Up  => {
-                match call_state {
-                    CallState::Nothing | CallState::New => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_UP, false),
-                    CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_UP, true),
-            }}
-            Direction::Down => {
-                match call_state {
-                    CallState::Nothing | CallState::New => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_DOWN, false),
-                    CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(spesific_call.floor, elevio::elev::HALL_DOWN, true),
-                }
-            }
+
+        let calldir =   match spesific_call.direction {
+                                Direction::Up => elevio::elev::HALL_UP,
+                                Direction::Down => elevio::elev::HALL_DOWN,
+                            };
+
+        match call_state {
+            CallState::Nothing | CallState::New => elevator.call_button_light(spesific_call.floor, calldir, false),
+            CallState::Confirmed | CallState::PendingRemoval => elevator.call_button_light(spesific_call.floor, calldir, true),
         }
+
     }
 
     elevator.floor_indicator(state_to_mirror.last_floor);
