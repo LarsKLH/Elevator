@@ -32,20 +32,19 @@ use std::env;
 
 
 
-
+// Argument list order methinks should be ./elevator_code {number of floors} {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
-
-    //let ipv4_id = Ipv4Addr::from(args[0].as_bytes()); TODO fix this so yyou can take ip as argument
-
-    let ipv4_id = Ipv4Addr::new(127,0,0,26);
-    let socket_number:u16 = 20026;
-
-    let num_floors = 4;
-    let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
-
     
+    let num_floors: u8 = args[0].parse().expect("could not convert the first argument to a u8");
+    
+    let ipv4_id: Ipv4Addr = args[1].parse().expect("could not convert the second argument to a ipv4addr");
+    
+    let socket_number: u16 = args[2].parse().expect("could not convert the second argument to a socket/u16");
+
+
+    let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
 
     // Initialize memory access channels
     // - One for requests, one for receiving
@@ -62,7 +61,7 @@ fn main() -> std::io::Result<()> {
 
     // Initialize motor controller channel
     // - Only goes one way
-    let (elevator_controller_send, elevator_controller_receive) = cbc::unbounded::<mem::State>();
+    let (elevator_outputs_send, elevator_outputs_receive) = cbc::unbounded::<mem::State>();
 
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
@@ -70,8 +69,8 @@ fn main() -> std::io::Result<()> {
         let elevator = elevator.clone();
 
         let memory_request_tx = memory_request_tx.clone();
-        let elevator_controller_receive = elevator_controller_receive.clone();
-        spawn(move || elevator_interface::elevator_controller(memory_request_tx, elevator_controller_receive, elevator));
+        let elevator_outputs_receive = elevator_outputs_receive.clone();
+        spawn(move || elevator_interface::elevator_outputs(memory_request_tx, elevator_outputs_receive, elevator));
     }
 
     // Run button checker thread
