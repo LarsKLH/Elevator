@@ -58,7 +58,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_rx = memory_request_rx.clone();
         let memory_recieve_tx = memory_recieve_tx.clone();
-        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx, ipv4_id));
+        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx, ipv4_id, num_floors));
     }
 
     // Initialize motor controller channel
