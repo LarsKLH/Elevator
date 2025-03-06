@@ -100,6 +100,8 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
     for change in differences {
         match change.1 {
             mem::CallState::Nothing => {
+                // If the others don't agree, then we cannot update the order to none
+
                 let mut pending = 0;
                 let mut new = 0;
                 let mut total = 0;
@@ -120,6 +122,8 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                 // Do nothing, new button presses are always legit
             }
             mem::CallState::Confirmed => {
+                // If the others don't agree, then we cannot update the order to confirmed
+
                 let mut new = 0;
                 let mut confirmed = 0;
                 let mut total = 0;
@@ -146,6 +150,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                     }
                 }
 
+                // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
                 if received_state.last_floor != change.0.floor || !others_agree {
                     new_differences.remove(&change.0);
                 }
