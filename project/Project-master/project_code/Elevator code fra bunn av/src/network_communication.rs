@@ -72,7 +72,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
     loop{
         recv_socket.recv(&mut recieve_buffer);
 
-        let recieved_memory: mem::State  = postcard::from_bytes(&recieve_buffer).unwrap();
+        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).unwrap();
     
         rx_sender_to_memory.send(recieved_memory);
     }
@@ -91,5 +91,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
     let to_socket = net_config.target_socket;
 
     from_socket.send_to(&written_card, to_socket);
+
+    // Dersom vi er obstructed burde vi ikke sende noe så de andre heisene antar at vi er døde
 
 }

@@ -71,16 +71,33 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
 // Check whether we should stop or not
 fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
-    let direction: elevint::Direction = match my_state.move_state {
-        elevint::MovementState::Moving(dirn) => dirn,
-        _ => panic!("Error: Elevator is not moving")
-    };
-    // Create a call to check if the floor is confirmed
-    let check_call = mem::Call {
-        direction: direction,
-        floor: new_floor
-    };
+        
+    let my_floor = new_floor;
+    let my_direction = my_state.move_state
+
+    let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store in a Vec
+
+    let my_call_is_confirmed = calls.iter()
+        .any(|(call, state)| *state == mem::CallState::Confirmed && call.floor == my_floor);
     
+    if my_call_is_confirmed {
+        return true;
+    }
+    
+    let no_confirmed_calls_in_direction = calls.iter()
+        .filter(|(call, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
+        .all(|(call, _)| match my_direction {
+            mem::Direction::Up => call.floor <= my_floor, // No confirmed calls above
+            mem::Direction::Down => call.floor >= my_floor, // No confirmed calls below
+        });
+    
+    if no_confirmed_calls_in_direction {
+        return true; // Stop the elevator
+    }
+    // Else continue moving in current direction
+
+
+
     // Move the if-statements bellow INSIDE the match statement if you can NOT access the check_call variable outside of the match statement
     // elsewise you can keep it as it is
     // If the state of our current floor is confirmed, we should stop
@@ -130,9 +147,9 @@ fn should_i_go(my_state: mem::State) -> () {
     // May need to take the direction of the elevator into account when checking if another elevator is closer and if 
     // the elevator is moving or not (and which floor is more advantageous to go to)
 
-    if other_floors_confirmed(my_state.current_floor, my_state.clone()) {
-        // If there are no more confirmed floors below or above us, we should stop
-        memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).unwrap();
+    if other_floors_confirmed(my_state.last_floor, my_state.clone()) {
+        // If there are confirmed floors below or above us, we should maybe start moving
+
     }
     else {
         // If there are more confirmed floors below or above us, we should continue
