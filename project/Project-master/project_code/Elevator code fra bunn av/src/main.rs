@@ -23,7 +23,7 @@ use std::env;
 
 
 
-// Argument list order methinks should be ./elevator_code {number of floors} {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to} {elevator server }
+// Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000]
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
