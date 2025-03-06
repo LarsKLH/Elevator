@@ -87,24 +87,6 @@ impl State {
     }
 }
 
-impl CallState {
-    pub fn into_elevio_light_state(&self) -> bool {
-        match self {
-            Self::Nothing | Self::New => false,
-            Self::Confirmed | Self::PendingRemoval => true,
-        }
-    }
-}
-
-impl CallType {
-    pub fn into_elevio_call_type(&self) -> u8 {
-        match self {
-            Self::Cab => elevio::elev::CAB,
-            Self::Hall(elevint::Direction::Up) => elevio::elev::HALL_UP,
-            Self::Hall(elevint::Direction::Down) => elevio::elev::HALL_DOWN,
-        }
-    }
-}
 
 
 

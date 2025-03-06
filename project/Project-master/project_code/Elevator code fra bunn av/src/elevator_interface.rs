@@ -172,8 +172,22 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
             recv(call_button_rx) -> call_button_notif => {
                 let button_pressed = call_button_notif.unwrap();
 
-                todo!("have to update the cyclic counter for this floor")
+                //todo!("have to update the cyclic counter for this floor");
                 // juct check if the current state is nothing then chnage to new, if else do nothing
+
+                memory_request_tx.send(mem::MemoryMessage::Request);
+                let current_memory = memory_recieve_rx.recv().unwrap();
+
+                let current_calls = current_memory.state_list.get(&current_memory.my_id).unwrap().call_list.clone();
+
+                let equivilent_button_in_memory = mem::Call::from(button_pressed);
+
+                let pressed_button_current_state = current_calls.get(&equivilent_button_in_memory).unwrap();
+
+                if pressed_button_current_state == &CallState::Nothing {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(equivilent_button_in_memory, CallState::New));
+                }
+
             }
 
             recv(floor_sensor_rx) -> floor_sensor_notif => {
@@ -208,7 +222,39 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
 }
 
 
+impl From<elevio::poll::CallButton> for mem::Call {
+    fn from(button_polled: elevio::poll::CallButton) -> mem::Call {
+        let call_type_of_button = match button_polled.call {
+            0 => mem::CallType::Hall(Direction::Up),
+            1 => mem::CallType::Hall(Direction::Down),
+            2 => mem::CallType::Cab,
+            _ => panic!("recieved an u8 from the elevator button poller that is not either 0, 1, or 2, terminating immediatly!")
+        };
 
+        mem::Call {
+            call_type: call_type_of_button,
+            floor: button_polled.floor
+        }
+    }
+}
 
+impl CallState {
+    fn into_elevio_light_state(&self) -> bool {
+        match self {
+            Self::Nothing | Self::New => false,
+            Self::Confirmed | Self::PendingRemoval => true,
+        }
+    }
+}
+
+impl mem::CallType {
+    fn into_elevio_call_type(&self) -> u8 {
+        match self {
+            Self::Cab => elevio::elev::CAB,
+            Self::Hall(Direction::Up) => elevio::elev::HALL_UP,
+            Self::Hall(Direction::Down) => elevio::elev::HALL_DOWN,
+        }
+    }
+}
 
 
