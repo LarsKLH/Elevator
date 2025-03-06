@@ -194,17 +194,24 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
 
 // Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
-    let confirmed_calls_on_my_floor_with_same_direction: Vec<_> = my_state.call_list.clone()
-        .into_iter()
-        .filter(|(call, state)| call.floor == my_state.last_floor 
-        && *state == mem::CallState::Confirmed 
-        && (call.call_type == mem::CallType::Hall(prev_dir)|| call.call_type == mem::CallType::Cab))
-        .collect();
-    
-    // Change CallState of current call to pending removal
-    if confirmed_calls_on_my_floor_with_same_direction.len() == 0 {
-        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(confirmed_calls_on_my_floor_with_same_direction[0].0.clone(), mem::CallState::PendingRemoval)).unwrap();
-    }
+    use std::collections::HashMap;
+
+let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> = my_state.call_list.clone()
+    .into_iter()
+    .filter(|(call, state)| {
+        call.floor == my_state.last_floor &&
+        *state == mem::CallState::Confirmed &&
+        (call.call_type == mem::CallType::Hall(prev_dir) || call.call_type == mem::CallType::Cab)
+    })
+    .collect(); // Collect into a HashMap
+
+// Change CallState of each call to PendingRemoval
+for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
+    memory_request_tx
+        .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+        .unwrap();
+}
+
     // Wait 3 seconds
     thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
     // Update MoveState to StopDoorClosed
