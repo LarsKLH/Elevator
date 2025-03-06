@@ -40,7 +40,7 @@ pub enum MovementState {
 
 // Motor controller function. Takes controller messages and sends them to the elevator
 // controller. Also updates the memory with the current direction of the elevator
-pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevator_controller_receive: Receiver<State>, elevator: Elevator) -> () {
+pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, elevator_outputs_receive: Receiver<State>, elevator: Elevator) -> () {
     
     
     // TODO: jens want to remove the next two lines
@@ -54,7 +54,7 @@ pub fn elevator_controller(memory_request_tx: Sender<mem::MemoryMessage>, elevat
     // Infinite loop checking for elevator controller messages
     loop {
         cbc::select! {
-            recv(elevator_controller_receive) -> state_to_mirror => {
+            recv(elevator_outputs_receive) -> state_to_mirror => {
                 let received_state_to_mirror = state_to_mirror.unwrap();
 
                 mirror_movement_state(received_state_to_mirror.move_state, &elevator);
