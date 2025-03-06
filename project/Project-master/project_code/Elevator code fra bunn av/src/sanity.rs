@@ -151,9 +151,11 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
 }
 
 fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+     
+     
      // Dealing with hall calls from other elevator
 
-
+     // Getting new and old calls
      let old_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_state.id).unwrap().call_list
      .clone()
      .into_iter()
@@ -281,7 +283,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 else {
 
                     // Getting a new state list with the changes added
-                    let mut state_list_with_changes = old_memory.state_list.clone();
+                    let mut state_list_with_changes: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
+                    state_list_with_changes.insert(received_state.id, received_state.clone());
                     state_list_with_changes.insert(received_state.id, received_state.clone());
 
                     // Dealing with the new hall calls
