@@ -87,7 +87,6 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
                 Direction::Down => {
                     // Turn off elevator light before starting
                     elevator.door_light(false);
-                    sleep(Duration::from_millis(500));
                     
 
                     // Change direction
@@ -96,7 +95,6 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
                 Direction::Up => {
                     // Turn off elevator light before starting
                     elevator.door_light(false);
-                    sleep(Duration::from_millis(500));
 
                     // Change direction
                     elevator.motor_direction(elevio::elev::DIRN_UP);
