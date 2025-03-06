@@ -51,6 +51,9 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
     let socket_to_target = SocketAddrV4::new(target_ip, wanted_port);
 
     let native_send_socket = UdpSocket::bind((ipv4, wanted_port)).unwrap();
+
+    native_send_socket.set_broadcast(true);
+
     let native_list_socket = native_send_socket.try_clone().unwrap();
 
     let net_config = NetWorkConfig {
@@ -98,7 +101,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
         sleep(Duration::from_millis(69)); // Walter made me do it
 
 
-        // Dersom vi er obstructed burde vi ikke sende noe så de andre heisene antar at vi er døde
+        // Dersom vi er obstructed burde vi kanskje ikke sende noe så de andre heisene antar at vi er døde
     }
     
 
