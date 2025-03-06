@@ -93,10 +93,12 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
         let written_card= postcard::to_slice(&memory, &mut card_buffer).unwrap();
         
 
-        from_socket.send_to(&written_card, to_socket).unwrap();
+        from_socket.send_to(&written_card, to_socket).expect("was not able to transmit to target socket");
+
+        sleep(Duration::from_millis(69)); // Walter made me do it
+
 
         // Dersom vi er obstructed burde vi ikke sende noe så de andre heisene antar at vi er døde
-        sleep(Duration::from_millis(69)); // Walter made me do it
     }
     
 
