@@ -11,6 +11,13 @@ use std::time::{Duration, SystemTime};
 use crate::memory::{self as mem, Call};
 use crate::elevator_interface as elevint;
 
+// Basics of our cyclic counter:
+// - It only goes one way, from Nothing to new to confirmed to pendingremoval and then back around
+// - To go from nothing to new or from confirmed to pendingremoval only one elevator needs to be in the previous state, ie. we do not need the others to agree
+// - To go from new to confirmed or from pendingremoval to nothing we need all the elevators to agree
+
+// There also needs to be some way of dealing with elevators reconnecting with different states, but this is not implemented yet
+
 // Iterates the cyclic counter correctly
 fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<Call, mem::CallState> {
     for mut call in &state_to_change {
@@ -88,7 +95,7 @@ fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<
 }
 
 // Checks whether the changes follow the rules for the cyclic counter
-fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem::State, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_state: mem::State, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
     let mut new_differences = differences.clone();
     for change in differences {
         match change.1 {
@@ -152,7 +159,6 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
 
 fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
      
-     
      // Dealing with hall calls from other elevator
 
      // Getting new and old calls
@@ -172,7 +178,7 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_sta
      let mut differences = difference(old_calls.clone(), new_calls.clone());
 
      // Check whether the changed orders are valid or not
-     differences = insanity(differences, received_state.clone(), state_list_with_changes.clone());
+     differences = filter_changes(differences, received_state.clone(), state_list_with_changes.clone());
 
 
      // Changing our hall calls based on the changes to the received state
@@ -195,6 +201,10 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_sta
 }
 
 fn handle_cab_calls(old_memory: mem::Memory, received_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> HashMap<mem::Call, mem::CallState> {
+    
+    //  Dealing with the cab calls for the other elevator
+    // This means filtering out the changes that make no sense
+    
     // Checking for cab calls concerning the other elevator
     let old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_memory.my_id).unwrap().call_list
     .clone()
@@ -216,8 +226,11 @@ fn handle_cab_calls(old_memory: mem::Memory, received_memory: mem::Memory, memor
     others_states_for_comparison.insert(0.into(), old_memory.state_list.get(&received_memory.my_id).unwrap().clone());
 
     // Check whether the changed cab calls are valid or not
-    others_differences_cab = insanity(others_differences_cab, received_memory.state_list.get(&received_memory.my_id).unwrap().clone(), others_states_for_comparison.clone());
+    others_differences_cab = filter_changes(others_differences_cab, received_memory.state_list.get(&received_memory.my_id).unwrap().clone(), others_states_for_comparison.clone());
 
+
+    // Dealing with the cab calls for our elevator
+    // This means changing the state of our elevators based on the rules of the cyclic counter
 
     // Checking for cab calls concerning our elevator
     let my_old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).unwrap().call_list
@@ -249,11 +262,14 @@ fn handle_cab_calls(old_memory: mem::Memory, received_memory: mem::Memory, memor
     return others_differences_cab;
 }
 
-fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx: Sender<mem::MemoryMessage>) -> HashMap<Ipv4Addr, SystemTime> {
-    let mut new_last_received = last_received.clone();
-    
+fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
 
-    return new_last_received;
+    // If we have no response from an elevator for a long time, we should not care about it's opinion anymore
+    for elevator in last_received {
+        if elevator.1.elapsed().unwrap() > Duration::from_secs(3) {
+            memory_request_tx.send(mem::MemoryMessage::DeclareDead(elevator.0)).unwrap_or(println!("Cannot declare elevator dead"));
+        }
+    }
 }
 
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
@@ -279,6 +295,12 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
                     // Sending the data for the new elevator to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state)).unwrap_or(println!("Error in updating memory"));
+                }
+                else if old_memory.state_list.get(&received_memory.my_id).unwrap().timed_out {
+                    // Holy shit, incomplete code
+                    todo!("Do something when a elevator reconnects");
+
+                    // Here we probably need to merge our and their states somehow, but I'm not sure how to do that yet
                 }
                 else {
 
