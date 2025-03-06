@@ -1,20 +1,16 @@
 
 
 
-use std::collections::HashMap;
 use std::time::*;
 use std::thread::*;
 
 
 
-use crossbeam_channel::RecvTimeoutError;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 
-use driver_rust::elevio::elev::HALL_DOWN;
 use serde::{Serialize, Deserialize};
 
-use driver_rust::elevio::elev::DIRN_STOP;
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 use crate::memory::CallState;
 use crate::memory::State;

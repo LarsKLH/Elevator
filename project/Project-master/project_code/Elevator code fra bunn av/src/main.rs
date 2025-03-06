@@ -1,18 +1,11 @@
 
-use std::default;
-use std::hash::Hash;
 use std::net::Ipv4Addr;
 use std::thread::*;
 use std::time::*;
-use std::collections::HashSet;
-use std::u8;
-use std::sync::*;
-use std::cmp::max;
+use std::u8; // what?
 
 use driver_rust::elevio;
 
-use crossbeam_channel::Receiver;
-use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
 
 mod memory;
@@ -22,7 +15,6 @@ mod brain;
 mod sanity;
 
 use crate::memory as mem;
-use crate::elevator_interface as elevint;
 
 use std::env;
 

@@ -7,12 +7,10 @@
 
 use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
 
-use std::collections::HashMap;
 use std::thread::sleep;
 use std::time::Duration;
 
 use crossbeam_channel::{Receiver, Sender};
-use crossbeam_channel as cbc;
 
 use crate::mem;
 
