@@ -32,16 +32,19 @@ use std::env;
 
 
 
-// Argument list order methinks should be ./elevator_code {number of floors} {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}
+// Argument list order methinks should be ./elevator_code {number of floors} {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to} {elevator server }
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
+
+    //print!("arguments are: arg 1 = {}, arg 2 = {}, arg 3 = {}", args[1], args[2], args[3]);
+
+
+    let num_floors: u8 = args[1].parse().expect("could not convert the first argument to a u8");
     
-    let num_floors: u8 = args[0].parse().expect("could not convert the first argument to a u8");
+    let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr");
     
-    let ipv4_id: Ipv4Addr = args[1].parse().expect("could not convert the second argument to a ipv4addr");
-    
-    let socket_number: u16 = args[2].parse().expect("could not convert the second argument to a socket/u16");
+    let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16");
 
 
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
@@ -69,8 +72,9 @@ fn main() -> std::io::Result<()> {
         let elevator = elevator.clone();
 
         let memory_request_tx = memory_request_tx.clone();
+        let memory_recieve_rx = memory_recieve_rx.clone();
         let elevator_outputs_receive = elevator_outputs_receive.clone();
-        spawn(move || elevator_interface::elevator_outputs(memory_request_tx, elevator_outputs_receive, elevator));
+        spawn(move || elevator_interface::elevator_outputs(memory_request_tx, memory_recieve_rx, elevator_outputs_receive, elevator));
     }
 
     // Run button checker thread
