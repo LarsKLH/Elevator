@@ -70,23 +70,29 @@ pub enum MemoryMessage {
     // Mulig fix, gjøre update slik at den sender en init update som låser databasen til den blir skrevet til igjen
 }
 
-impl From<Ipv4Addr> for Memory {
-    fn from (ip: Ipv4Addr) -> Self {
+impl Memory {
+    fn new (ip: Ipv4Addr, n: u8) -> Self {
         Self { my_id: ip,
-            state_list: HashMap::from([(ip, State::new(ip))]) 
-        } 
+            state_list: HashMap::from([(ip, State::new(ip, n))]) 
+        }
     }
     
 }
 
 impl State {
-    fn new (id_of_new: Ipv4Addr) -> Self {
-        Self {  id: id_of_new,
+    fn new (id_of_new: Ipv4Addr, n: u8) -> Self {
+        let mut new_me = Self {  id: id_of_new,
                 timed_out: false,
                 move_state: elevint::MovementState::StopDoorClosed,
                 last_floor: 0,
                 call_list: HashMap::new() // need to intitialize with the required number of floors that requires we pass the number of floors 
-            }
+            };
+        for floor_to_add in 0..n {
+            new_me.call_list.insert(Call { call_type: CallType::Cab, floor: floor_to_add }, CallState::Nothing);
+            new_me.call_list.insert(Call { call_type: CallType::Hall(elevint::Direction::Up), floor: floor_to_add }, CallState::Nothing);
+            new_me.call_list.insert(Call { call_type: CallType::Hall(elevint::Direction::Down), floor: floor_to_add}, CallState::Nothing);
+        };
+        new_me
     }
 }
 
@@ -94,8 +100,8 @@ impl State {
 
 
 
-pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv4: Ipv4Addr) -> () {
-    let mut memory = Memory::from(ipv4);
+pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv4: Ipv4Addr, number_of_floors: u8) -> () {
+    let mut memory = Memory::new(ipv4, number_of_floors);
     
     loop {
         cbc::select! {
