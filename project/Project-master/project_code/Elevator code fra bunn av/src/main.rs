@@ -15,7 +15,6 @@ use crossbeam_channel::Receiver;
 use crossbeam_channel::Sender;
 use crossbeam_channel as cbc;
 
-mod subfunctions;
 mod memory;
 mod elevator_interface;
 mod network_communication;
