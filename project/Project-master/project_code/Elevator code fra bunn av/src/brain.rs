@@ -202,7 +202,9 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
         .collect();
     
     // Change CallState of current call to pending removal
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(confirmed_calls_on_my_floor_with_same_direction[0].0.clone(), mem::CallState::PendingRemoval)).unwrap();
+    if confirmed_calls_on_my_floor_with_same_direction.len() == 0 {
+        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(confirmed_calls_on_my_floor_with_same_direction[0].0.clone(), mem::CallState::PendingRemoval)).unwrap();
+    }
     // Wait 3 seconds
     thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
     // Update MoveState to StopDoorClosed
