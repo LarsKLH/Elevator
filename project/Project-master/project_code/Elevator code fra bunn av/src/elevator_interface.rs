@@ -177,7 +177,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 //todo!("have to update the cyclic counter for this floor");
                 // juct check if the current state is nothing then chnage to new, if else do nothing
 
-                memory_request_tx.send(mem::MemoryMessage::Request);
+                memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let current_memory = memory_recieve_rx.recv().unwrap();
 
                 let current_calls = current_memory.state_list.get(&current_memory.my_id).unwrap().call_list.clone();
@@ -187,7 +187,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 let pressed_button_current_state = current_calls.get(&equivilent_button_in_memory).unwrap();
 
                 if pressed_button_current_state == &CallState::Nothing {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(equivilent_button_in_memory, CallState::New));
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(equivilent_button_in_memory, CallState::New)).unwrap();
                 }
 
             }
@@ -219,10 +219,17 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
             recv(obstruction_rx) -> obstruction_notif => {
                 let obstruction_sensed = obstruction_notif.unwrap();
 
-                // todo!("we need to figure out how to do here");
-                // add new move state obstructed that wil force us to do nothing, but check if obstr gets removed
+                memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
+                let current_memory = memory_recieve_rx.recv().unwrap();
 
-                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
+                // todo!("we need to figure out how to do here");
+                // add new move state obstructed that wil force us to do nothing, but check if obstr gets remove
+                if obstruction_sensed {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
+                }
+                else if current_memory.state_list.get(&current_memory.my_id).unwrap().move_state == MovementState::Obstructed {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
+                }
             }
         }
 

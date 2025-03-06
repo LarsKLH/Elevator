@@ -36,12 +36,15 @@ use std::env;
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
+
+    //print!("arguments are: arg 1 = {}, arg 2 = {}, arg 3 = {}", args[1], args[2], args[3]);
+
+
+    let num_floors: u8 = args[1].parse().expect("could not convert the first argument to a u8");
     
-    let num_floors: u8 = args[0].parse().expect("could not convert the first argument to a u8");
+    let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr");
     
-    let ipv4_id: Ipv4Addr = args[1].parse().expect("could not convert the second argument to a ipv4addr");
-    
-    let socket_number: u16 = args[2].parse().expect("could not convert the second argument to a socket/u16");
+    let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16");
 
 
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;

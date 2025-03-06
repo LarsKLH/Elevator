@@ -1,5 +1,6 @@
 
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::net::Ipv4Addr;
 
 use crossbeam_channel::{Receiver, Sender};
@@ -150,7 +151,11 @@ fn insanity(differences: HashMap<mem::Call, mem::CallState>, received_state: mem
 }
 
 fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+     
+     
      // Dealing with hall calls from other elevator
+
+     // Getting new and old calls
      let old_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_state.id).unwrap().call_list
      .clone()
      .into_iter()
@@ -189,25 +194,71 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, my_sta
      return differences;
 }
 
-fn handle_cab_calls(old_memory: mem::Memory, received_state: mem::State, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
-    // Dealing with cab calls from other elevator
-    let old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_state.id).unwrap().call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
-    let new_cab_calls: HashMap<mem::Call, mem::CallState> = received_state.call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+fn handle_cab_calls(old_memory: mem::Memory, received_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> HashMap<mem::Call, mem::CallState> {
+    // Checking for cab calls concerning the other elevator
+    let old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_memory.my_id).unwrap().call_list
+    .clone()
+    .into_iter()
+    .filter(|x| x.0.call_type == mem::CallType::Cab)
+    .collect();
+    let new_cab_calls: HashMap<mem::Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).unwrap().call_list
+    .clone()
+    .into_iter()
+    .filter(|x| x.0.call_type == mem::CallType::Cab)
+    .collect();
 
     // Getting the difference between the old and new cab calls to get what calls have changed since last time
-    let mut differences_cab = difference(old_cab_calls.clone(), new_cab_calls.clone());
+    let mut others_differences_cab = difference(old_cab_calls.clone(), new_cab_calls.clone());
+
+    // Getting a state list with only cab calls from the other elevator
+    let mut others_states_for_comparison: HashMap<Ipv4Addr, mem::State> = HashMap::new();
+    others_states_for_comparison.insert(received_memory.my_id, received_memory.state_list.get(&received_memory.my_id).unwrap().clone());
+    others_states_for_comparison.insert(0.into(), old_memory.state_list.get(&received_memory.my_id).unwrap().clone());
 
     // Check whether the changed cab calls are valid or not
-    differences_cab = insanity(differences_cab, received_state.clone(), state_list_with_changes.clone());
+    others_differences_cab = insanity(others_differences_cab, received_memory.state_list.get(&received_memory.my_id).unwrap().clone(), others_states_for_comparison.clone());
+
 
     // Checking for cab calls concerning our elevator
+    let my_old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).unwrap().call_list
+    .clone()
+    .into_iter()
+    .filter(|x| x.0.call_type == mem::CallType::Cab)
+    .collect();
+    let my_new_cab_calls: HashMap<mem::Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).unwrap().call_list
+    .clone()
+    .into_iter()
+    .filter(|x| x.0.call_type == mem::CallType::Cab)
+    .collect();
 
+    // Getting only the cab calls that have changed to minimize overwriting of memory
+    let my_differences_cab = difference(my_old_cab_calls.clone(), my_new_cab_calls.clone());
 
-    return differences_cab;
+    let mut my_states_for_comparison: HashMap<Ipv4Addr, mem::State> = HashMap::new();
+    my_states_for_comparison.insert(old_memory.my_id, old_memory.state_list.get(&old_memory.my_id).unwrap().clone());
+    my_states_for_comparison.insert(0.into(), received_memory.state_list.get(&old_memory.my_id).unwrap().clone());
+
+    let my_differences_cab_changed = cyclic_counter(my_differences_cab, &my_states_for_comparison);
+
+    // Sending the changes to memory one after the other
+    for change in my_differences_cab_changed {
+        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).unwrap();
+    }
+
+    // Returning the cab call changes for the other elevator so it can be included in a state update later
+    return others_differences_cab;
+}
+
+fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx: Sender<mem::MemoryMessage>) -> HashMap<Ipv4Addr, SystemTime> {
+    let mut new_last_received = last_received.clone();
+    
+
+    return new_last_received;
 }
 
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
 pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::Memory>) -> () {
+    // Setting up a hashmap to keep track of the last time a message was received from each elevator
     let mut last_received: HashMap<Ipv4Addr, SystemTime> = HashMap::new();
     loop {
         cbc::select! {
@@ -219,34 +270,48 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
                 // Getting new state from rx, extracting both old and new calls for comparison
                 let received_memory = rx.unwrap();
-                let received_state = received_memory.state_list.get(&received_memory.my_id).unwrap();
+                let received_state = received_memory.state_list.get(&received_memory.my_id).unwrap().clone();
+
+                // Setting last received for this elevator to the current time
                 last_received.insert(received_state.id, SystemTime::now());
 
-                // Getting a new state list with the changes added
-                let mut state_list_with_changes = old_memory.state_list.clone();
-                state_list_with_changes.insert(received_state.id, received_state.clone());
+                if !old_memory.state_list.contains_key(&received_memory.my_id) {
 
-                let differences_in_hall = handle_hall_calls(old_memory.clone(), received_state.clone(), my_state.clone(), memory_request_tx.clone(), state_list_with_changes.clone());
-
-
-                let differences_in_cab = handle_cab_calls(old_memory.clone(), received_state.clone(), state_list_with_changes.clone());
-
-                
-                // Summing up all accepted changes and commiting to memory
-                let mut received_state_new = received_state.clone();
-                for change in differences_in_hall {
-                    received_state_new.call_list.insert(change.0, change.1);
+                    // Sending the data for the new elevator to memory
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state)).unwrap_or(println!("Error in updating memory"));
                 }
-                for change in differences_in_cab {
-                    received_state_new.call_list.insert(change.0, change.1);
-                }
+                else {
 
-                // Sending the new state to memory
-                memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_new)).unwrap_or(println!("Error in requesting memory"));
+                    // Getting a new state list with the changes added
+                    let mut state_list_with_changes: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
+                    state_list_with_changes.insert(received_state.id, received_state.clone());
+                    state_list_with_changes.insert(received_state.id, received_state.clone());
+
+                    // Dealing with the new hall calls
+                    let differences_in_hall = handle_hall_calls(old_memory.clone(), received_state.clone(), my_state.clone(), memory_request_tx.clone(), state_list_with_changes.clone());
+
+                    // Dealing with the new cab calls
+                    let differences_in_cab = handle_cab_calls(old_memory.clone(), received_memory.clone(), memory_request_tx.clone());
+
+                    
+                    // Summing up all accepted changes and commiting to memory
+                    let mut received_state_new = received_state.clone();
+                    for change in differences_in_hall {
+                        received_state_new.call_list.insert(change.0, change.1);
+                    }
+                    for change in differences_in_cab {
+                        received_state_new.call_list.insert(change.0, change.1);
+                    }
+
+                    // Sending the new state to memory
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_new)).unwrap_or(println!("Error in updating memory"));
+                }
             }
 
-            // If we don't get a new state in decent time, this function runs
+            // If we don't get a new state within 100 ms
             default(Duration::from_millis(100)) => {
+                timeout_check(last_received.clone(), memory_request_tx.clone());
+
                 // Getting old memory and extracting my own call list
                 let old_memory = memory_recieve_rx.recv().unwrap();
                 let my_call_list = old_memory.state_list.get(&old_memory.my_id).unwrap().clone().call_list;

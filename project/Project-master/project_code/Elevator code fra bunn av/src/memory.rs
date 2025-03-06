@@ -28,6 +28,7 @@ pub struct Memory {
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct State {
     pub id: Ipv4Addr,
+    pub timed_out: bool,
     pub move_state: elevint::MovementState, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>
@@ -61,7 +62,8 @@ pub enum MemoryMessage {
     UpdateOwnMovementState(MovementState),
     UpdateOwnFloor(u8),
     UpdateOwnCall(Call, CallState),
-    UpdateOthersState(State)
+    UpdateOthersState(State),
+    DeclareDead(Ipv4Addr)
     // TODO krangle om hvordan endre state med update
     // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
     
@@ -80,6 +82,7 @@ impl From<Ipv4Addr> for Memory {
 impl State {
     fn new (id_of_new: Ipv4Addr) -> Self {
         Self {  id: id_of_new,
+                timed_out: false,
                 move_state: elevint::MovementState::StopDoorClosed,
                 last_floor: 0,
                 call_list: HashMap::new() // need to intitialize with the required number of floors that requires we pass the number of floors 
@@ -126,6 +129,11 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         // Change the requested state in memory
                         
                         memory.state_list.insert(state.id, state);
+                    }
+                    MemoryMessage::DeclareDead(id) => {
+                        
+                        // Declare the requested elevator dead
+                        memory.state_list.get_mut(&id).unwrap().timed_out = true;
                     }
                 }
             }
