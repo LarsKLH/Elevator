@@ -36,7 +36,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
                     recv(floor_sensor_rx) -> a => {
 
-                        println!("New floor received, checking whether or not to stop");
+                        //println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.unwrap(), my_state) {
                             // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).unwrap();
@@ -48,33 +48,30 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                     }
                     recv(cbc::after(Duration::from_millis(100))) -> _a => {
 
-                        println!("No new floor received, refreshing");
+                        //println!("No new floor received, refreshing");
                         thread::sleep(Duration::from_millis(50));
                     }
                 }
             } 
             elevint::MovementState::StopDoorClosed => {
-                println!("Stopping and closing door");
-                //  #Determine next direction using should_i_go and send to memory
+                //println!("Stopping and closing door");
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
             }
             elevint::MovementState::StopAndOpen => {
-                println!("Stopping and opening door");
-                // #Change callstate to PendingRemoval in memory
-                // #Determine next direction using should_i_go and send to memory
+                //println!("Stopping and opening door");
+                // #Change callstate of the call to my current floor to PendingRemoval in memory    
+                clear_call();    
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
+                if going {
+
+                }
             }
 
             elevint::MovementState::Obstructed => {
                 println!("Elevator is obstructed");
                 // #Determine next direction using should_i_go and send to memory         
                 // dont allow for ANY movement until the obstruction is removed
-
             }
-
-            // #Questions for later: Should the elevator remember the last direction it was moving in?
-            // #Can obstructions occur both when in motion and when standing still (with or without open doors)?
-
         }
     }
 }
@@ -87,7 +84,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     let my_direction: elevint::Direction = match my_state.move_state {
         elevint::MovementState::Moving(dirn) => dirn,
         _ => {                                                            // This should never happen
-            println!("Error: Elevator is not moving. Defaulting to Up."); 
+            //println!("Error: Elevator is not moving. Defaulting to Up."); 
             elevint::Direction::Up                                        // Provide a fallback value
         }
     };
@@ -111,7 +108,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
         });
     
     if no_confirmed_calls_in_direction {
-        return true; // Stop the elevator
+        return true;                    
     }
 
     // Else continue moving in current direction
@@ -128,10 +125,10 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
     //          May need to use the distance function from the memory.rs file ??
     // # (Todo) Also needs to tidy up if statements to match statements and/or clean up number of cab_calls and hall_calls variables
 
-    println!("Checking if I should go");
+    //println!("Checking if I should go");
     let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
     let my_floor = my_state.last_floor;
-    
+
     // Check if elevator holds any cab or hall calls
     let cab_calls = calls.iter()
         .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
@@ -186,6 +183,14 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
         };
 
 }
+
+fn clear_call() -> () {
+    
+
+
+
+}
+
 
 
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
