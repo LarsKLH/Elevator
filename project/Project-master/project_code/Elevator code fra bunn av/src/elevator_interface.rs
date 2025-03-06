@@ -32,7 +32,8 @@ pub enum Direction {
 pub enum MovementState {
     Moving(Direction),
     StopDoorClosed,
-    StopAndOpen
+    StopAndOpen,
+    Obstructed // See spec, the oonly req on obstr. is that we do not close the door, we propebly need to ask about this
 }
 
 // TODO: add from and to for movement state and elevio::elev::DIRV
@@ -108,6 +109,7 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
             // Turn on light for now
             elevator.door_light(true);
         }
+        MovementState::Obstructed => {/* Do nothing, as per spec we must just make sure that the doors dont close */}
     }
 }
 
@@ -130,7 +132,7 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
 
 
 
-pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, elevator: Elevator) -> () {
+pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator) -> () {
 
     // Set poll period for buttons and sensors
     let poll_period = Duration::from_millis(25);
@@ -195,9 +197,17 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
 
                 // might be a bad thing too do
                 memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(floor_sensed)).unwrap();
-                // NEED to send to brain as this circumwent memory as of now
-                
                 //this is a hardware thing, if we cant trust it we cant trust anything
+                
+                
+                
+                
+                // NEED to send to brain as this circumwent memory as of now
+
+                // this might be a bad idea, as i think this open for a race condition
+                // if the memory is not updated before the brain tries to read from the memory
+                floor_sensor_to_brain_tx.send(floor_sensed).unwrap(); 
+                
             }
 
             recv(stop_button_rx) -> stop_button_notif => {
@@ -209,8 +219,10 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
             recv(obstruction_rx) -> obstruction_notif => {
                 let obstruction_sensed = obstruction_notif.unwrap();
 
-                todo!("we need to figure out how to do here")
+                // todo!("we need to figure out how to do here");
                 // add new move state obstructed that wil force us to do nothing, but check if obstr gets removed
+
+                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
             }
         }
 

@@ -139,15 +139,15 @@ fn should_i_go(my_state: mem::State) -> () {
     };
 
     // Check if elevator is obstructed, 
-    //#or maybe this should be done in the elevator_logic function so that the elevator does not move at all
-    let is_obstructed = my_state.obstructed;
+    //¤or maybe this should be done in the elevator_logic function so that the elevator does not move at all
+    let is_obstructed = my_state.move_state == elevint::MovementState::Obstructed;
 
     // Check if elevator holds any cab or hall calls
     let cab_calls = calls.iter()
         .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
 
     let hall_calls = calls.iter()
-        .any(|(call, state)| call.call_type == mem::CallType::Hall && *state == mem::CallState::Confirmed);
+        .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
 
     if cab_calls {
         // If there are cab calls, we should maybe start moving
