@@ -71,8 +71,11 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             }
             elevint::MovementState::Obstructed => {
                 println!("Elevator is obstructed");
-                // #Determine next direction using should_i_go and send to memory         
-                // dont allow for ANY movement until the obstruction is removed
+                let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
+                if going {
+                    println!("Moving again"); // dont allow for ANY movement until the obstruction is removed
+                }       
+                
             }
         }
     }
@@ -189,6 +192,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
 
 }
 
+// Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     let confirmed_calls_on_my_floor_with_same_direction: Vec<_> = my_state.call_list.clone()
         .into_iter()
