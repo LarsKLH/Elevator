@@ -6,7 +6,7 @@
 4. State looks to be somewhat structured, but consider how you would differenciate between tasks that are new but not colective confirmed(pending) and that are confrimed. Multiple states can ease the distingusje.
 5. The different datastructures seems overly intricate and intertwined. This is reflected on the multiple lines of code in for example local_networks file. Tip would be to look into #[derive(copy, clone, ... ) ]. 
 6. Usin tokio to split work onto fibers is somewhat tedious, consider using "crossbeam channels" ?
-7. 
+7. Is serializing and deserializeing nessecary for transmitting worldview? The worldview can be sent as a plain string.
 
 b9c3b571
 6
