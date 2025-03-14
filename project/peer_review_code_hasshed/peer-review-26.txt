@@ -20,7 +20,7 @@ b9c3b571
     - How do you confirm that other elevators have received an order to make sure it isn't lost? Right now there seems to be no verification of orders before they are completed. 
     - Also, how will you recover from a critical failure in one of the threads? I see that you have your watchdog, but it does not seem like any info is backed up right now. So given a panic in a thread, all the info used looks like it will be lost.
 - In conclusion: It is clear that you have a lot of work to do. I can see the outline of what you want to do, but the implementation is very lacking.
-- As for code quality, overall you would get a hard F from me. I should not need to work this hard to understand your code. It took me a long time to find out how you even wanted to communicate orders, and i have no idea what the broadcast functions even do currently as they do not seem to communicate with any other thread. Things that are missing should ideally be added as TODO! or at least explained in comments.
+    - As for code quality, overall you would get a hard F from me. I should not need to work this hard to understand your code. It took me a long time to find out how you even wanted to communicate orders, and i have no idea what the broadcast functions even do currently as they do not seem to communicate with any other thread. Things that are missing should ideally be added as TODO! or at least explained in comments.
 
 a37a0872
 5/6
@@ -56,4 +56,10 @@ It would be very good for readable if you did not have the main execution of a f
 
 337eedef
 8
-- 
+- The names of the functions are sometimes illogical, and make it harder to understand what they are supposed to do. The comments help, but are only a crutch.
+- The commenting is inconsistent. In some files they are almost too thorough, while in others (memory and network) they are lacking.
+- Almost all of the threads have the possibility to panic if the wrong type is sent through a channel. While what is send is controlled, the code would be more robust if this was handled without .unwrap.
+- If a thread panics there is no way to restart it as it stands, a watchdog would be nice.
+- Deprecated code should be removed, not just commented out.
+- There are several unneccesary let sentences used for copying. This would look cleaner if it was done in the function call itself. This would also remove the need for new scopes constantly.
+- Some functions seem ridiculously long (especially in sanity.rs), they should either be split up in subfunctions or simplified.
