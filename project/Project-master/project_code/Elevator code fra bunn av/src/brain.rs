@@ -15,7 +15,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 // The symbol # is used where the code is not yet implemented and needs to be done later, or i have questions about the code
 
 
-// The main elevator logic. Determines where to go next and sends commands to the memory
+// The main elevator logic. Determines where to go next and sends commands to the elevator interface
 // # (Todo) clean up references, clones and copies
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
 
@@ -73,7 +73,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 println!("Elevator is obstructed");
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
-                    println!("Moving again");
+                    println!("Moving again"); // dont allow for ANY movement until the obstruction is removed
                 }       
                 
             }
@@ -91,7 +91,6 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
         _ => {                                                            // This should never happen
             //println!("Error: Elevator is not moving. Defaulting to Up."); 
             elevint::Direction::Up                                        // Provide a fallback value
-            // this **might** cause a problem, will fix if it ever actually occurs
         }
     };
 
@@ -105,10 +104,10 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     }
 
     
-    // Check if there are no confirmed floors in the direction the elevator is moving -> stop
+    // Check if there are no confirmed floors in the direction of the elevator -> stop
     let no_confirmed_calls_in_direction = calls.iter()
         .filter(|(call, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
-        .any(|(call, _)| match my_direction {                   // #should maybe use .any() instead of .all() here
+        .all(|(call, _)| match my_direction {                   // #should maybe use .any() instead of .all() here
             elevint::Direction::Up => call.floor <= my_floor,
             elevint::Direction::Down => call.floor >= my_floor,
         });
@@ -134,19 +133,19 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
     let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
     let my_floor = my_state.last_floor;
 
+    // Check if elevator holds any cab or hall calls
     let cab_calls = calls.iter()
-    .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
+        .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
 
     let cab_calls_in_prev_dir = calls.iter()
-    .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+        .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
 
     let hall_calls = calls.iter()
-    .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
+        .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
 
     let hall_calls_in_prev_dir = calls.iter()
-    .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+        .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
 
-// Check if elevator holds any cab or hall calls
     if cab_calls {
         // If there are cab calls, we should maybe start moving
         // Move in the direction of previous call

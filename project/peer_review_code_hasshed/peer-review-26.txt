@@ -1,0 +1,9 @@
+0C25976E
+6+
+The README is copy paste chatGPT, which sets a bad first impression on your solution. Based on this and my walkthrough indicates AI generated code (AI inspired at best). Despite this I give some comments, even though I would make chatGPT do it, I do it myself.
+Nice of you to include flowcharts, one of the few reasons I understand your code. Some good comments, but suspect them to be AI generated
+Your naming sheme is nonexistent, or just not put much thought in (ie. world_view files, WorldView struct, what is happening in pub mod world_view {pub mod world_view} recurive mod??  )
+In "world_view_update, line 33-40" 
+State looks to be somewhat structured, but consider how you would differenciate between tasks that are new but not colective confirmed(pending) and that are confrimed. Multiple states can ease the distingusje.
+The different datastructures seems overly intricate and intertwined. This is reflected on the multiple lines of code in for example local_networks file. Tip would be to look into #[derive(copy, clone, ... ) ]. 
+Be consistent in language, either english (prefered) or norwegian.
