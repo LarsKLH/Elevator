@@ -27,7 +27,7 @@ a37a0872
 
 I find it very hard to give you a score as I find it simply insurmountable.
 
-You code seems to have grown incredibly out of control. Trying to follow the program flow is a mess of swapping between files, modules, and I cannot believe that it is even remotely possible to try to understand the code without Ctrl-click. I have spent upwards of 10 hours on trying to understand your code and I haven't even reached the main control loop. For reference I have appended a rubric with the amount of lines in your code, there is almost 3500 lines of rust code.
+You code seems to have grown incredibly out of control. Trying to follow the program flow is a mess of swapping between files, modules, and I cannot believe that it is even remotely possible to try to understand the code without Ctrl-click. I have spent upwards of 10 hours on trying to understand your code and I haven't even reached the main control loop. For reference I have appended a rubric with the amount of lines in your code, there is almost 3500 lines of just rust code, when removing all whitespace and comments.
 
 The fact that you import all functions and strucs directly makes it very hard to figure out where all the functions are coming from. It would be much easier to understand if you imported to an alias and used that instead. For instance 'crate::data_struct as datstruct' and then write like 'datstruct::CabinState' instead of just writing 'CabinState'.
 
