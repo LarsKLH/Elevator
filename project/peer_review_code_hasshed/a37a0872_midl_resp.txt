@@ -1,0 +1,30 @@
+a37a0872
+5/6
+
+I find it very hard to give you a score as I find it simply insurmountable.
+
+You code seems to have grown incredibly out of control. Trying to follow the program flow is a mess of swapping between files, modules, and I cannot believe that it is even remotely possible to try to understand the code without Ctrl-click. I have spent upwards of 10 hours on trying to understand your code and I haven't even reached the main control loop. For reference I have appended a rubric with the amount of lines in your code, there is almost 3500 lines of rust code.
+
+The fact that you import all functions and strucs directly makes it very hard to figure out where all the functions are coming from. It would be much easier to understand if you imported to an alias and used that instead. For instance 'crate::data_struct as datstruct' and then write like 'datstruct::CabinState' instead of just writing 'CabinState'.
+
+Is the logging module copy pasted from somewhere else? It seems to bee way to overkill for this kind of project, it is almost 600 lines. Why does it need to work over the network? Why don't you just print to the terminal where you want to use the logging module?
+
+The names of some functions are not really explanatory i shouldn't really have to go into the function to find out what ConnectionTransmitters::take_status() does.
+
+It would be very good for readable if you did not have the main execution of a function is not interlaced with the entire execution loop of a new spawned thread, see messages_channels().
+
+===============================================================================
+ Language            Files        Lines         Code     Comments       Blanks
+===============================================================================
+ TOML                    5           43           40            0            3
+-------------------------------------------------------------------------------
+ Markdown                5          303            0          209           94
+ |- C                    1           76           30           30           16
+ (Total)                            379           30          239          110
+-------------------------------------------------------------------------------
+ Rust                   31         4181         3439          115          627
+ |- Markdown             5           75            0           62           13
+ (Total)                           4256         3439          177          640
+===============================================================================
+ Total                  41         4527         3479          324          724
+===============================================================================
