@@ -76,7 +76,14 @@ impl Memory {
             state_list: HashMap::from([(ip, State::new(ip, n))]) 
         }
     }
-    
+    pub fn get (memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> Self {
+        memory_request_channel.send(MemoryMessage::Request).expect("Failed to send request to memory thread");
+        let received_memory = memory_recieve_channel.recv().expect("Failed to receive memory from memory thread");
+        Self { my_id: received_memory.my_id,
+            state_list: received_memory.state_list
+        }
+    }
+        
 }
 
 impl State {

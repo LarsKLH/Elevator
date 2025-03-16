@@ -42,15 +42,15 @@ fn main() -> std::io::Result<()> {
 
     // Initialize memory access channels
     // - One for requests, one for receiving
-    let (memory_request_tx, memory_request_rx) = cbc::unbounded::<mem::MemoryMessage>();
-    let (memory_recieve_tx, memory_recieve_rx) = cbc::unbounded::<mem::Memory>();
+    let (memory_request_channel, memory_request_channel_rx) = cbc::unbounded::<mem::MemoryMessage>();
+    let (memory_receive_channel_tx, memory_recieve_channel) = cbc::unbounded::<mem::Memory>();
 
     // Run memory thread
     // - Accesses memory, other functions message it to write or read
     {
-        let memory_request_rx = memory_request_rx.clone();
-        let memory_recieve_tx = memory_recieve_tx.clone();
-        spawn(move || mem::memory(memory_recieve_tx, memory_request_rx, ipv4_id, num_floors));
+        let memory_request_channel_rx = memory_request_channel_rx.clone();
+        let memory_receive_channel_tx = memory_receive_channel_tx.clone();
+        spawn(move || mem::memory(memory_receive_channel_tx, memory_request_channel_rx, ipv4_id, num_floors));
     }
 
     // Initialize motor controller channel
@@ -62,10 +62,10 @@ fn main() -> std::io::Result<()> {
     {
         let elevator = elevator.clone();
 
-        let memory_request_tx = memory_request_tx.clone();
-        let memory_recieve_rx = memory_recieve_rx.clone();
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
         let elevator_outputs_receive = elevator_outputs_receive.clone();
-        spawn(move || elevator_interface::elevator_outputs(memory_request_tx, memory_recieve_rx, elevator_outputs_receive, elevator));
+        spawn(move || elevator_interface::elevator_outputs(memory_request_channel, memory_recieve_channel, elevator_outputs_receive, elevator));
     }
 
     // Run button checker thread
@@ -76,9 +76,9 @@ fn main() -> std::io::Result<()> {
     {
         let elevator = elevator.clone();
 
-        let memory_request_tx = memory_request_tx.clone();
-        let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || elevator_interface::elevator_inputs(memory_request_tx, memory_recieve_rx, floor_sensor_tx,elevator));
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
+        spawn(move || elevator_interface::elevator_inputs(memory_request_channel, memory_recieve_channel, floor_sensor_tx,elevator));
     }
 
 
@@ -99,10 +99,10 @@ fn main() -> std::io::Result<()> {
     // Run sanity check thread
     // - Checks whether changes in order list makes sense
     {
-        let memory_request_tx = memory_request_tx.clone();
-        let memory_recieve_rx = memory_recieve_rx.clone();
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
         let rx_get = rx_get.clone();
-        spawn(move || sanity::sanity_check_incomming_message(memory_request_tx, memory_recieve_rx, rx_get));
+        spawn(move || sanity::sanity_check_incomming_message(memory_request_channel, memory_recieve_channel, rx_get));
     }
 
 
@@ -113,9 +113,9 @@ fn main() -> std::io::Result<()> {
     // Run State machine thread
     // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
     {
-        let memory_request_tx = memory_request_tx.clone();
-        let memory_recieve_rx = memory_recieve_rx.clone();
-        spawn(move || mem::state_machine_check(memory_request_tx, memory_recieve_rx));
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
+        spawn(move || mem::state_machine_check(memory_request_channel, memory_recieve_channel));
     }
     */
 
@@ -123,19 +123,19 @@ fn main() -> std::io::Result<()> {
     // Run Transmitter thread
     // - Constantly sends elevator direction, last floor and call list
     {
-        let memory_request_tx = memory_request_tx.clone();
-        let memory_recieve_rx = memory_recieve_rx.clone();
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
         let tx_net_config = net_config.try_clone();
-        spawn(move || network_communication::net_tx(memory_request_tx, memory_recieve_rx, tx_net_config));
+        spawn(move || network_communication::net_tx(memory_request_channel, memory_recieve_channel, tx_net_config));
     }
 
     // Run elevator logic thread
     // - Controls whether to stop, go up or down and open door. Sends to motor controller
     {
-        let memory_request_tx = memory_request_tx.clone();
-        let memory_recieve_rx = memory_recieve_rx.clone();
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        spawn(move || brain::elevator_logic(memory_request_tx, memory_recieve_rx, floor_sensor_rx));
+        spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx));
     }
 
     // Loop forever, error handling goes here somewhere

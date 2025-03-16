@@ -288,8 +288,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
         cbc::select! {
             recv(rx_get) -> rx => {
                 // Getting old memory and extracting my own state
-                memory_request_tx.send(mem::MemoryMessage::Request).unwrap_or(println!("Error in requesting memory"));
-                let old_memory = memory_recieve_rx.recv().unwrap();
+                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
                 let my_state = old_memory.state_list.get(&old_memory.my_id).unwrap().clone();
 
                 // Getting new state from rx, extracting both old and new calls for comparison
