@@ -103,10 +103,6 @@ impl State {
     }
 }
 
-
-
-
-
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv4: Ipv4Addr, number_of_floors: u8) -> () {
     let mut memory = Memory::new(ipv4, number_of_floors);
     
