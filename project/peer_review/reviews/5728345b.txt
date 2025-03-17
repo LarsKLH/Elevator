@@ -1,0 +1,9 @@
+Reviewer 1:
+8
+- The project seems well-structured and the modules are well separated. 
+- The module and function names are descriptive, making it easy to understand their purpose.
+- Comments are helpful in clarifying the data flow, particularly in request handling where it's not immediately clear. 
+- Moving hard-coded constants from “request_main.go” to a Types file would make sense as other constants are already located there.  
+- The “RunRequestControl” function is quite large. splitting it into smaller functions would make it easier to read, understand and debug. Same applies for the “RequestAssigner” function but I can’t really think of a way to make it simpler. 
+- Overall, the code is clear, with minor refinements needed for modularity.  
+

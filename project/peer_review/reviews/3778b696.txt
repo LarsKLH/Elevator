@@ -1,0 +1,10 @@
+Reviewer 1:
+7
+The code containts useful comments, but they should be consistent and in the same language.
+In fsm.rs, the "unsafe" keyword is used multiple times. By using "unsafe", you lose the benefits of rust's memory safety.  
+The code is mostly consistent when it comes to using PascalCase for enums and structs (except for the enum tcp_message), and the rest of the code is consistent in using snake_case.
+Prefixing the function names according to the module is unnecessary, because namespaces are used (for fsm).
+No global variables are used, which makes it easy to track states.
+The project seems to have a solid foundation with somewhat good structure, where features can be added.
+The code is difficult to read at times, because of many commented lines as well as some files that are not included (tcp_elevator).
+

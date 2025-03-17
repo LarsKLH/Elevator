@@ -1,0 +1,61 @@
+Reviewer 1:
+7
+• There is not a strong cohesion in the modules. It would be easier to understand the code if it was divided into smaller modules. It is hard to understand the purpose of the modules, and they seem to do several different tasks. This is especially true for the driver folder, which also contains the elevator algorithm.
+• Some of the functions are very big. This makes it hard to understand what exactly they do, and how they change the state. 
+• Many of the functions do not use parameters and return values, and rather modify variables outside their scope. The elevator instance and map of elevators are global, which could lead to race conditions. In addition, they are hard to find.
+• More specific names for variables would be easier to understand, in particular a, i, time1 and MyQueue. Some of the names for functions are also a bit unclear, e.g. openDoor() also closes the door, decideDir() does multiple things etc..
+• There are some very long comments, especially for the HRA() function, where there is a list of the steps of the function. If this function is split up based on the steps, this would not be necessary, as the function names would explain the steps themselves. There are also many unnecessary comments from the given resources, that seems like you have forgotten to delete.
+• Some of the abbreviations are hard to understand, especially hra.
+• Some of the type declarations are written multiple times, both in the config.go file and the elevator-io.go file
+
+Reviewer 2:
+8
+1.Global variables:
+From Anderss slides on code quality he says we should avoid having shared variables. 
+You use a lot of those. We would recommend returning the variables in the function and assigning them in the driver.go function instead of having a reference as argument.
+In the config file you also define some global variables which can make it harder to seperate testing the code functionality from the data.  
+2.Confirmation:
+Another thing that could be helpfull when testing packetloss is having confirmation for every order taken before setting the lights. We cant see any code for connection loss, but 
+from reading the code i cant see what will happen to the cab requests of the elevator when connection is lost and regained. 
+3.Variabelnames:
+The names you have chosen is very clear and understandables. It is easy to follow the code and we were not suprised by any of the functions by the functionname. 
+The only generic name we found was time1 in the doorOpen function. It could be changed to doorOpenDuration f.ex.
+4.Main function: 
+We got feedback from the teaching assistant that the main function should not hide a lot of the functionality. and was guided to put a lot more inside the main function that just running some goroutines. 
+we would suggest you to look into it and maybe ask the teaching assistant yourself if its necessary to change it or not. 
+5.This is very minor bur reachedFloor function is not used
+6.openDoor as a goroutine:
+Is it necessary to have openDoor as a goroutine? We cant see where the routine gets closed, so you will potentially have a lot of rogue go routines. Which is unfortunate.
+It is also unclear what will happen if there are several types of requests on the same floor by the same elevator. Will several goroutines start? 
+I would recommend closing it.a
+for i := 0; i < config.NumButtons; i++ {
+		if queue[config.ElevatorInstance.Floor][i] {
+			removeOrder(config.ElevatorInstance.Floor, i)
+			elevio.SetMotorDirection(elevio.MD_Stop)
+			go openDoor()
+			break
+		}
+}
+4.Easy code:
+You have very easy and understandable code. We could easily follow each step from the main function to the execution. Good Job!
+
+Reviewer 3:
+7
+- Main: Most of the main logic appears to be inside driver.go. Some logic should be added to handle initialization between floors.
+- Driver: Consider moving the FSM logic to a separate folder for clarity.
+- Network Recommendations: Make small and modular networking functions like “sendUDP([]byte)” and use it as building blocks in other functions to create specific sender functions. This way you keep your code modular. Have a clear structure to your messages. Since you can only send byte slices, structs and messages must be serialized into []byte before sending. Make functions for this and put some thoughts into how the serialization should happen. We went for binary encoding. Consider having a “packet” struct so you don’t need unique serialization functions for each of your type structs. Abstract all networking away in modular functions, which you then call from your elevator main.
+- Driver: Obstruction logic is missing. Consider moving the FSM logic to a separate folder for clarity. Also, avoid creating unnecessary modules—evaluate whether a package truly needs to be a separate module. decideDir() does not take arguments, and its function is a bit unclear. It appears to modify a struct inside the config package, but the intended behavior is not obvious. Calling openDoor in a separate goroutine may not work as expected. The door should halt other actions while open, but this might not be achievable from an isolated goroutine.
+- Config: The config.MyQueue variable name is a bit vague. Does it store all orders or only this elevator’s orders? Consider renaming it something like LocalOrderQueue or GlobalOrderQueue for clarity. Additionally, it seems like you are going for peer-to-peer, but some questions should be addressed: How does an elevator detect when another is disconnected or dead? How does an elevator recognize its own disconnection? When and how is a worldview outdated? How are elevator IDs assigned to ensure uniqueness? Also, config isn’t a very descriptive name for this package. 
+- Effective use of channels and goroutines.
+- Enhancement: Improve modularity and overall structure of the project. Folder and file names should be more descriptive. Example: In the driver_go folder, you have both “driver_func.go” and “driver.go”, both of these have the package “driver”. The driver package has both hardware control and decision logic, and should be separated. 2. Ensure functions intended for external use are capitalized. 3. Enhance error handling—detect and restart failed network connections when necessary. Consider using fmt.Errorf() to create custom error messages for easier debugging.
+
+Reviewer 4:
+7
+The decideDir()-function long and handles a lot of conditions. We see that you have opted for writing your own logic for deciding the direction of the elevator. This has resulted in your large decideDir() functions, that along with deciding direction, also starts the motor. We would like this to be separated into several smaller functions (maybe utilizing the logic in the handout code, choosedirection and setmotordirection).
+The state machine within the driver-go module is very readable! 
+Bad syntax within the state machine. The channels do not have to be read onto a variable a. They can be read directly onto the variables, or just by an <- directly into the case.
+Good modularity. It is easy to understand that this project utilizes a peer-to-peer solution with a cyclic-counter (SyncHallRequests). However use of global functions across modules like UpdateQueue() is not standard.
+Remove unused functions and copied files like duplicate readme.md’s etc from the code. 
+The global variables within the config module are accessed by all the other modules. This might lead to race conditions without thorough synchronization? We suggest that you share data between modules utilizing channels, for example sending a payload from the driver to the assigner updating it on the given elevators current floor, state etc. instead of both modules trying to access this information in the config.
+Your code is relatively good, however due to the lack of completeness it is hard to determine how the project will end up looking. We would advise you to keep ensuring that the good modularity is upheld when implementing the rest of the project.
+

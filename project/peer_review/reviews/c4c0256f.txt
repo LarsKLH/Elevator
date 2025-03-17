@@ -1,0 +1,31 @@
+Reviewer 1:
+7
+The main contains almost nothing and offers almost no useful information about the rest of the code. There are 2 other “main” files called “request_main” and “elevatorMain”. It is hard to understand why there would be 3 files called “main” and why the 2 other “main” files start the threads while the main.go file is mostly empty. The project also contains two main() functions one in main.go and one in elevatorMain.go this will not work with go’s single entry-point rule. The elevatorMain file should in our opinion be converted to a FSM file and the main features moved to the main.go file.
+The project has no clear acknowledgment system that confirms if an elevator has handled a request. Request states are tracked (NEW, ASSIGNED, COMPLETED), but there is no verification from other elevators that it has been handled. Our suggestion is to implement a confirmation message system of some sort, ensuring that once a request is completed, all elevators know about it. 
+In elevatorMain there are several references to functions in localController, but the parameters used when passing the function is not equal to the definition done in localController. One example is onRequestButtonPress which needs three parameters, only receives two parameters when being used. 
+Each module looks to be dealing with one subject. This is good, but we don't understand why there is a need for three “types” files and four “requests” files. It could be a good idea to combine some of these files. 
+Positive: The project uses mutexes to protect shared state variables, ensuring that concurrent reads and writes do not cause race conditions. 
+The project looks like it is for the most part structured in a way where there is one module with a switch case for the code and a second module with all the functions that is needed for this switch case. 
+The comments and names of the functions and variables are good and help the reader understand the code. 
+
+Reviewer 2:
+8
+- Good modularization and division of responsibility. The code is split into multiple packages and files, making it clear and easy to navigate. Each file has a well-defined responsibility, making it easy to understand what each part of the system does.
+- Avoid "for-select case" in main files (request_main.go and elevatormain.go) to improve readability. Use main files to start goroutines and create channels. We see it as more structured to have the implementation in other files.
+- Good use of types and constants (elevatorTypes.go and hardwareType.go) makes the code more readable and easier to maintain.
+- Variable and function names are intuitive.
+- Clear information flow between modules and channels.
+- Extensive comments throughout the code, but at times, they only repeat what the code does instead of providing additional insight.
+- A configuration file could be useful for constants used throughout the project.
+
+Reviewer 3:
+7
+> The entry point don't indicate in a clear way what the system consists of. First of all, it exists two main functions in the project (one in a main.go file, and one in elevatorMain.go). The function in main.go (which is assumed to be the correct one) runs another function as a go routine, RunRequestControl, that seems like it implements the main functionality. This could be cleared up, and the main functionality (creating channels etc.) could be placed in main.go
+> Creating help-functions could reduce the length of some switch case, specially in RunRequestControl. It is a bit harder to follow because it is so long.
+> The majority of the code inside each function is easy to read and seems well written. The naming is also mostly good.  
+> Overall good commenting and it helps a lot with the readability.
+> It had been easier to see what packages were implemented if there was one folder for each package, and that they were not nested in the way they are. 
+> The channels for sending and receiving request makes it easy to understand the flow of the information between modules. 
+> Most functions are pure, and it is easy to read what they does.
+
+

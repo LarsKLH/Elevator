@@ -1,0 +1,52 @@
+Reviewer 1:
+8
+    • Consider putting some parts of the code inside a function, for example the code in main() from line 65-79 and 81-85
+    • ElevatorStatus and Message has predetermined number of elevators, and is therefore not scalable.
+    • ID is hard coded in multiple places, when changing IDs you would have to manually write the ID in all relevant places. This is also the case for the number of floors, which could be a variable.
+    • Should explicitly write a comment when code is taken from project resources.
+    • Unnecessary use of comments repeating what the code does.
+    • Logic implemented for ResourceManager is unclear. fsm.Elevator.Requests set equal to output in line 210, and then set to true in line 211.
+    • Global TimerActive variable violates encapsulation, should be local.
+    • Easy to understand and navigate the code, well written and structured neatly.
+
+Reviewer 2:
+8
+The code quality is high, and the project is easy to navigate. The README provides a clear overview of the modules but lacks details on how they interact. 
+It is easy to see where the elevator and IP address are set, but following a request from a button press through the system requires deeper insight into all the modules. A diagram illustrating this process could be valuable.
+The project is well structured, with modules that have clearly defined responsibilities. However, the resource module is quite large and could benefit from being split into smaller, more focused components. It is hard to understand the network module, since it consists of many files. 
+Function and module names are generally descriptive, though the resource module’s name does not clearly describe its purpose. A more specific name could improve clarity.
+Error handling appears to be incomplete, with missing logic for handling unforeseen scenarios (like elevator failures or unexpected system states).
+The code is well-commented, with concise and informative explanations that enhance readability.
+The system can detect when an elevator loses connection, but it is unclear whether this results in automatic reallocation of tasks to other elevators or a reconnection mechanism.  
+
+
+Reviewer 3:
+9
+Very nice with a well structured README!
+We are easily able to get a brief overview of how the project is structured, with all modules listed with functionality.
+The README contains a how-to user guide, which is crucial for projects which should be maintained over time.
+The README also contains how to do the argument parsing, which is a clean way to do this.
+For production code, it is very normal to use .env files, which is something you could consider.
+However, your detailed user guide makes the process perfectly fine.
+The group has listed a roadmap in the README which makes the "missing" components easy to track.
+The packages are well structured. The packages elevator, messageProcessing, resource_manager, timer and bcast is well documented.
+The structure is very good in the other packages, but a lack of documentation makes it somewhat harder to read for an "outsider".
+Consider putting the same documentation effort into the other modules.
+The group seems to be following best practices with regards to project structure, which make the code easy to navigate.
+All packages are well sized, modularized and easily readable.
+The use of variable names is good, which also makes the information flow understandable.
+In general, the structure, use of variable names, packages names, etc is very good.
+I find it hard to find any obvious missing pieces, and think this is of extremely high quality!
+As mentioned above, consider the use of elevator specific .env files, and consider documenting the packages mentioned above.
+I cannot see any reason to give you a score lower than 9. Great job!
+
+Reviewer 4:
+9
+README-filen er grundig og godt forklart, og gir en tydelig oversikt over systemet og dets struktur. Modulene er logisk inndelt, noe som gjør det lett å forstå hvordan de ulike delene henger sammen. 
+Variabel- og funksjonsnavn er beskrivende og konsekvente, noe som bidrar til en ryddig og lettlest kodebase. Bruken av mellomrom og innrykk er gjennomført på en måte som øker lesbarheten. 
+main.go er relativt omfattende og kunne muligens ha vært delt opp i de andre modulene for å gjøre koden mer oversiktlig.
+Kommentarene er presise og gir akkurat nok informasjon til at koden blir enklere å forstå uten å være overflødig. 
+Implementasjonen av testfunksjoner er en styrke, da det viser at gruppen har tenkt på testbarhet og kvalitetssikring av koden. Dette bidrar til et mer robust system.
+Det er ingen unødvendig kompleksitet i hvordan funksjoner er strukturert. Koden er logisk oppbygd og følger en intuitiv struktur, noe som gjør den enkel å lese og forstå.
+Programmet kunne hatt mer omfattende logging av viktige hendelser for enklere feilsøking. Logging av nettverksfeil, tapte meldinger og uventede tilstander ville gjort systemet mer pålitelig.
+

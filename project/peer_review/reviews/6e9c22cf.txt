@@ -1,0 +1,55 @@
+Reviewer 1:
+7
+-In general, you have commented out warnings and therefore miss out on the help warnings provide. Rather than doing this, adapt to how rust want you to write variable and component names. 
+-All driver functions should be moved to a separate file to avoid cluttering. Alternatively, elevio can be included directly. 
+-Consider including everything in the lib-file instead of in a mod.rs using pub mod modules{*pub mod module_1 * pub mod module_2 etc.}  
+-Consider renaming some functions to highlight what it does rather than what the return is,i.e best_to_worst_elevator, best and worst on what? Could be sort_elevators_by_cost. 
+ Also cancel_order should be completed_order. 
+-Consider making a rule for selecting which elevator should be master to avoid race conditions that are present in the current solution. We are assigning elevator numbers. 
+ From your tests and the Elevator.ID element, it looks like you are going to too. This can be used to decide which is master, 
+ avoiding any problems with race condition handling, (We suspect there is a logical error in your handle_multiple_master function)  
+-The tests are readable and seem useful, but should be moved to separate file 
+-With no main file or run_elevator/run_master file it is difficult to tell how the different functions interact with each other and what dependencies there are. 
+ It seems like the code has been made by different persons, not thinking about the unity. 
+-A role enum has been implemented, but it is unclear how it will be used, and how the program will switch between the different roles.
+-There is very little communication between modules. It is therefore difficult to know how they would be implemented together, and how they are supposed to communicate.
+
+Reviewer 2:
+6
+General: The system is in an early stage of development. It lacks clear order handling, failure mechanisms, error recovery, structured communication, and proper elevator coordination, making it difficult to understand if the system will function reliably at scale.
+Network communication: The UDP communication module is well-structured and includes mechanisms for handling packet-loss, and verification of successful message-transmissions.
+Tests: The large number of tests makes it easy to catch errors. However, the tests could benefit from being placed in separate modules/files so that functionality and tests can be easily distinguished.
+Modularization: The overall structure is easy to understand and there are few dependencies between modules. However, the Elevator module is extensive and includes logic for setting lights, listening for button presses, and controlling the elevator. It could benefit from being divided into several sub-modules. (e.g. "elevator_state_machine/elevator_controller" for elevator movement, "elevator_io" for hardware I/O communication, "queue" for order-handling and "tests" for test functionality)
+Single-elevator control logic: The current control logic and sort-queue function does not guarantee that all orders will be served. Instead of always prioritizing calls on the low floors, you should implement an explicit direction-based state machine. It should complete all orders in its current direction, before it switches and serves orders in the opposite direction. 
+Order handling: The structure of sending and storing orders as simple u8 floor-variables is problematic, since you cannot differentiate between cab and hall calls. This can lead to problems with maintaining the button-light contract because you must confirm all call-types upon completion of an order.
+Order assignment: The order assignment logic is a decent starting point, but it would benefit from also considering the call type. However, you should adjust the structure of the order-assignment to use the provided cost-functions.
+Network failure: The strategy for handling a master going offline is good, but the suggestion to reboot the program in the event of multiple masters seems unnecessary. There is no provided strategy for the master detecting a slave going offline. A possible solution is to have all slaves send a periodic heart-beat signal, allowing the master to detect its absence.
+Comments: Review if all comments are informative, and not a repetition of the code. In general, many comments appear to be unnecessary.
+
+Reviewer 3:
+8
+Top-level entry points: The initialization function in the elevator module effectively establishes a connection and sets up important functionalities. However, the system does not seem to have a clear init module, and looking from the outside it hard to se what threads and classes that are initialized. I give this a 6/10.
+Module-architecture “outside”: from the outside it looks like your modules are trying to handle maybe too much by themselves and I would consider spilling the master and slave module into several modules working together, it Is somewhat hard to see how these modules are supposed to work together or how they interact from the outside. However, the modules seems to do their jobs. I give this 6/10.’
+Module-architecture “inside”: The functions are quite pure—some of them have side effects like UDP communication, this in not optimal. This makes testing harder and reduces clarity. However, the logic in each function is clear and the functions themselves are clean.  I give this 8/10.
+Testability: As opposed to having for example a module to handle all network communication, this code does not seem easily testable. This is because of the complicated structure of each module, however some of the functions themselves are testable and I give this a 5/10. 
+Interaction between modules: For a clear and structured project its beneficial to have all the modules be kind of like a function, so that when looked upon from the outside the only thing that is important about the module is the input and output. You don’t really have your project set up this way but rather have more complicated modules when looking in from the outside, therefore I give this a 5/10. 
+Commenting/useful naming: Your naming and commenting is on point, it’s easy to understand what the functions are meant to do and why they act like they do. I give this a 10/10.
+Gut feeling: you have understood the project and its difficulties; however you don’t seem to have broken the problem at hand into several small problems that can be put into modules, rather you have tried to solve the entire problem in one big swoop. I believe you can get this to work, but you may stumble upon some unexpected difficulties because of the lack of testability in your sub-systems. I give this a 7/10.
+
+Reviewer 4:
+6
+* Awesome to see that this group has implemented tests! Keep going.
+* Nice predictable and readable documentation on top of the files, and separator-line down the files.
+* Lots of half-written code and the code lacks a main loop. Also, there is little information regarding what they are trying to do; except for a master-slave configuration and confirming orders in some way by sending acks. This makes it really hard to critique the code's intent. They should focus more about getting single things done.
+* The functions are nicely laid out and kept simple. Good for readability.
+* The constants in line 44-50 in elevator_2.rs should be put inside enums for readability.
+* The udp.rs is nicely structured in regards to the structs in the top easily laying out the how the messages look like.
+
+Reviewer 5:
+8
+- Good modularization and structure – The project is split into logical modules (elevator.rs, master.rs, slave.rs, udp.rs), making it easy to navigate and extend.
+- Master-Slave synchronization approach is well thought out – Even though it’s not fully implemented, the idea of having multiple masters in sync is solid. Once the missing parts (backup handling, edge cases) are added, it should be robust.
+- Good attempt at unit testing – There are test cases, though they could be better organized in a dedicated examples/ folder as Rust suggests, to separate test logic from the main code.
+- Commenting needs improvement in some modules – elevator.rs and poll.rs have very few comments, making it harder to understand their roles. master.rs and slave.rs do a better job, but still, a bit more clarity in function descriptions would help.
+- README or documentation missing – The project lacks an overview document that explains the interaction between modules, setup instructions, and architecture decisions. Adding this would make it easier for others to contribute or understand the system quickly.
+

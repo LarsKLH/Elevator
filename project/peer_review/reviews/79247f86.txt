@@ -1,0 +1,43 @@
+Reviewer 1:
+8
+The main idea of how you want to solve the problem is clearly and well explained in the README file, but it’s not as obvious from the entry point (main). The project and its structure should be understandable without a good README file. 
+The main function could with advantage be shortened or structured in a better way. It is time consuming trying to understand what exactly is happening from start. To improve clarity, consider structuring main.go so that it primarily initializes the system and then delegates functionality to higher-level modules/packages. Moving i.e. event handling into a separate package and function would make main.go better reflect the system’s structure.
+Beyond the entry point (main.go), the project is well structured and divided into reasonable packages (elev, network ++), aligning well with the parts needed for the project. Great!
+It is clear from the code that the group wants to utilize go's built-in functions, and seems to be successful doing so. 
+Some of your function names does not completely align with their functionality. For example, the MoveElevator()-function, as highlighted in your comment "Move elevator to floor, set order and lamp", does other things than just "moving" your elevator. 
+Your commenting style is great and makes the code easier to understand and follow along. 
+Overall, it looks like you have implemented functionality for all the key parts of the project. Great work!
+
+Reviewer 2:
+9
+All goroutines and channels are initialized in the network file instead of main, improving clarity and maintainability. Functions like InitElevState and InitDriver set up the elevator state and driver first, returning channels for inputs, ensuring a clean and efficient system. The readme file clarifies the system’s design and its peer-to-peer structure.
+Each module is clearly defined with a single task, ensuring separation of concerns. The folder structure reflects this, and public interfaces prevent unnecessary complexity or overlap. HandleHallOrder, for example, processes messages correctly without interfering with other elevators.
+State changes, such as elevator position, direction, and active orders, are managed by dedicated functions to minimize shared state and concurrency issues. Localized states ensure clear ownership and prevent race conditions.
+Functions return values instead of modifying external variables, reducing side effects and improving maintainability. The code structure is clear, with logical separation and descriptive variable names to enhance readability.
+I would consider making a function and putting the updating of networkPeerUpdate inside its own module so it doesn’t take up space in main, as it does now. 
+Tracing the flow of information is well-implemented. They use slog.Debug, which is useful for tracking state changes. Looking at the network communication for example, it is clear that when reconnecting to the network, network.HandleSyncOrders ensures order synchronization, including cabin orders if necessary.
+The flow of information is mostly unidirectional. When a channel receives data, the necessary parameters are updated, ensuring a clean, structured flow without unnecessary back-and-forth communication.
+Gut feeling: 10
+
+Reviewer 3:
+7
+-The main-file is small and that is good.
+-It is somewhat unclear to see how the inputs and outputs are connected in this code. 
+-I dont think it is wise to call moveElevator inside the network module. These things should be separated for readability and scaleability and to have control over who can directrly control the elevator (outputs).
+-It is unclear how the elevator receives orders from other nodes. I think you should rework HandleHallOrder.
+-The type package is very good. Makes the program more dynamic and easier to expand.
+-You should aim to separate the execution of orders, assignment of orders and distribution of orders into different packages.
+-You might want to use channels to connect execution of orders and receiving orders, maybe like "chan orderCompleted" "chan receivedOrderFromDistribution".
+-When a button is pressed you use moveElevator directly if it is a cabCall. Cant this lead to issues? Is it possible that the elevator dies while trying to serve the order and is unable to send the backup to the other peers?
+-The network package is very large. You should separate it into more packages. E.g. assignment, distribution and network. Where network contains all the broadcasting and receiving and sends this via channels to the other packages. 
+-The variable and function names are good and informative.
+
+Reviewer 4:
+8
+- The project is divided into logical modules with good separation of responsibilities, making the code easier to understand.
+- Variables and functions have clear and descriptive names, making it easy to understand what each function does without needing to read the implementation.
+- There are few global variables, and shared resources are encapsulated where possible.
+- While some files contain short comments, there are several places where documentation is missing or could be more explanatory (cost_function.go). Improving this would make the code easier to understand.
+- Most functions have a clear and well-defined responsibility, such as GetFloor(), SetDoorOpenLamp(), and shouldStop(). This follows the Single Responsibility Principle, making the code more readable.
+- The code follows a consistent style with proper indentation, uniform spacing, and coherent naming conventions.
+

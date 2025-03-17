@@ -1,0 +1,39 @@
+Reviewer 1:
+9
+- Very well organized modules, good description in readme. Could use a diagram that shows flow and structure between modules though.
+- Since network.go is blank you're probably currently working on implementing some more things. If you haven't done it already, you're missing handling if the master disconnects.
+- The main for loop (in fsm) can be replaced by goroutines for each module that together implement its functionality.
+- Could consider moving fsmRun into main, or move the other functions in the fsm file to a different one. These functions aren't on the same "level" as the fsmRun function, which acts as the main function.
+- Good naming for both functions and variables.
+- Seems to have good flow between modules, with flow in mostly one direction.
+
+Reviewer 2:
+8
+- Comments: some unnecessary comments to "explain" functions, e.g. don't need to comment that "RunMaster runs the master".
+- Coherence: most modules only deal with one subject which is good, however, the fsm-module seems to deal with many things, consider splitting it up.
+- Naming: most of function and variable name are desciptive enough that they help navigate code. Some (for example FSMRun()) is a bit unclear, but the comments then help explain. Also some one-letter variable names should be more descriptive.
+- Functions: the functions seems to only have one objective/goal each which is good
+- Overall Structure: The folder and package organization is mostly clear: each major concern sits in its own package. This separation helps keep the codebase navigable.
+- Understandability: most bodies of code are easy to follow, however of the local variables have one-letter names which makes can make it confusing (for example in imeToServeRequest())
+- Functionality: from the README and the modules, it easy to get an overview of the system and know where to look to find out how different parts are designed
+
+Reviewer 3:
+7
+1. Entry point file main.go is incomplete, making it impossible to analyze module-interaction and information-flow. 
+2. Good grouping of channels, makes it possible to implement a readable main.go function. A possible problem is wrong use of send/receive channels as the direction is not defined. 
+3. Initialized elevator struct in elevio-module, may require updated module names and description. Elevio is doing more than only interacting with hardware. Furthermore, it is not clear at this point why lights is a stand-alone module, maybe unnecessary. 
+4. Types-module: Good solution for using the same types/structs in different modules and avoiding import-cycles.
+5. The fsm-run function would need to be ran as a goroutine in main in order to assure non-blocking behavior. For clarity, the goroutines that now are being spawned inside, should be moved.
+6. The use of select cases in what could be considered as "module run" functions, makes the code modular whilst also contributing to readability.
+7. Good use of comments, contributing to readability.
+
+Reviewer 4:
+9
+- Main/FSM: It appears that the primary logic is implemented in FSM. However, main seems to only contain single elevator logic.
+- OrderHandler: Channels are used effectively, and the method for handling orders is clean. Orders are efficiently passed from the elevators to the master, waiting for responses and sending finished floor messages back to the master.
+- Master: Some considerations: It is important to decide how the master is chosen. What happens if the master dies? Should it have its own main function and run as a separate process? Should it be launched by an elevator? Since the master will run on one of the elevator computers, each elevator must independently determine which one should act as master. Otherwise, multiple master nodes could exist, defeating the purpose of having a single master. A possible approach is to randomize the selection or check IP addresses and assign the lowest IP as the master. Having a struct containing the states of all the elevators is a good idea. However, consider using a consistent state type for both master.go and fsm.go, as it would improve clarity and prevent inconsistencies in how elevator states are defined.
+- Hall Request Assigner: The implementation of the cost function essentially seems to attempt to do the same as the provided “hall request assigner” handout code. Instead of dedicating resources to implementing a complex cost function, it would be more efficient to utilize the provided executable, which is optimized for hall request distribution.
+- Network: No modifications have been made yet, but here are some recommendations: 1. Separate the network/conn/ package into distinct directories for better structure, similar to other parts of the project. 2. Ensure that all opened connections are properly closed, which needs to be taken into account during error handling. 3. Review how information is serialized and deserialized within broadcasted messages. Right now, information appears to be passed primarily through an ID string—consider whether a more structured approach is needed. 4. You have a very good starting point in the NetworkMessage struct in master.go and types.go. However, why do you have a peers.go package when the project seems to follow a master-slave structure rather than peer-to-peer, though it might just be a misleading name. 5. Also, reduce redundant transmitter and receiver functions to a single definition each to improve maintainability. 6. Lastly, consider abstracting network functionality away from the rest of the code. 
+- Good: Well-structured and modular code. Effective use of channels. Clean handling of communication between components. Efficient FSM implementation.
+- Enhancement: Seems to be some blocking calls in TimeToServeRequests that may cause the system to remain in IDLE unnecessarily. Error handling is somewhat limited. Consider taking some inspiration from your imported “localip.go” package when doing error handling. However, these are also lacking in return statements, meaning you risk multiple errors piling up. Consider using custom error messages with fmt.Errorf() to improve debugging and using “defer” to ensure resources are safely closed in case of an error return.
+

@@ -1,0 +1,38 @@
+Reviewer 1:
+8
+Inconsistent naming conventions. Make names more uniform by either using underscores or capital letters. Some names are also unclear regarding functionality (e.g., using names like a, p, etc., in ‘cases’). 
+Some functions (e.g., MakeHallRequests, CombineHallAndCabReq) are pure and return new data based on input, while others (e.g., UpdateMyElevator, InsertInOrderBook) modify global state directly, which can make debugging challenging. 
+Hardcoded values for buttons and floors should be replaced with constants/variables. 
+Slightly unclear structure. Many FSM functions and multiple nested switch cases. 
+Implementation of peer-to-peer with cyclic counter appears well-executed. A dedicated struct for different order states seems organized.  
+The code makes good use of channels and select blocks, which is both efficient and easy to follow for those familiar with the language. 
+Unnecessary comments and debugging prints. For example, a commented-out function in worldview.go and debugging prints in Requests_shouldStop. 
+
+Reviewer 2:
+8
+Can clearly see the modules initialized, divided and grouped with other relevant modules. 
+Can see that its a peer to peer system based on worldview and peer channels.
+FsmOnRequestButtonPress could be more modular as it updates states and decides direction.
+For hall_request_arbitration.go, functions are as pure as possible, depending only on inputs. 
+Variable names are easy to follow.
+Buttonpresses are one directional.
+Comments are mostly useful but inconsistent; e.g. in main there are alot of redundant comments, but in elevator.go they are more useful and used only when necessary, and in fsm.go there are too few.
+Names are mostly clear, some inconsistencies between use of camel/snake case. Elevator and Cab requests use mostly snake, and the rest use camelcase.
+
+Reviewer 3:
+8
+•Structure: it is reasonably modularized with single elevator, hra, order sync running independently in its own goroutine. Maybe its unnecessary to run hra and order sync in separate goroutines, since hra is so small? A better approach could be to run them in the same goroutine, that way the main loop contains of an executor (elevator), and distributor (worldview + hra). 
+•Fault tolerance: it implements a periodic heartbeat synchronization, which is good because we don’t have to worry about packet loss (the system fixes itself over time). It classifies orders in different states (unconfirmed, confirmed etc) and uses a cyclic counter to figure out which sync messages to keep. This works, but it could lead to some edge cases in different configurations. A different approach would be to use a monotonic counter (see Anders YT video called “Distribution”), because it only counts in one direction, which makes it easier to distinguish the most up to date message.
+•Code quality: The code is readable with meaningful naming conventions. In go, it is more idiomatic to avoid duplicate naming in packages and function names. Eg hallassigner.HallArbitration_Run could be called hallassigner.Run(), worldview.WorldView_Run() could be called worldview.Run(). Another suggestion is to try to avoid using handler functions. In select case statements the code is already modularized in the case statement, calling  eg FsmOnFloorArrival in a case statement “modularizes” it twice (see Anders YT video named "Code quality").
+•Final Thoughts: The code is well written, with fault tolerance being emphasized which is important for this project. Continue the good work!
+
+Reviewer 4:
+7
+- A lot of channels are located in the main function scope. Consider if you could limit some of their scopes to e.g. Single_Elevator_Run(). Consider running HardWareInit() from Single_Elevator_Run() to limit the scope of the drv channels.
+- Try to employ pure functions wherever possible. For instance, rather than passing a pointer to MarkAsDisconnected, try newWorld = MarkAsDisconnected(a.Lost, world), followed by world = newWorld. Another example: UpdateMyElevator(a, world) doesn’t make it clear what it modifies. Instead try myWorld.Elevators[myWorld.ID] = UpdateMyElevator(a) to make it very explicit what is modified.
+- The same channel is called elevToWorld in elevator and updatedLocalElevator in worldview and main. This makes it harder to follow the control flow of the program. Try to keep the same channel names when passed to another function or go routine. This would make it easier to follow the information flow. 
+- It’s unclear how you ensure the service guarantee. What do the order states in OrderBooks mean? Does a confirmed order imply it has been backed up and it’s safe to turn on the lights? Make it very clear how you ensure orders are backed up before turning on lights. It is also unclear what leads an order to change state in OrderBooks.
+- Are you backing up your cab calls before turning on the cab lights? If not, how do you ensure service guarantee for the cab calls? The cab calls are not tracked by OrderBooks, so you must ensure they’re backed up before they arrive on the updatedLocalElevator channel. Does this mean you leave the single_elevator responsible for making sure the cab calls are backed up?
+- Consider using more descriptive variable names. For instance replacing case a := “incomingChan” with a variable name that describes the incoming data. Also consider this for variables such as ticker :=time.NewTicker(1 * time.Second). More readable variable names would also let you remove some then superfluous comments. 
+- Consider replacing 4 and 3 with, for instance, N_FLOORS and N_ELEVATOR. This would make it easier to modify your program to allow for a different number of floors and elevators, in addition to making your code more readable (why are we iterating from 0 to 4? Because there are 4 floors).
+

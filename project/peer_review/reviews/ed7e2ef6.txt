@@ -1,0 +1,10 @@
+Reviewer 1:
+9
+driver-go has lots of different logic, not only the driver.
+Functions do mostly one thing, and not too much, very readable.
+Very maintainable networking.
+Mostly good, but 200 char functions definitions is long. (Nitpick)
+Some inconsistent variable naming. (Nitpick)
+Mostly self documenting code, sparing use of comments.
+Overall very approachable.
+

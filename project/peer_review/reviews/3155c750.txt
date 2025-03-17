@@ -1,0 +1,33 @@
+Reviewer 1:
+7
+Key points:
+    1. Good modular structure of the files
+    2. Obstruction-implementation
+    3. Elevator.go - Default cases in the Switch instances will never do anything and are redundant
+    4. Language could be more mature
+    5. Recursive TCP call. Use a for-loop instead, and put a "continue" in the error-handling. Infinite recursive calls might lead to stack overflow.
+    6. Listen_recive[sic!] and Decode: A function that exists only to call another function in a for-loop seems redundant, especially when it's the only place the other function is called.
+There are a couple of issues with the code itself, listed in the bullet points above. Current implementation of the obstruction seems at a glance to be too simple. Though without having tried it, it seems to currently just make the elevator pass a floor if it is engaged while the elevator is moving. Won't it send the elevator out of bounds?
+The comments in general need a pass to make it more professionial. Beginning a comment with "basically just…" and ending comments with "i think" reeks of uncertainty and unprofessionalism. Make sure the language is correct, also in terms of capital letters and punctuation. Self explanatory functions don't need commenting.
+
+Reviewer 2:
+6
+The overall folder structure is poorly organized. Several functions and variables are shared across multiple modules, making the code harder to maintain. You should make better use of Go’s concurrency features, such as channels, to share data instead of relying on global variables. For example, the FsmOnRequestButtonPressed() function currently handles both state transitions and communication, which should be separated into different modules. If too many functions require uppercase names, it may indicate an issue with module structuring.
+The entry point is poorly designed (main.go). There is no clear benefit to polling different buttons in main and then passing the data to FSM functions. Instead, convert the FSM functions into a module and initialize it in main. 
+Having two separate main functions is highly questionable, making the code difficult to understand and scale to N elevators.
+Not easy to determine whether this is a peer-to-peer or a master/slave system. How do you ensure that a order is handled/not lost?
+In general, several functions consist of deeply nested logic which makes some functions hard to follow. Ensure each function does only one thing.
+The project lacks a clear naming convention. For example, RequestShouldClearImmediatly and Transmitt_update_and_update_localHallRequests use inconsistent naming styles. Additionally, local functions start with lowercase letters while global functions start with uppercase. 
+
+Reviewer 3:
+9
+I cannot see if this is a master-slave or peer-to-peer system. Because of this, I also cannot determine how orders are backed up. However, the rest of the implementation is easy to find and go through.
+The file structure and modules are well-organized and easy to navigate. I understand your choices; some would separate at least the request logic into its own module.
+Overall, the naming is good. It's great to see that you are aware of Golang's uppercase convention for global instances. You might want to take a look at the naming conventions from the lectures—some people like them, others don’t, but now it has been mentioned. To me, it seems that the naming convention sometimes varies between snake_case and CamelCase/PascalCase. Is there a reason for this?
+The code is mostly easy to understand. Some variables have names like 'a,' but there are only a few, and they should be easy to fix.
+The modules have good coherence and completeness. Overall, each module focuses on one subject, but the elevator module is quite large and could potentially be split further. However, since it is already divided into different files, everything remains understandable and straightforward. To me, the assigner and orders functionality could be handled within the same module since they both deal with request handling, but I can understand why it was structured this way.
+There are few comments in the code. Personally, I would like to see more comments, as they would help speed up the understanding of the code. That being said, most of the existing comments are very useful. Try to stick to one language—since the code is written in English, the comments should also be in English. In my group, we have an English speaker who wouldn't be able to read non-English comments. While this may not affect you now, it is something to keep in mind for working in the industry.
+Gut feeling:
+I feel that this code is very good—it requires minimal input and is mostly easy to go through. However, don’t become complacent when you are so close to having something great. Write good comments and inform the reader not just about what the code does but also about the meta-level aspects (e.g., whether it is a peer-to-peer system). I can see that you have implemented abstraction well in your code, including public vs. private access, getters and setters, and appropriate use of pointers. Your use of goroutines and channels is also appropriate. Keep up the good work, and make sure to implement the backup functionality. 8 of 10 on general basis, nothing to do With peer-review scoring.
+I chose to give you a 9 because this is a good implementation with overall good code quality. The remaining features that need to be added or any changes that need to be made should not be a problem for you.
+

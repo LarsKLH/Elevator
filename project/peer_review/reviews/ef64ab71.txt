@@ -1,0 +1,34 @@
+Reviewer 1:
+9
+* Short and precise main, good!
+* Very readable code, the modules are intuitive and easy to follow.
+* Cool way of delegating orders, scoring system makes sense.
+* Very nice with the description of the different modules. There are a few spelling mistakes here and there, so it might be an idea to spell check before the final hand-in.
+* Generally very good naming of variables and functions. However, there are a few that can be improved:
+    *chooseElevator: might be more descriptive with chooseRandomElevator()
+    *union: it makes sense when you look at what the function actually does, but might be useful with a more descriptive name.
+    *Recive_buttons: it's written "receive".
+    *Network: it is clear that you have a p2p network when reading the function, but it might be nice to add that to the function name so that it is clear when only reading main.
+
+Reviewer 2:
+8
+Very organized and well structured go routines.
+Init function is very well written and easy to understand.
+In handleOrders.go: hardcoding the switching of directions when at top or bottom should not be necessary. It can be handled by using better logic in direction decisions.
+You should always use /defer/ when unlocking mutexes in case of an error.
+Function mergeOrders is very large and should, if possible, be split into smaller functions for better readability.
+Documentation is not good enough.
+There is too little error handling in the code.
+
+Reviewer 3:
+8
+• Main structure should probably be more core-shell based, but very easy to understand for people who know the project. (Also because their approach is similiar to Ours. )
+• Missing back-up and master takeover routine (?). Or I can't find it. 
+• Functions in delegate orders and handle orders seem purely logical.
+• Fsm functions have hardware interaction which is not desirable. Changing this would mean more core-shell apporach and deciding with only logical function.
+• In merge orders everything seems fine except suddenly functions about buttonlights appear. Understandibly needed since orders are merged, synchronized and lights turned on. To follow the same standard as the rest of the project they should be moved. 
+• For someone who did not write the code, traceability is genereally good. Usage of pointer to elevator object is sometimes difficult to follow. 
+• Can't find where delegated orders are broadcasted to each node.
+• Naming genereally good. Delegate-, handle- and merge orders might be a bit repetitive (nitpicking)
+
+

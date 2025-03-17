@@ -1,0 +1,28 @@
+Reviewer 1:
+7
+The submitted code is generally well-written. For the most part, it is well-commented, but elevatorFSM could benefit from additional comments.
+When it comes to variable and function naming, they are clear and well-chosen. 
+The code is generally easy to understand, except for elevatorFSM, where heavy nesting makes it harder to follow.
+There is no way to know if it is a peer- or master-slave-network.
+The code has good traceability, making it easy to find where things go
+However, the main issue with the code is the lack of indication that it is meant to be part of a network. It seems that only the provided code has been included without proper integration into the rest of the project.
+
+Reviewer 2:
+9
+- Elevator FSM is implemented as a double switch case. A possible modification is to use a State Transition Table (STT) or a function based approach where each state is represented as a function that accepts an event. The FSM then simply listens to events and dispatches any incoming event to the current state function. Whether this would be an improvement is subjective, but it may scale better as the number of states increases.
+- There is a separate routine for managing the door, but door-related events are listened to in other parts of elevator FSM. This makes the implementation seem a bit fractured. Would there be a way to either make the door handling a part of elevatorFSM? That might make the code easier to understand.
+- Documentation in the README file makes it very easy to get a high-level understanding of the system in short time. The explanation of the modules is concise and very well done. Including an illustration of the dependencies, e.g a class diagram, might make it even more informative. For modular code like this, the developer often includes a separate README for each module. This could be considered here as well, although it might not be necessary given the small size of the codebase.
+- I cannot see that the network module is initialized in the main.go file. Overall, it is a bit difficult to trace down where the network module interacts with the rest of the program.
+- Coupling between commonState and Elevator; commonState modifies Elevator's state directly. An idea might be to design communication between commonState and Elevator to work over channels instead, make Elevator "listen" to the commonState channel and handle state updates the same way as other events.
+- Functionality: It is made explicit that the system is peer-to-peer. It is clear how the acknowledgement functionality is intended to work. It is clear how order assignment is intended to work. The project re-uses functionality wherever possible, e.g. order assignment and elevio, which I think is a great design choice.
+- The documentation states that elevio was modified, but does not specify in what way. Given how elevio can be considered common software that other projects are also using, stating what changes were made would be informative.
+
+Reviewer 3:
+9
+Very useful commenting, helping to understand both flow and abbreviations in variable names
+Good coherence, as the modules seem to deal with only one subject
+The variable names ending with "C" are a bit vague. We assume this means channel, but it would be more obvious by only adding an h (eg. newOrderCh or newOrderChan)
+The flow of the code is easy to trace
+Good structure making it easy to know where to look for given parts of the system
+Consistency in convention for variable names
+

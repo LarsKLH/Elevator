@@ -1,0 +1,48 @@
+Reviewer 1:
+9
+Your project has a clear and logical separation.
+   - cmd/ is clearly defined for executable entry            points (elevator, elevatortester).
+   - internal/ neatly organizes elevator logic into distinct, cohesive modules (elevator, elevcmd, elevevent, elevstate, elevnet).
+    - External dependencies or helper libraries (libs/) are clearly isolated from the main logic.
+ You've effectively split the project into logical, independent modules, as each module focuses on clearly defined responsibility.
+Testing and robustness: you have included the use of test to test modules, which is good software engineering practices.
+For better readability it would be nice if you could provide a clear overview or diagram explaining module interactions and how data flows through the system. This would enhance maintainability and project readability.
+Clear Abstraction for Networking: Your networking module is well designed, abstracting lower-level details from the rest of the elevator logic. The abstraction simplifies handling network communication while keeping the implementation details hidden. This makes your code scalable as well.
+Each network module has a clearly defined role. Your networking, command handling, state management, and I/O logic are isolated from each other. This helps with maintainability, scalability, and easier debugging.
+effective use of concurrency patterns, such as goroutines and channels in Go. Your code leverages concurrent design, enabling asynchronous event handling, responsive network communication, and smooth elevator operation.
+
+Reviewer 2:
+7
+    • Hard to follow the code, however this might be because we have a lack of understanding of the included packages
+    • The go func() function in elevnetbroadcast.go could be a separate function to improve readability
+    • Module naming could be improved, for example the prefix “elev” makes it hard to read.
+    • Seems that the code is implemented with a C-like structure, with a lot of pointers instead channels.
+    • Hard to follow the information direction, as the structure is vague from an outside perspective. It’s also hard to understand how the modules communicate.
+    • Unclear why the functions in elevrequests belong to the elevstate, and in that case why those methods are in their own file.
+
+
+Reviewer 3:
+6
+- From main you cannot see any go rutines or channels beeing made/used. There is also a global variable named logger, which is not very informative. Immediate thoughts are what is a logger, and why do we run a logger?
+- Other than that you can see that an elevtor is initialized and broadcasted to the network and that there is a listening functin. It is not clear what structure the system is in or how the procedures work. 
+- There is also a seperate folder containing the same main file, but for testing? The main files are also located in a folder for control, which seems resonable. 
+- Internal looks from the outside to contain the implementation for the elevator, the control, constants, events and data handling, so all modules. I will point out that it is a bit odd to have a control folder and one interal folder, and then have all control implemented in internal. 
+- The Elevator creates an elevator full of threads, but the code seems a bit hard to expand if you wish to add a new thread you need to add it manually as threads are launched one by one. 
+- The code contains three main files, two are similar but in different folders (both folders in cmd) and one main file in the network folder in the end. It is very confusing reading the code and trying to figure out what to run and which functions are used. 
+- Looking through the internal folder there are a lot of modules for elevator, elevator control, elevator constants, elevator event, metadata, network, state, utensils and logger. I do not enirely see the differnece between all these modules and the functions in them. There are a lot of test functions but none testing the full system and not really easy to see what is tested and if there ever is any function testing the entire system. 
+- There is also a folder for elevator constants, yet there are more constants in elevatorcmd and they do not have an assigned type other than struct. 
+- In all there are also several files containing a newElevator, a start and a stop function. Which does what and why are they all called exactly the same? 
+- Elevstate seems to contain both the configuration of elevator states and an fsm for the elevator, this should maybe be separate. 
+- The elevutils seems to contain random functions, should be a bit more clean. 
+- Overall it is very hard to understand the code, reading the readme file helps a bit, but without it there is just way to much stuff going on. 
+
+Reviewer 4:
+8
+Readability and Go Idioms: main.go is easy to understand and the code overall demonstrates very good use of Go idioms!
+Background Task Handling: In many Go programs, a select statement’s default clause is used to handle “background” tasks whenever none of the channels are ready. This makes sense if you want to keep reacting to internal state changes; however, you can end up in busy-waiting if nothing else is happening. Alternatively, a timer-based approach could be used instead.
+Use of Libraries: Very good practice to have “libs”! But why duplicate code and not use it?
+Simplification of Subsystem Initialization: Use a helper for starting subsystems and then the “Elevator.Start()” which is orchestrating the concurrency for each subsystem. This would look cleaner by both reducing repetition and improving readability. It’s by no means wrong how it currently is, but simplifying it like this could make the code more maintainable.
+Folder Structure and Naming: Some folder choices seem redundant, e.g., “elevcmd” – it was difficult to see its purpose. Similarly, consider whether all folders prefixed with “elev…” are needed since they are already inside internal as well and the project is entirely about an elevator system. Also, “case val” in the select statement could be more descriptive.
+Configuration Management: It could be considered to have a single config package to gather configuration logic instead of it being spread across multiple locations.
+Testing and Reliability: Great job including both unit tests and integration tests, it really strengthens reliability! All in all, very well done!
+

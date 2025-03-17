@@ -1,0 +1,36 @@
+Reviewer 1:
+8
+Key Points:
+    1. Good overall structure, modularized well.
+    2. Having everything in the folder called "network" is counterintuitive, should be taken out.
+    3. Main is structured and clearly sets up the components and can clearly tell the communication. 
+    4. Huge sections of code commented out some places, should be removed if not used.
+    5. fsm.go: setting on all of the lights? Is commented on so know the group is aware
+    6. Inconsistency with comments on English and Norwegian, should be all in English. 
+Overall, the project demonstrates a solid grasp of concurrent programming in Go and a clear peer-to-peer design with master/slave coordination. With some refinements in structure (e.g. reducing global state and enhancing error management) and consistent documentation, the codebase should remain maintainable as the project scales.
+
+Reviewer 2:
+6
+Hello, it has been interesting to look at your code! However, it would have been easier to understand your vision if you had supplemented with more comments or a text explaining you plan. Anyways, we have given it a try.
+We would suggest you divide your files into different modules. Having all files in the network folder is both confusing and outright misleading.You should instead define separate modules, for example, separating the elevator from the network. Remember that you can define "Go modules"—this is one of the things that makes Go particularly well-suited for such projects.
+Your main is way too big. Why define the custom structs here? We would recommend moving them to your network module or a separate file of some sort. They definitely don’t belong in main. Make functions! Almost everything that happens in main() should exist in a different file in separate functions. Make functions such as initElevator() and initNetwork() that you can call upon instead.
+Good that you are commenting on what happens in your main function. But remember that a function with an explaining name would make many of those comments unnecessary. It is not clear to me why you are starting bcast.Transmitter and bcast.receiver multiple times. This seems redundant.
+Master. Having a folder named master, with a single file named master, with a single function masterElection() seems unnecessary. We assume that you plan on expanding this module, but is it not clear with what. Which other files are a part of this master module? How do you plan on interacting with your slaves? 
+The same can be said for your folder localIP which only consists of the function localIP(). This function should be moved to the module it belongs to. Timer: this is almost empty
+Config: It doesn’t really work how a config-file should. For instance, if you change numFloors in config it doesn’t update numfloors in elevio. You should probably use _numFloors as defined in elevio to make it coherent.
+Avoid global variables such as Masterid and network_connection who are defined in main.
+The function masterElection() changes the the global variable Masterid with a pointer, we would recommend returning masterID from the function instead, alternatively with mutex. This way your code would be more functional and you reduce the risk of unforeseen effects. Especially since you have a global variable Masterid and a MasterMsg.MasterID which can lead to trouble if you don’t have control of when you update master’s id. 
+Peers. It seems misleading to name your folder peers if you are implementing a master-slave network. For us it seems like the point of this module is to check for alive nodes on the network, maybe your name should reflect that. There is also a name interference with conn := conn.DialBroadcastUDP(port). 
+Be consistent! Do not switch between camelCase and snake_case or between Norwegian and English comments. Decide on a single convention. The most natural would be CamelCase since that fits with the elevio-code and english comments. 
+In general your code is definitely a work in progress where most of the code is unfinished. We wish you good luck with cleaning up your existing code and writing all the remaining parts.
+
+Reviewer 3:
+7
+The main.go file contains a lot of logic and switch cases that would be better fit in a separate file/function that can just be called from main. 
+To improve code quality, a suggestion would be to put port numbers into a config file instead of hardcoding it directly in main. 
+It is better code quality to make the functions in for example requests return parameters instead of directly handling the elevator which lies in another module. 
+Some global variables like Masterid gets modified in multiple places and modules, which can potentially create some issues.
+Some comments are good, and help the reader understand what’s going on, while others are a little confusing, eg. “Network connection is not what it seems”. 
+The MasterElection seems to be lacking some functionality, but this is probably going to be fixed later?
+There seems to be a solid one-way communication between modules, this is very good!
+

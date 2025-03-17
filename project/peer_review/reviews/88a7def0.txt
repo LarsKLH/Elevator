@@ -1,0 +1,50 @@
+Reviewer 1:
+8
+- Components: The code is well-organized into modules with clear responsibilities, but it could be improved by documenting how the modules interact in main.go.
+- Traceability: Uses asynchronous communication with chan, enabling efficient information flow. However, logging could be improved to better track request flow through the system.
+- Understandability: orderserver has an optimization algorithm for order distribution, but code comments are missing to explain the decision-making process.
+- State: Error handling is weak in elevatorio.go – network failures cause a panic, and a retry mechanism should be implemented instead.
+- Functions: Some functions, especially in orderserver.go and requests.go, contain long switch statements that reduce readability. Splitting them into smaller functions is recommended.
+- Dependencies: Channels are unbuffered, which may cause blocking if messages are not processed quickly enough. Buffer sizes should be considered.
+- Comments: Documentation is lacking in critical parts of the code. Comments should be improved in functions handling state transitions and order distribution.
+
+Reviewer 2:
+7
+- Comms:
+    - Doesn't send direction of the elevator
+    - Is this irrelevant to decide what elevators to take which order?
+- elevatordriver:
+    - Maybe consider a configuration file, instead of having multiple global variables in different files. Then all global variables can be in one place.
+    - Why is NumButtons and NumFloors variables? They are never changed, so they could be constants. 
+- elevatorfsm:
+    - Very describing function names
+    - Unnecessary to set all lights if only one should be changing? It is definitly easy way to ensure lights are correct.
+    - What is the purpose of the variable EverybodyGoesOn? Is it smart that this is global and can be changed by everyone? No security around the use of this.
+- healthmonitor: 
+    - It is not clear where the healthmonitor removes elevators it no longer communicates with.
+- models: 
+    - The global variables could maybe be included here instead?
+
+Reviewer 3:
+7
+1. Arguments
+Some functions take in a lot of arguments and the structure of the function definition makes it a bit hard to follow what is arguments and what is code in the function
+2. Models module/folder
+It might be nice to have all type definitions in one place, but it is just confusing when there are a lot of definitions outside the folder.
+Consider moving definitions to one place, or defining all types somewhere closer to functions they belong to.
+3. Repetition of code
+There is a lot of repetition of code in orderserver/algorithm.go and elevatordriver/elevatorfsm.go
+We see that some of the functions do the same logic, but use it to do different things. For example modifying an elevatorobject or returning som variable.
+There is no clear reason as to why two functions are necessary in all cases, so merging them to one function would make your code easier to understand.
+4. findOptimalRequests
+We would recommend having a look at the subjects github in project resources / cost_funs / usage example to see how to use the handed out request assigner
+Would also recommend maybe changing some names of functions or explaining better what is happening.
+What does "performInitialMove" and "performSingleMove" do? And what does it have to do with the request assigning?
+5. Nested functions
+The nested functions clear clearReqsAtFloor and performSingleMove make it unnecessarily difficult to understand what is happening.
+We can't see any places where clearReqsAtFloor is called with different functions as an argument. THerefore we don't see a reason for having it as an argument and not calling it directly. 
+The nesting itself could work, but we find it more complicated, especially with having one of the functions as an argument.
+Recommend defining functions seperately or maybe keeping them nested if it helps not having function as an argument.
+6. Code Quality
+The rest of the code (other than findOptimalRequests and the nested functions) is fairly self explanatory, and seem easy enough to understand.
+

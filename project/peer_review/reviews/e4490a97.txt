@@ -1,0 +1,30 @@
+Reviewer 1:
+7
+- The system is divided into multiple modules. A single Elevator, a networking module for peer discovery and an HRA. Each package has a distinct responsibility, this makes the structure easier to comprehend
+- Channels are used to connect components, and each module receives the channels it needs to communicate with others.
+- Each module focuses on a single subject. Channels, functions match their purpose.
+- The code is easy to follow, with descriptive function names. The logic flow for networking is generally understandable.
+- All changes to the global InfoMap happen in a clearly defined areas. That makes it easy to see exactly who made each change, which makes debugging simpler.
+- There is no excessive back and forth between modules. The top level coordination is mostly in Nettverk_hoved and HRAMain. This helps avoid circular dependencies or confusion.
+- Comments are present and typically useful. Some comments could be more standardized. The comments are both in norwegian and english.
+
+Reviewer 2:
+7
+Lack of documentation. No README file and few comments make it challenging to read through the code. 
+Poor naming conventions. Function names are in both Norwegian and English (nettverk_hoved). It is unclear what the converter function actually converts. Also, variable names like a and p are used in cases (e.g., in Elev_main). 
+Confusing setup of the network module as it contains conversion functions for HRA. For example, the FSM module should not handle order assignment if it is already managed by HRA. 
+Cab and hall requests should be defined as constants to improve code readability (instead of writing if btnType == 1, for example). 
+Some functions are difficult to read, especially requests_shouldClearImmediately. It is not easy to see what is being returned. 
+References a config file that is not included. 
+Simple and well-structured main function that sets up channels and runs goroutines. 
+
+Reviewer 3:
+7
+File Structure: The file structure is mostly clear and organized. The naming of files and functions is well-structured with some exceptions.
+README: Missing README file makes it difficult to launch the project. It's recommended to add a clear README that explains how to set up and run the project.
+Folder Naming Consistency: The folder naming for "Nettverk" is not consistent with the naming structure, especially since the folder inside it is named "network." This could be confusing for future users.
+Modifications to OnRequestButtonPress: Your modifications to the OnRequestButtonPress function are simple but well-implemented. If it works, it looks like you have achieved the functionality with only small code changes.
+Git Imports: In the file elev_algo_main.go, you import "elevator_io" from Git, even though the file exists locally. If there’s no specific reason for this, consider using the local version for better clarity and ease of use. Again, I was not able to run your main as it required a password to your git.
+Module Imports and Naming: In the fsm file, several functions from the "requests" module are imported, which is fine, you have kept the "requests_" names. Consider renaming it to better reflect its purpose and functionality or consider keeping "requests" as a module for better readability.
+Module Structure: Consider keeping requests as a module for better readability.
+

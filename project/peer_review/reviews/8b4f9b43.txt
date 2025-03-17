@@ -1,0 +1,10 @@
+Reviewer 1:
+8
+Unnecessary libraries and files are included (Project-Resources, go.mod, Makefile, etc.).
+There is no clear overview of the code, and package descriptions are inconsistent.
+Some comments are redundant, while others are useful. Avoid comments where the code is self-explanatory.
+The project structure is good, with clear naming conventions.
+Nesting is kept at a reasonable level, making functions easy to follow.
+Some Norwegian text is buried in the code/comments.
+Function names are generally good, making it clear what the functions do in most cases.
+

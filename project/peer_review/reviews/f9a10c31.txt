@@ -1,0 +1,36 @@
+Reviewer 1:
+8
+The project is well organized, with separate modules handling different tasks.                                   The finite state machine in fsm.go is clear and correctly manages elevator movement.                     The use of channels for communication between parts of the system works well.                                                                                              The system correctly find and removes inactive elevators using UDP peer to peer communication.                          The way state updates are handled could be more efficient, for example by using a timer instead of time.Sleep.                                                                                                                                        Using UDP broadcast is effective, but multicast might be a better option for reducing network traffic.    The group uses variable-names and comments that are easy to follow
+
+Reviewer 2:
+9
+You have descriptive functions names and clean code, the functions does what the names describes.
+File structure gives good overview and makes it easy to navigate in the project.
+You could have used go.mod files for each folder for easier imports of modules, then could have just imported "elevator" instead of "heisV5/elevator".
+Some functions are quite long -> splitting them could help with readability (ex. "ClearRequestsAtFloor", "main"), the same three lines of code repeated 9 times in succession in ClearRequestsAtFloor.
+Some unused functions and some functions have unused parameters, we found no references to some of the functions in elevator.go. (Might be a misunderstanding on our side.)
+Some functions start with capital letter but some start with lowercase.
+go func() {...} could have been a separate function -> so the longer functions could been streamlined (ex. "RunStateSynchronizer")
+In the config file you have defined numfloors and numbuttons, but still use integer values 4 and 3 in the code (magic numbers :) ), resulting in the system being less scalable.
+Global variables such a request matrix can initialized by a run_elevator function, to reduce global access to this element.
+
+Reviewer 3:
+9
+Good modularization, each module focuses on a single responsibility
+Descriptive names and comments make the code understandable, however adding some information to the README would help
+The main function clearly shows what threads and are being initialized and how they interact. 
+Good use of structured state objects (ElevatorState, GlobalState ...).
+Some use of global variables, such as in the fsm package where functions directly modify the global variable (elevatorState) instead of using parameters and return values, so they’re not fully pure, though the global state is clearly defined and easy to track.
+Overall it seems to be a robust peer-to-peer design with clear responsibilities and effective state synchronization.
+
+Reviewer 4:
+8
+-     Comments are cluttering everywhere, also English is appreciated. 
+-	We don't get any understanding of the overall system structure, a read.me, or figure would be appreciated. 
+-	It is unclear how the fsm and main communicates, both of them handle update of orders. In our opinion you should just move the fsm specific cases in main to the fsm when you have a main fsm running as well. 
+-	Since we haven't gotten a good overview of the system, the state synchronizer looks too large. If we had gotten a good overview of the system, it would have helped, but the file is large and does too much. It is hard to follow and hard to understand what everything does.
+-	The overall design is minimalistic and most of the time easy to understand. Some places it can be a bit too minimalistic and make it hard to understand. Not impossible, it just takes time when you don't have a description of the system. 
+-	The overall module structure is mostly good, most modules seem to only deal with one thing and keep the scope local. 
+-	Generally good naming of functions and variable names. They are written in a self-explanatory way, which makes it so that comments aren't necessary. In addition, there is good consistency with lower case and capital for public and private variables and functions. 
+-	The score is 8 because the stateSynchronizer appears to do too much. So, when expanding, this could become unmanageable. 
+

@@ -1,0 +1,43 @@
+Reviewer 1:
+7
+The main file was a bit long, but overall well structured. There are many logical operations if/else, within the main switch-case, which makes it harder to follow the logic. An improvement would be to make the main-function more concise, so that it is easier to get an overview over the code. For example, you could initialize all the channels through an initialize file or function. It is also not immediately clear why you have three stop channels and the function names HigherRankConnections and myRank is not immediately self-explanatory. 
+Generally good and clear function names, however it could be improved by clarifying the functionality. For example, when something is named “BackupInfo”. Maybe use, set_ or get_ backupInfo, or something similar. This could increase the readability. Function names like HigherRankConnections and myRank is not immediately clear. The same is the case for HRAready.
+It is very nice that you have a config file, which makes it easier to get a clear picture over general parameters. The number 1500 in masterchecks.ShouldKillMaster() in the main file, could maybe have been defined here, to make maintenance easier.
+Generally the modules deal with only subject, and are named appropriately, and it looks like most functions  deal with everything concerning the subject.
+You have a clear and well-organized folder-structure with Elevator, Network, and Master. It was a bit tedious to open every folder, which only included one file, but it is ok, as it makes your code easier to read in regard to packets etc. You could add a ReadMe file with general information about the system architecture and special design choices.
+Though the overall folder structure is good, there are some confusing parts too. Especially the difference between the Master folder and the Message folder within the Elevator folder. Here you for example have both an messageProcessing file within the Master folder, and a processMasterMessage within the message folder. The differences between these are not clear, and you should consider reorganizing some of your folder structure.
+Generally well-organized and clear comments as headers in the various files, especially in processMasterMessage. However, you should do some cleaning in regards to other comments, as they are both in Norwegian and English, and some are not that useful.
+Gut feeling: 6
+
+Reviewer 2:
+8
+- The code is reasonably readable, although it could do with some renaming (report.Report hurts the eyes). It is clear what model you are trying to create and the overall quality seems good. Here are some bulletpoints of possible issues that have or could arise:
+- MaxDuration being 2^63-1 will cause an integer overflow and will stop the program from compiling on architectures with less than 64bits. A MaxDuration of 1hr is a practical inf for this project.
+- I'm not necessarily convinced deep copies need to be made for all elements of the Elevator struct. ElevatorCase, LatestFloor, ID, Dirn, Behaviour are all thread safe. Access to and from the non thread-safe elements can be done with channels. I'm not sure this would improve efficiency, but it seems like a slight oversight to not take full advantage of Go's features.
+- All the DeepCopyX functions only perform shallow copies of the maps and slices. Copying by reference (ex: copy.Mapname = original.Mapname) only copies a pointer to the original instance. This invites race conditions, as a data structure which "should" be thread safe, isn't. You might not experience race conditions due to this, but you certainly could. We did. To perform a true deep copy of, lets say, the FullCabRequests matrix, you would need to initialize a new matrix and iterate through the original matrix and copy individual values.
+- I dont understand why timer.UpdateTimer gets its own package all to itself while the gigantic for/select in main:64-150 doesnt (with some tweaking, it could become a function in fsm that is called as a goroutine from main). This is maybe more of a preference thing, but I think cleaning up the main and making it as concise as possible is a good move.
+- To answer the question on main:29: Go automatically closes and cleans channels at program termination. Only when the program is running and you want to signal that no more data will be sent on the channel or to avoid unexpected blocking you would close the channel. Master termination is such an example, and broadcast channels are closed correctly in that instance. If I were to change anything, it would be to defer closure after creation instead of putting it in the kill-case. This way it is easy to check if the channels are explicitly told to close after function is finished or not.
+- I would create a backup package that handles all of the backup-related tasks. This would also clean up the elevator.go file. Fault-tolerance-wise, it would be smart to divide the elevator struct from the backup as well. If the local elevator code breaks, there is no backup either.
+-Having README's would improve the accessibility of your project. Having to scour the entire codebase to get an overview shouldn't be necessary.
+
+Reviewer 3:
+7
+- No diagram or readme. Makes it more difficult to get an initial impression and overview.
+- The main function is very big. Consider implementing goroutines for each module instead of a main for loop, with most of the same functionality as in the for loop. Ex. all the drv occurrences can be implemented as an elevator-goroutine.
+- Maybe you have good reason for it that we couldn't see, but making and returning a new elevator with updated variables in a lot of functions seems unnecessary.
+- Your master implementation seems good and clean, the Struct seems to contain all needed information and master functionality seems to be well implemented.
+- Well structured modules that stick to their own functionality. Easy to navigate. 
+- Can't find functionality to turn on hall lights for all elevators in code, this should be implemented(disregard this if we just didn't see it).
+- Answers to some direct questions: Report is a good enough name, since it provides status reports. ShouldClearImmediately is kind of hard to read, could be split up into multiple lines with temporary variables. case peerUpdate := <-masterPeerUpdate_chan in master.go doesn't necessarily need to be its own function since its not used anywhere else. If you really want it to be one you could just make it one and implement it as a goroutine.
+
+Reviewer 4:
+8
+Your snapshot contains no README or clarifying comments in the different modules making the code difficult to read and navigate. This also means we have to look through a lot of code to understand how it is all connected, which was difficult. 
+The main function is long and hard to follow. Its structure would benefit from being split into clear, separate functions to improve readability. 
+In your DeepCopy functions, you only need to update the map (and any structs containg maps). You can assign the values of oldStruct to newStruct and only update the values that need to be deep-copied. This should save several lines of code and clarifies what needs to be deep-copied.
+Why is FindHigherRankConnections in the elevator module? This does not seem directly relevant to driving the elevator itself.
+Is it really a good idea to have a pure rank-based decision algorithm for master-slave control? Should a slave be allowed to kill a 'healthy' master? This would result in unnecessary master-slave transitions.
+Why have you chosen to create a new Master with each button press? Why not just edit the variables in the master?
+It seems that the project is slightly bloated. We think you could shrink it by choosing more efficient transitions and change how you edit/change states and variables in the different objects.
+
+

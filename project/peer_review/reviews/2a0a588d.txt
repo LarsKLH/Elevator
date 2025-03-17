@@ -1,0 +1,70 @@
+Reviewer 1:
+7
+- For consistency, consider using #derive to implement the trait Copy for FloorHallButtons, OrderStatus also. Derive has already been used for the other traits these types implement.
+- Your implementation of the trait PartialEq for Direction is not good. It will cause an infinite recursion as you use == inside the implementation (the reason your code still works is that the only function that uses == is equests_shouldClearImmediately which itself is never called). Here you can just use a derive directive to implement it for you. This is consistent with your implementation of Debug, Serialize, Deserialize, Clone and Copy for Direction and is more idiomatic to Rust when implementing traits in the “obvious” or “standard” way. 
+- The door controller in the FSM is a bit hard to follow. Instead of having two loops - one starting and one checking if the timer should restart, is it possible to reduce it to one loop with the logic of both starting and restarting being handled in more or less the same way?
+- We find the request matrix (type:  [[bool;3];FLOORS]) to be confusing (we know this is the set up in the single elevator example, but it would probably still be useful to change the semantics here). An array (of FLOORS length) of structs with attributes up, down, cab would give more clarity in the code. This of course removes the possibility for a dynamic amount of buttons on each floor, but we do not see when this is useful. It also removes one possibility for an indexing error. At the very least the format of the matrix should be documented. If you decide to keep the matrix as is, the hard coded 3-values should be changed to the N_BUTTONS constant.
+- The FLOORS constant, defined in order_utils,  is not consistently used either, on the top of main a new 4 value is initialized and passed to elevator. Note that Elevator::init has no need to receive num_floors at all as we think it is better to consider it as a compile time constant it can just read from FLOORS.
+- Although the splitting of which parts of the system is responsible for what state is generally good, there are a lot of different ways of representing the same state in your code. For example the method create_fsm_state responsible for creating fsm_state from state and hall_orders is an example of how some of the code is just moving between representations. We suggest moving the “constructor” of fsm_state into the implementation of the fsm_state struct so it is in line with how it is done for State with State::init(). 
+- Additionally, we believe changing the name State to ElevatorState or something more descriptive would help. Since there are quite a few different representations of state in your program a generic name such as “state” is probably not great.
+
+Reviewer 2:
+9
+-	We should preface this feedback by saying that none of us are familiar with Rust. We often
+	made assumptions that syntax we didn't understand was correct and the proper way to do things
+	in Rust. The code is lacking documentation, while this isn't a major issue if the code is
+	readable for people familiar with Rust, we aren't in a position to judge that. As someone not
+	familiar with Rust, some documentation would have helped us understand the code better.
+-	If Rust supports it, a config file would have been nice, number of floors for example
+	is declared multiple places with different names, sometimes as a const in the module, sometimes
+	as a variable inside functions and sometimes as a magic number (we believe).
+-	We can't see any fault handling, How do you handle a process dying? It seems like main starts
+	all the processes and then goes to sleep. Is there a supervisor to restart dead threads, or
+	is there a process supervisor or process pair that restarts the whole program when a process
+	dies?
+-	elevator_is_alone() doesn't require the if statement, `if boolean_check: true, else: false`
+	is a common code smell, just return the boolean value directly.
+-	format_2_elevator_state() is defined in two modules and are identical, you should see if you can
+	move it to a shared module. It's a prime candidate for a bug if you change the elevator state
+	format, but only remember to update one of the functions.
+-	Trying to run the linter `cargo clippy` gave a few warnings about unreachable code, broken
+	naming conventions, unused variables, etc... If you don't use a linter, we can recommend
+	using one to help quickly catch errors and inconsistencies.
+-	Overall the code looks good, and the best one we have looked at. You got modules with clear
+	purposes, and we have no reason to believe that you wouldn't handle building additional
+	functionality into the project. Our only question mark is how fault handling is done, but that
+	could be due to our lack of understanding Rust.
+
+Reviewer 3:
+7
+# components:
+- all threads have some dependency to the function which creates them. 
+- Since you are not using your main loop there is no idea of a main thread, function or task. 
+- you may want to initialize none shared thread in the first function that needs it.  as done with door_controller(). initializing all threads in main is also a valid solution.
+- the mixing you have done now is not good.
+# dependencies
+Can't find any badly declared dependencies.  there are some global types with bad names. "AllEncompassingDataType" is not a good name. it seems to be connected to the udp connection so give it a relevant name.
+- there exist a FLOOR and FLOOR_N which seems to mean the same. only difference is the type.
+# functionality
+- the communication part does not seem to be implemented. i cant say which architecture is planed between the elevators.
+- there seems to be allot of states connected to OrderStatus. This may create uneccecart complexity not all of them are neccecary.
+- door_controller() is only a timer. it does not controll the door state (open/close). it also seems to not be in use.
+# Coherence
+- the types "state" and "fsm_state" seem to have overlapping usage. 
+- would recommend to either remove one or take the common data fields into a parent struct.
+- you have given some files with the extention "_utils", but it doesent seem to be consistent.
+- fsm_main() and state_manager_main() are not the best names.
+# potential bugs/recomendation
+- flag_new_order_at_call_button()
+- it seems both cases in the match changes order[].up
+- should change up or down?
+- implementation of command line arguments.
+- you should check that the number of arguments match what is expected.
+- if it does not match. give a descriptive error or use default values.
+- in FSM.rs:
+ use crate::state_utils::{self, fsm_state};
+- it is possible this will create both fsm_state and state_utils::fsm_state.
+- why is elevator_is_alone() defined in state_manager.rs and state_utils.rs?
+# conclution:
+the code seems to be ok, but there is some tidying to do. there is almost no networking logic and it is therefore hard to criticize. 
+

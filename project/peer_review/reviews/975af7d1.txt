@@ -1,0 +1,46 @@
+Reviewer 1:
+9
+General: The code is well structured and easy to understand. The design choices seem viable, and it should be possible to implement the remaining fault handling without restructuring.
+Modularization: The program is structured logically into modules with a well-defined purpose. Each model appears to deal with everything concerning its subject, ensuring completeness. 
+Networking module: The network module might benefit from further modularization. A suggestion is to move the functions handling events into a separate module (e.g. process_hall_order, process_cab_order and process_event). 
+Understandability: Because of descriptive naming and a logical structure, the program's functionality is easy to understand. The entry point is clean and gives a quick overview of the program’s high-level logic. 
+Dependencies: The dependencies between modules are easy to track through channels passed to threads upon initialization.
+Commenting: The docstrings are generally short and effective, and do not introduce unnecessary repeating of the code. However, consider using /// instead of /** for better compatibility with rust documentation tools. Additionally, you should review the comments within functions as they in many places can be viewed as redundant. (e.g. "Obstruction", "Default" and "Timer" in elevator_controller.rs).
+Naming: The naming of modules, functions and objects is in general descriptive, removing the need for extensive commenting. However, some local variable names could be improved for clarity. (e.g. obstr, sel and oper in elevator_controller.rs).
+
+Reviewer 2:
+8
+- Good ratio of comments.
+- Name files in src are descriptive and good. I would separate pure Library files into another folder layer.
+- It is difficult to read the code, esthetically, but that can also be because of rust.
+- Good job on writing a README.md that gives an overwiev of the system at large, easier to understand everything.
+- No more comments :)
+
+Reviewer 3:
+8
+- The README.md file included in the project makes for a nice overview of the architecture (peer-to-peer) and some project files. But it seems like quite a few files are not yet described and some functionality is not yet implemented (e.g. acknowledgment, fault handling, etc.). It would be nice to get a brief overview of the other files, especially those pertaining to the functionality of a single elevator (files in the single\_elevator folder).
+-There is a clear entry point to the program with the main.rs file. This file spawns a thread controlling a single elevator (for which there is a folder with the associated files) and a thread for initializing the network.
+-For the most part, the project is quite nicely segmented into modules, with a few exceptions. For example, the module networking.rs seems to contain a significant amount of functionality: setting up threads for discovering peers, initiating transceiver channels, and listening, as well as processing hall orders, cab orders and 'events', finding peers and dealing with new peers on the network. Maybe it would simpler to split this file into multiple files: one for dealing with the elevator network and one to deal with different orders and events that occur for a 
+- Functionality not yet fully implemented for dealing with peers that reconnect or reboot. It's not completely clear how these would be functionally different though. An interesting case to consider is what happens when an elevator is rebooted or reconnected and it has an order which other elevators have not registered. Has this order been completed but not yet removed by the given elevator? Or has it not yet been completed and the rest of the elevators are simply unaware of it? In this case, it could be wise to err on the side of caution and repeat an order to ensure no orders are lost.
+-Otherwise good code structure and readability, with descriptive comments and names for most functions 
+
+Reviewer 4:
+8
+- Good modular structure, clear separation of responsibilities across modules (`networking`, `single_elevator`, etc.), which helps readability and maintainability.
+- The FSM logic (`single_elevator/fsm.rs`) is generally understandable but contains repeated code segments, suggesting potential improvements by abstracting into helper functions.
+- The project does not utilize asynchronous Rust frameworks such as Tokio. Incorporating async/await patterns could significantly improve scalability and better utilize CPU resources, especially if the system is expanded to handle more elevators or higher message throughput.
+- Error handling usually follows Rust idioms (`Result`, `Option`), yet several `.unwrap()` calls appear without clear justification or handling, increasing the risk of unexpected panics at runtime.
+- Documentation within modules is inconsistent; critical functionality, particularly within network handling (`networking.rs`) and FSM logic, lacks sufficient explanation or clear reasoning behind design choices.
+- Configuration parameters such as `NUM_BUTTONS` and other constants are spread across different files, which complicates maintainability; centralizing these constants would simplify updates and adjustments.
+- The networking implementation (`networking.rs`) is functional but relies on abrupt termination (`process::exit(1)`) upon encountering errors. More robust error handling or recovery strategies would greatly improve reliability in practical deployments.
+
+Reviewer 5:
+8
+- The code structure is well-organized, with clear separation of concerns between modules such as elevator.rs, elevator_controller.rs, and fsm.rs. This makes it easier to navigate and understand the system's architecture.
+- The use of Rust's concurrency model with channels (crossbeam_channel) is effective for handling communication between different components. This approach ensures that the system can handle multiple tasks concurrently without significant issues.
+- The documentation and comments in the code are minimal but sufficient. However, adding more detailed comments, especially for complex functions, could improve readability and maintainability.
+- The code handles elevator states and directions well, with clear functions like choose_direction and should_stop that make the logic easy to follow.
+- The system currently lacks robust error handling, especially in network communication and elevator control. Implementing more comprehensive error handling would make the system more reliable.
+- The peer-to-peer architecture is conceptually sound, but the implementation of network communication (UDP) is not yet fully integrated. This is a critical feature that needs to be addressed for the system to function as intended.
+- The codebase is generally clean, but there are some areas where variable naming could be improved for clarity. For example, some variable names like dirn could be more descriptive.
+

@@ -1,0 +1,9 @@
+Reviewer 1:
+9
+- Clear description of project in README.md, gives a clear sense of current state and future goals of the group.
+- Intuitive function and variable names.
+- Good modularization, easy to follow chain of events in different .go files.
+- When going through the different libraries there was nothing in particular that seemed strange or missing to me.
+- Good use of comments, not overly commented, but short and direct where clarification is needed.
+- The project is not finished, but it seems like there is only fune-tuning left, I think this group will do great.
+

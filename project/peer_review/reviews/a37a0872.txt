@@ -1,0 +1,56 @@
+Reviewer 1:
+7
+* Nice to add Design decision.md, although it is not nearly enough, when trying to figure out what is going on. There is a lot of nesting within project-tree. It makes it hard to understand what is what, and what it does. Importing code that is nested as deep as "use common::connection::client_pool::client_pool::ClientPool;" is unnecessary for this size of project.
+* It is not evident what the difference is between the "Process" in controller.rs and common.rs. Again, structuring and also naming things differently would help.
+* Looks like this group so far has greatly prioritised making the singel-elevator work. This however, looks like it's having a negative impact on the progress of the distributed system, which they should start thinking about how to solve.
+* I cant stop picking on the naming/structure. It really annoys me there is a process controller, elevator controller, and that the door_control is not inside the elevator controller. Better readability!
+* Good that you are implementing tests. The tests for the functions are readable which means the functions are simple, which means they are good written functions.
+* The "lib" name is by convention in rust used for laying out the module-tree. Why is logger->src->lib.rs packed with code?
+* Good that you're keeping track of old and new code by using the depreciated attribute.
+
+Reviewer 2:
+5
+I find it very hard to give you a score as I find it simply insurmountable.
+You code seems to have grown incredibly out of control. Trying to follow the program flow is a mess of swapping between files, modules, and I cannot believe that it is even remotely possible to try to understand the code without Ctrl-click. I have spent upwards of 10 hours on trying to understand your code and I haven't even reached the main control loop. For reference I have appended a rubric with the amount of lines in your code, there is almost 3500 lines of just rust code, when removing all whitespace and comments.
+The fact that you import all functions and strucs directly makes it very hard to figure out where all the functions are coming from. It would be much easier to understand if you imported to an alias and used that instead. For instance 'crate::data_struct as datstruct' and then write like 'datstruct::CabinState' instead of just writing 'CabinState'.
+Is the logging module copy pasted from somewhere else? It seems to bee way to overkill for this kind of project, it is almost 600 lines. Why does it need to work over the network? Why don't you just print to the terminal where you want to use the logging module?
+The names of some functions are not really explanatory i shouldn't really have to go into the function to find out what ConnectionTransmitters::take_status() does.
+It would be very good for readable if you did not have the main execution of a function is not interlaced with the entire execution loop of a new spawned thread, see messages_channels().
+===============================================================================
+ Language            Files        Lines         Code     Comments       Blanks
+===============================================================================
+ TOML                    5           43           40            0            3
+-------------------------------------------------------------------------------
+ Markdown                5          303            0          209           94
+ |- C                    1           76           30           30           16
+ (Total)                            379           30          239          110
+-------------------------------------------------------------------------------
+ Rust                   31         4181         3439          115          627
+ |- Markdown             5           75            0           62           13
+ (Total)                           4256         3439          177          640
+===============================================================================
+ Total                  41         4527         3479          324          724
+===============================================================================
+
+Reviewer 3:
+9
+Top-level entry points: The process module initiates a lot of key components in the system, and it shows how these different parts of the system are connected, It does not include any unnecessary information. This goes for all the top-level entry point here, and already after opening up your project I can see that you are doing a good job dividing the problems at hand into several smaller more manageable problems, but maybe you go too far as it is somewhat difficult to know what lies where. This totals to an 8/10.
+Module-architecture “outside”: Your modules are logically separated and seems to execute task effectively. I like that you make a module for logging, network and the process itself, this is good separation, I think the faulted module is a good idea, but you obviously have a little way to go before it is finalized. What I believe is missing is a consistent module structure, where it’s easy to know what type of functions are placed in the module making the entirety of the code more readable. The outside architecture gets an 8/10.
+Module-architecture “inside”: The functions seem pure, they only have one task, its often very clear what that is, and they usually do this task in a reasonable amount of code lines, this is good. Your modules seem to complete the tasks they are meant to do.  I give this 8/10.
+Testability: your good separation makes this code seem testable. Well done on this point. 10/10. 
+Interaction between modules: The system has a well-structured, decoupled design where each module has a distinct responsibility. I give this 9/10.
+Commenting/useful naming: You commenting is lacking, it would be very helpful for an outsider to be able to understand the intention of each part of the code without having to read the code itself, however your naming is good, and this makes your code readable and intentions clear. I give this a 6/10. 
+Gut feeling: You have understood the problems in this project and are far along in the process of solving them, and I think you will be able to finish before the deadline if you continue working like you have done so far. Well done, 8/10.
+
+Reviewer 4:
+9
+- The entry point adequately documents the main modules and components, making it clear which threads and classes are initialized.
+- The dependencies between components are somewhat clear, but global variables could be better documented for improved clarity.
+- Modules generally handle a single responsibility, though some components have interfaces that may be doing too much like elevator service handling both state and orders.
+- State management is well-structured, minimizing shared state across threads, but additional documentation around critical shared resources could help.
+- Most functions are designed to be pure and avoid unnecessary side effects, but some utility functions modify external state in ways that are not immediately obvious.
+- The code is fairly readable, but some functions are deeply nested, making it harder to follow certain execution paths.
+- Information largely flows in a single direction, but there are a few cases where bidirectional dependencies exist that could be refactored.
+- The comments provided are helpful and do not merely repeat the code, but they are too sparse and the understandability would benefit greatly from some more.
+- The project feels well-structured and maintainable, with minor refinements needed in readability and separation of concerns.
+

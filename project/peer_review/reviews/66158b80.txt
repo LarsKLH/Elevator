@@ -1,0 +1,51 @@
+Reviewer 1:
+7
+Components: Your codebase can be better organized. Each module should be in separate folders.
+Dependencies: In the main file, we easily see what threads/classes are initialized as your function names are explicit (ex: elevio.Init). All the initialization and goroutines (before line 77) could be better structured by grouping in functions.
+Coherence: Be careful, each of your modules should have only one purpose. Your file requests.go mainly aims to test if an elevator has requests and change its direction in consequence. The function Calculate_priority_value (also in this file) doesn't have the same purpose, it should be part of another module that manages and distributes resources among the different elevators.
+Functions: Your functions are small and focused on one task, great! Most of your functions return values, and modify only the variables in their scopes, great!
+Direction: Most interactions seem unidirectional.
+Understandability: Structure your comments in the same way for readability. Comments in English would have been nice so I could read them, but I get that it’s not required.
+Naming: Be careful, for readability, use a single naming convention. For example, some of your function names start with lowercase, others with uppercase, some with underscores, others without (e.g., requests_above() vs GetElevatorStruct). Maybe follow the naming convention given in the lecture. Also, only one of your modules (Networking.go) starts with an uppercase letter.
+
+Reviewer 2:
+8
+Bullet point 1:
+Some of your naming is a little bit confusing. For example, calling one file worldview_package.go and another worldviews.go while none of them actually is in the package worldview. 
+It would make sense if you wrote the code, but as an outside observer it comes across as a bit strange.
+Bullet point 2:
+The initialization of variables always happend on the top of the script, in the "var()" syntax, which was easily readable and understandable. 
+However, we can see that you have defined NumFloors as a global variable i elevator.go, but do not use it in your main.go file and instead redefine it there as NUMFLOORS.
+If you have any global variables like that, you can use them instead of redefining as it is unecessary.
+Bullet point 3:
+Some of the files are commented quite thoroughly, while others are not. 
+It might be a good idea to add some comments where there is a possibility for confusion. 
+However, most of your naming is clear enough that we get what the funcions do, even without comments, which is good.
+Bullet point 4:
+In the main function, we could find where you initilized the elevator, but to us it did not look very scalable. 
+You seem to initilize one elevator in your code, meaning you will have to run n programs to run n elevators. 
+If you have peer-to-peer however, we get how this is kind of what you have to do, but even then, things could be a bit more automated on that front.
+Bullet point 5:
+Your files are very well organized. 
+We can clearly see what the original translated elevator code is, and what additions you have made with the connections folder, with the main file overlooking it all.
+Bullet point 6:
+Your main-function is well commented, but also quite large which makes it more difficult to follow.
+You can consider making functions for the different types of tasks the main-function deals with.
+You also have a bit of commented out code-lines in the function which makes it harder to follow. 
+We get keeping them if they are for testing, but remember to remove them for better readability and structure.
+Bullet point 7:
+We can see that you have removed a lot of the abundant code in the elevator.go file. Nice. 
+In our experience the elevator_print function was just a hassle when debugging, since it took up the whole terminal. 
+You also rewrote the elevator_uninitialized function in a much better way. Well done.
+
+Reviewer 3:
+7
+*Comments documenting what a function does should be by the function itself, rather than the place it is used.
+*The word 'package' being used in variable and struct names (anything other than packages really) seems like a bad convention.
+*In elevator.go the number of floors in the elevator struct is hardcoded despite there being a numFloors variable in the same file.
+*Is the 'NumFloors_minus_1' variable in requests.go necessary? It adds more clutter for keeping track of what's going on (although it's name explains very well what it is)
+*Function/variable names in networking.go are confusing, making it hard to understand what happens in the functions. Variable names make the function 'Wait_for_responses' difficult to follow.
+*There are many big functions that need comments to document what the Whole thing does.
+*In online.go, the function init() uses a global variable called ID. Which ID is this. Is this a possible point of trouble later.
+*It seems you have a concrete plan for how to solve this problem, although it might be hard to maintain. Maybe Focus on this if there is time left over.
+

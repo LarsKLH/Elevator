@@ -1,0 +1,43 @@
+Reviewer 1:
+7
+You have descriptive functions names and clean code, the functions does what the names describes.
+Some functions start with capital letter but some start with lowercase.
+In Node folder, why node_old and node -> little confusing names of files.
+Could have used the built in timers in go.
+Could change config from yaml to just config.go file -> don't need a function to import and could just use config.n_floors to access the variable.
+In fsm.go you have a switch case with only one case, this may be a work in progress but if not it could be changed to only an if.
+Could use pass by reference instead of returning the elevator object in clearAtCurrentFloor.
+
+Reviewer 2:
+6
+NOTE: Giving feedback on this project is somewhat difficult as the code is in an initial state. This makes the project feel immature, even though this might only be due to the lack of effort currently put into it. The main function is also missing.
+The README should be more detailed and provide a full overview of how the project is planned to be solved. At this stage, it contains some initial thoughts, but details about master/slave, order assignment, fault handling, etc., are currently omitted.
+There is no overview of packages and their usage.
+The code has comments in Norwegian while the code itself is in English. Ensure that comments are in the same language as the code.
+The project lacks clear modularization and does not utilize Go's package functionality effectively.
+Commented-out code should be fully removed.
+Function naming is good, making it clear what each function does.
+
+Reviewer 3:
+5
+Nice with a readme file, as this gave an overview over your plan, since you hadn’t come so far.
+Your NumFloors and NumButtons are clear and well-organized. We expect it to remain just as clear when you continue writing. You should consider moving the const and var values that you modify to the top of the file, as this would increase the readability. For example, we would recommend moving the const values in elevator.go to the top of the top of the document, before loadConfig.
+As you have not yet written much code, we would recommend getting started on small manageable tasks, which can be easily checked and tested. This will hopefully make it easier to start.
+UDP faces challenges with verifying that messages are being delivered. You should address this as soon as possible so that you have time to come up with solutions before the deadline.
+Since there is no main file in the code, it is difficult to assess the flow of your code. We would recommend that you plan how you want to set up the flow. It can be very helpful to draw a state-machine, if you choose to use this approach.
+The node file. Generally well_structured, and it seems like you have an idea of utilizing go_routines, which is nice. You also have bcast.Transmitter and bcast.Recive modules, which is a good start for peer-to-peer communication. Moving forward, you should implement a code for discovering other peers, assigning unique IDs, and failure handling. Making good clear error messages helps a lot in knowing where the problem is in the code. Remember to test for packet-loss, when you have a broadcast/recieve that works.
+Remember that there are a lot of pre-written code-files in the https://github.com/TTK4145/ . Here you can find example codes for both networking with UDP, and a code for distributing the elevator orders. We recommend looking at this both for inspiration and usages.
+Gut feeling: 2
+
+
+Reviewer 4:
+7
+• One better option of organising the files would be having a separate driver-go folder that only interfaces the code to the hardware, and an elevator-algorithm folder for the more high level files, such as timer.go and fsm.go
+• For future developement it might be easier to separate the networking files into a general network/node file, a transmit file and a receive file, since they may get quite long and have slightly different purpose.
+• It’s not immediately visible how the files and functionalities are supposed to be interconnected, this could be solved through a well-organised main file.
+• For better error handling try using a logger framework approach (through the go log package), it allows better debugging through highlighting errors or info messages differently and it would help throughout all functions
+• Overall code structure is well organised, the naming convention looks good and it shows intent
+• a short comment describing the intent of the loadConfig function could be useful, we didn’t use the same approach and it was a bit harder to understand
+• split the loadConfig into loadConfig and decodeConfig for decoding the data without needing to interact with the file system, this also makes the overall module easier to reason about, maintain over time and easier to add a unit test for decoding
+• the global variable var ( RunningElevator Elevator ) might affect functionality later. When many parts of the code can change the global variable, it becomes difficult to track and manage state transitions. Try creating a struct (for example ElevatorFSM) that contains one Elevator object and where you could later on add channels or other attributes you would need.
+

@@ -1,0 +1,56 @@
+Reviewer 1:
+8
+Config file should be a go file, not a yaml file if all variables are static
+Use submodules for driver so that you dont have to link your github
+The request assigner shouldnt be in the same folder as the single elevator, make a new controller or assigner folder
+preferred0rders sorts elevators based on time to Idle, creative and heuristic way to assign orders
+Code lacks persistent error handeling, wrap functions in if err != nil { log.Println("Error:", err) }
+Be consistent with naming conventions, you have them mixed up quite a lot e.g newpeer() vs newElevator().
+In the timeout() function, readLifeSignals() might try to acqire peersLock, leading to a deadlock, maybe its safer to use defer to assure Unock() is called even if errors occur
+Clean and transparent main.go file, with good channel setup
+If you dont intent to use the Backup struct in other files, dont make it public by having a capital first letter
+Your README was clear and informative, and told exactly which folders were relevant
+
+Reviewer 2:
+7
+- Code readability
+The specific code is written in a readable manner
+Every function is relatively straightforward, its logic easy to follow
+- Elevator
+The elevator code is seemingly well translated
+- Unnecessary global variables
+LifeSignalChan and ThisNode - line 41 and 42 in network.go
+The variable networking.LifeSignalChan, used in the code for send/read life signal, is a global variable.
+As it is used in send/read life signal, it seems it should not be accessible from the outside
+So is ThisNode, though its internal states are all hidden from the outside
+Maybe ThisNode could be a variable in main()?
+- Package Network
+It is difficult to get an overview of how the network package implements a peer to peer system
+The ThisNode struct is like a giant object, with methods that are run as separate simultaneous processes
+ThisNode internals are in practice shared variables for communication between the different methods running as go routines
+- Testability (structure and go routines)
+Continuing on the last point, it is difficult to get an overview of all the go routines that are started in relation to the network module, 
+as it is done on very different places, deep in nesting.
+networking.InitElevator(..) 	
+	starts 	ThisNode.timeout()
+	and 	ThisNode.sendLifeSignal(signalChan)
+	and 	ThisNode.listener.Listen() 
+		which starts multiple ThisNode.listener.handleConnection()	
+	and ThisNode.readLifeSignal(signalChan), 
+		which starts multiple node.peers[].sender.Send()
+All of these goroutines mutate or read either the struct ThisNode or a peer struct in the ThisNode.peers[] field
+This makes the interactions between these go routines very difficult to understand
+Here is a link to the testability lecture, where Anders goes more into detail on this issue:
+https://youtu.be/6nIhDFF1D5U?si=Wu5vQFHlHGOE-9Jd&t=2287
+
+Reviewer 3:
+7
+-	The structuring of functions is way too large and try to do a lot more than what their intent is based on function names and comments. Some examples are timeToIdle-funtion or readLifeSignals.
+-	Modules also try to do too much. For instance, the networking module should not be the one that updates states. It should network, receive and send. Have another module like backup, and request-assigner that deals with the implications of networking.
+- 	The comments on the code were either lacking or confusing more than they were helpful. Some examples of this are the PipeListner function, GetDebugInput, kind of hard to understand it, timeToIdle, comments and function is hard to make coherent. 
+-	No clear overall vision of how the project should shape out, and how modules should interact with each other.
+-	Nice to see some tests are being incorporated in the request_assigner_test.go. If you keep this up with other modules, things will hopefully work out. 
+-	The FSM and elevator helper functions are easily understandable and structured, if you take inspiration from this throughout your code, it will help with code quality. 
+-	Some functionality in the main function looks misplaced. We agree with that the networking can be kept here, but the handling of arriving at floors and buttons being pressed looks like it should be handled in the fsm-module. 
+-	Overall, we give the project a score of 7. This is because we can see some underlying design principles, you have a lot of base functionality, although it is messy and probably doing too much. Using a lot of time to tidy and finish modules should increase the code quality. 
+

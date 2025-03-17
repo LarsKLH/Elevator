@@ -1,0 +1,60 @@
+Reviewer 1:
+8
+The code clearly shows a division of responsibilities between network, single elevator, initialization of channels, hardware and worldview. 
+Can see that it is a peer to peer system based on network and channels like peerUpdateCh. 
+Each module appears to deal with only one subject, and although single_elevator handles several aspects of a single elevator’s operation, its functionality is limited to managing a single elevator.
+It is fairly easy to understand what each body of code does, and what each function is meant to do. 
+There could be more comments in some places, but where they are they give meaningful insight in what the code does. 
+The names of the functions and models are intuitive and reflect the responsibilities of them. 
+
+Reviewer 2:
+7
+Bullet point 1:
+You have an ElevatorFunctions interface, but it only has one implementation. If the elevators are supposed to behave differently, 
+for example if you plan to have a "fallback" elevator that takes over requests for another one if it goes offline, an interface could be useful. 
+However, logic like this is not implemented in your code. If your elevators are meant to have identical behavior, 
+this would just be extra work and maintenance without any benefits.
+Bullet point 2:
+Some of your functions do a bit much. 
+For example, it seems that RequestHandler is both tracking state-related information, 
+while also sending and receiving messages via channels to handle peer-2-peer coordination. 
+These are two separate tasks, and it makes your code harder to follow.
+Bullet point 3:
+We can see that you have hardcoded the number of floors in different places in the functions. 
+We can also see that you have several other numbers embedded in your code (like timer for how long the door is open). 
+It might be better to have a constant for this so that other functions can access it, 
+and so you only need to change one variable if you scale up instead of going through several functions. 
+You could try setting these into named constants in a config file for easier maintainability 
+(we can see that you have a one as it is included in your main file, but it was not given to us).
+Bullet point 4:
+The CyclicCounter and Barrier setup is a smart way of handling communication between elevators without a central controller. 
+It seems like it will help the system to keep working even if one elevator goes offline, and that it makes sure elevators don’t get confused or do the same job twice. 
+However it is hard to understand at a glance, and some comments or code documentation on this would be helpful. Another thing you can improve related to this, 
+is Status in your Request struct. You set it to values between 0-3 in your CyclicCounter-function, but it is difficult to know what any of these numbers mean right away. 
+It might be a good idea to define what these numbers are supposed to represent.
+Bullet point 5:
+It is difficult to understand what the MergeUnique-function or the Contains-function does. 
+They are not used anywhere either, so to understand them without context is difficult. 
+None of the variable names in these functions indicate what they’re used for either. 
+It might be a good idea to use names that make it clear what these functions are intended for.
+Bullet point 6:
+In InitState, what does the variable n do? 
+It doesn't look like it is used for anything. It’s hardcoded to n = 4 in your main function. 
+Is it meant to represent the number of floors? It can be difficult to understand, especially if you are not familiar with the project beforehand.
+If you are not going to use it, however, you should remove it.
+Bullet point 7:
+Your main-function ends with for{}, but this is generally a bad idea. 
+This is because for{} wastes CPU-cycles (it will check the for-loop over and over, which is a waste of resources). 
+select{} will not do the same, but there are better alternatives to deal with this. 
+If you want to keep your goroutines running or waiting, you can for example use WaitGroup to wait for goroutines.
+
+Reviewer 3:
+7
+Coherence: Few packages (requests, elevator) result in many functions per package. requests.go handles multiple tasks I think (button sensing, request assignment, syncing). Splitting into separate files could improve readability.
+Functionality: Request handling and communication exist in main, making the elevator network structure clear. However, how orders are managed locally and over the network is unclear from main alone. 
+Direction: Large packages contain many variables and functions, making data flow hard to follow. Both elevator and request seem to monitor button events from elevio.
+Comments: Concise and useful, with no unnecessary details.
+Naming: Structs and variables in requests are well-named and intuitive.
+State: It's unclear which function is responsible for each task.
+The code is well-structured and intuitive, but large files make it harder to follow. Splitting into smaller files within each package could improve clarity.
+

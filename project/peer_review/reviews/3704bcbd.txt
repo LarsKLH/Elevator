@@ -1,0 +1,45 @@
+Reviewer 1:
+7
+Multiple main functions within package main. 
+It is not obvious how the modules will work together.
+Coherent strategy laid out in documentation.  
+The separate modules seem to deal only with subjects close to their main objective.
+The comments are very useful to understanding the different parts of the code.
+Some of the code seems irrelevant to the project, i.e. is not used.
+Variable- and function names are logical and reflect their tasks.
+
+Reviewer 2:
+5
+- Overview: There are multiple main files and main functions inside different folders and packages.
+            Maybe consider changing the names so the main function in the main package
+            only contsists of main functions of different packages.
+            Multiple files in a folder can be in the same package, and you should definitly dont have 
+            multiple main packages. 
+- elevator:
+    - Maybe have a constant for number of floors, instead of hardcoding 4 floors. 
+    - This could be, together with the const doorOpenTimeSeconds, be put in a configuration file. 
+- communication:
+    - It is not easy to figure out what is included in the message that is sent between the elevators.
+    - Is there a type defining what kind of message it is?
+    - Needs to handle network loss, not just detect it.
+
+Reviewer 3:
+9
+It is clear which components and modules the system consists of and in which order they are initilized in
+Which code depends on what other code requires some digging, but that is expected
+FSM, peer to peer and determinstic assignments seems like a good solution
+Function naming seems good
+Was kind of hard to follow information direction from a system that runs 3 main files
+The comments help understand what each functions is supposed to do and how it interects with the rest of the system
+Gut feeling: It seams like the system is well made and thought. Seems like you have good control of the projects, no complaints
+
+Reviewer 4:
+8
+There is a main.go function in the highest "layer" of the code, which only prints "Hello World!" and does nothing else. This doesn't seem to have any functionality for the project and can be removed. This is where I looked first to get an overview of how the project comes together, but it didn't really tell me anything.  
+The use of several main.go files makes the code a bit confusing to read. What is the difference between them and how do they work together? "queue_assigner" also has two main functions within it, one in main.go and one in example.go, which made me a bit unsure of the intended functionality. 
+Since this is a larger project I would recommend to not define functions in main.go, but rather move them to another file. This is mainly found in "state_machine", where several functions are defined in main.go after the scope of the main function. I would move these function definitions to the state_machine.go file instead. 
+I think using more comments would have made the code easier to follow. "state_machine" is easier to understand due to the use of comments in its main.go and state_machine.go files. I would like to see more like this in other files as well.
+The module names common_types, elevator, state_machine ++ makes it easier to navigate the code and see the structure of the project - good work! 
+Each module seems to only deal with one subject, i.e. running the elevator is separated from handling orders and so on. This makes the code easier to follow as it is separated into parts according to which functionality it aims to fulfill. 
+Good work on naming functions in a describing manner. I would maybe update the function names in state_machine.go, from Start() and Stop() to FSM_Start() and FSM_Stop() (or something similar) to separate them from other start and stop functionality other places in the code (like when the elevator should start and stop etc.). Using Start() and Stop() could be a bit confusing if you were to use the functions outside of "state_machine". 
+

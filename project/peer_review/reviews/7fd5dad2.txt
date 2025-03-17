@@ -1,0 +1,40 @@
+Reviewer 1:
+9
+Can clearly see what threads the program is divided into by looking at the main function. This gives an overview of what modules the program consists of. 
+The names of the channels defined in the main function clearly states how each module communicates. 
+Each module only deals with one subject, and the name of the module is representative for what the module does. 
+There are no global variables which makes it evident where the responsibility for each state lies. 
+Each module is easy to follow
+One can easily trace the flow of information.
+There were only a few comments. Because of variable names and readability of the code any more were not necessary to understand the code. Their readme file also made it easier to understand the code. 
+
+Reviewer 2:
+9
+The entry point (main.go) clearly shows which modules the system is built on and relies on, and it aligns well with the attached class diagram. 
+It is clear how the modules are connected and the system synchronized through the implemented channels.
+From the entry point, the code is well-structured and easy to follow. However, without comments, it becomes time-consuming and difficult to understand what happens beyond the entry point. 
+The naming convention for the channels in main.go clearly indicates who sends and who receives, but it’s not clear what is being sent through them. Consider renaming your structs which are passed through the channels for better readabilty. 
+The project structure feels a bit unclear when it comes to functionality and hierarchy. It could be organized in a more structured way, with related components grouped more logically. Some packages could be moved under the top-level modules to make things clearer and easier to navigate. For example, could the hwelevio package be moved under one of the top modules? And could dataenums be split into relevant types for each top module to keep things more organized? The const variables could stay in the top level hierarchy, but maybe place it in a 'config'-package?
+The modules seem to deal with only one subject at a time. 
+Overall, it looks like you're making great progress and have implemented functionality for all the key parts of the project.
+
+Reviewer 3:
+8
+- The main function is clear and easy to understand. The channels that are made and go routines that are called match the attached class diagram. It gives a good overview of how your code functions which is great!
+- Some variable/function/file names do not explain their use precisely. In the assigner module:  ret (variable), buttonPressed (function), request (file). In the network module: the f, e, and b in the for-loop in the cyclic counter. In data enums: Dirn (elevator struct) - why the n at the end of the name?, HWMotorDirection (type) - what is the purpose of having HW at the beginning of the name? 
+- Advice reconsidering your file structure. What causes a function to reside in logic.go, orderassigner.go, requests.go, or utils.go?
+- Try to remain consistent with your naming schemes. You use both orders and requests as well as both chan, channel, and neither. In addition, the structure of the names of the channels in the assigner varies. For example, you use “fromAsstoLight”, which can be changed to, for example, “toLightChannel” to be consistent with other channel names.
+- Try to keep channel names the same when you pass them to functions and when you use them in the functions. This makes it easier to follow the flow of information in your code.
+- Try to shorten your for select loops by using functions; a for select loop of 158 lines in your driver.go file is too long. In addition it may be smart to not directly change your objects, but rather passing them through pure functions. This will make it easier to debug your code as well as shortening your for select loops. Check out the slides on core and shell (slide 23 and onwards) of the code quality slides.
+- Is there a good reason why all your channels are buffered 100 times? Not necessarily wrong, but perhaps unnecessary?
+
+Reviewer 4:
+8
+- Components: The code is well-structured into distinct modules (assigner, driver, lights, network, hwelevio, dataenums), making it easy to navigate. However, the documentation on how these modules interact in main.go could be improved.
+- Traceability: Uses channels for communication, ensuring efficient information flow between modules. However, logging could be enhanced to better track order processing and debugging.
+- Dependencies: assignOrders() in logic.go relies on exec.Command("hall_request_assigner"), making it dependent on an external binary. A fallback mechanism should be considered.
+- State: Error handling in hwelevio.go could be improved—network failures currently cause a panic, and a retry mechanism should be implemented instead.
+- Functions: Some functions, particularly in network.go and requests.go, have complex nested conditions, reducing readability. Refactoring these into smaller functions would improve clarity.
+- Naming: Certain variable names, like ActiveSatus in dataenums.go, contain typos that should be corrected for better readability.
+- Comments: Documentation is lacking in key areas, especially in network.go and logic.go, where state transitions and order handling are complex. More comments could be added to clarify decision-making processes.
+

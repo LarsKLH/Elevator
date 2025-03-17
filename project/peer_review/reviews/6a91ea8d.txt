@@ -1,0 +1,63 @@
+Reviewer 1:
+8
+You could have used the built in timers in go instead of making you own.
+Does the timer needs to be global? It could for example be part of the elevator struct.
+In the KCP folder, you have some "weird logic" ex. checking if a number even (do something) and then checking if the number is odd (doing the same thing). Checking if 100 and then if not 100, could have used if else.
+Instead of using a while_v variable to decide when to break the while loop in elevio.go, could have used a for loop and using break statements when needed.
+You have descriptive functions names and clean code, the functions does what the names describes.
+It would benefit to have a better/more descriptive name for "Twin". Hard to understand what it does.
+Some files could benefit from splitting into more files, would recommend go.mod file for each "module" for easier imports.
+Some functions start with capital letter but some start with lowercase.
+Echo main could be split into shorter functions with appropriate names to improve readability.
+The new functions in elevio in kcp -> could have been shorter, more explanation about request/package (couldn't just use json for package1/2 in "SendToMaster" instead of anding and left shifting?)
+
+Reviewer 2:
+6
+1. Variablename: 
+Generally some of the variable names where not understandable. eks. We could not figure out why the elevator struct had an m_ infront of every variable. 
+In the KCPgo_code folder, we undertsand that it is in the early stages, but some of those variable names could be more spesific.
+Some variablenames that were too generic are: While_v, Package 1 and 2. 
+The floor variable in MakeRequest is not clear because it does not only describe the floor the elevator is on, but also the buttons. This makes it harder to understand the logic later in the function.
+2.Hardcoded Logic.
+In the KPC folder there is a lot of hardcoded logic that was both difficult to understand and makes it harder to scale the project. We would recommend to have one variable you can define and use throughout the whole function instead.
+This is an example of the hardcoded logic we were talking about: EL_requests = [][]int{{0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0}}. We dont understand what the zeros represent. 
+3. Logic of MakeRequest function
+The purpose of the function was not clear. We expected the function to put request in a list of some sort, but the function returned finished request, which was a bit confusing. 
+We did not understand what the numbers in EL_request represent for the system. We expected 1 or 0 for true or false, but was met with adding seemingly random numbers to make a math equation add up.
+This would be more understandable if the number were constants with explaining names. 
+The mathematical equation that set the el_requests were very difficult to understand. we could not follow the logic, so we suggest maybe to change some names or seperate the logic more. 
+If you are trying to distribute the requests to the different elevators we recommend checking out project resources/cost_funs/usage example on the subject github. 
+That code is easy to implement and could solve some of your problems. 
+4. Seperate send and receive functions. 
+It seems that you have send functions that do both the sending and receiving. This makes it difficult to understand when sending is done and receiving is done. 
+We would recommend to seperate the function into two different ones or at least renaming the function, such that the name explains that it is receiving aswell. 
+5. Peers list
+If the ID in the elevator struct is an int, Shouldnt the peers list also consist of ints? 
+6. Global variables
+A tip from Anders slides on code quality, is seperating your code in core and shell. This means not changing any variables inside a function also doing the logic. 
+Due to this we recommend not having references as input in a function, but rather returning the elevator object and setting it in a main f.ex. 
+This makes it easier to debug the logic because you can test the code itself without also testing the data it is operating on and changing. 
+7. single elevator. 
+This folder had a very nice structure. It was quite easy to understand and the names were very informative. Good job! Try to look at this folder to name the rest of your variables. 
+The reason for your score is mainly because of point 2 and 3. These two made it difficult to understand the underlying logic of the code you made. We understand your are in the early stages,
+so your code might have been easier to understand if we had more to go on, but unfortunately we dont. 
+
+Reviewer 3:
+6
+Main and Channel setup: The echo.go file, which is planned to become the main file, correctly creates and passes channels to its relevant components, making the flow of events easy to follow. As noted in the group’s code explanation, echo.go is still a work in progress and naturally lacks some relevant channels that will be needed as the project matures.
+Model structure and overlap: There is an overlap in responsibilities between the elevio.go module and the elevator_io.go module, which makes it unclear what the distinct roles of these modules are. The elevator_io.go module currently handles a mix of tasks (master handler functions, request functions, and networking functions) that would be clearer and more maintainable if separated into distinct modules.
+Global variables: The code makes use of global variables (such as g_elevator and g_timer), which can lead to issues with scalability and testability. Using Go’s concurrency features and passing shared information through channels would make the program more robust. The MasterCheck function currently sets the global Master variable directly (true or false), rather than passing this information via a channel.
+Function Naming: The functions are generally easy to follow, with names that clearly indicate their purpose. However, there are hardcoded values in functions like MasterCheck and TakeRequest that could lead to inflexibility and errors as the code evolves. In echo.go, channel inputs are always assigned to a variable named “a,” which can make it confusing to trace which case corresponds to which channel input.
+The code is still far from finished, lacking several modules and fault tolerance mechanisms. Key missing features include handling situations when an elevator goes offline and the implementation of cost functions. The current setup forces every computer to become the master (since “Master” is set to true at the start of main), indicating that a proper master selection function still needs to be implemented.
+The single-elevator code should be modified and utilize Go channels to pass new inforamtion. This is important because state information should be shared with the master and for computing costs of new orders. This ensures that the master is up to date with all elevator states and that an incoming order is assigned to the correct elevator. 
+
+Reviewer 4:
+8
+The function is organized and easy to follow, even though one cannot see what modules the system consists of, or how the modules interact. 
+The code is split into modules, however the names of the modules does not always make it clear what the modules task is. For example the elevator_state module both defines the elevator states as well as dealing with some requests. This is somewhat confusing when there exists another request-module. 
+There is a globally defined elevator, which could cause problems with responsibility of updating the state.  
+The functions are tidy and the names of the functions also explain what the function does.
+One can trace the flow in the code, for example by examining what happens when a button is pressed. 
+The comments are good and a concise explanation of what each function does. 
+There are some local variables that are difficult to interpret. 
+
