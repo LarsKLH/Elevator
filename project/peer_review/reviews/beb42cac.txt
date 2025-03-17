@@ -1,9 +1,0 @@
-Reviewer 1:
-8
-The class-based protocol is easy to follow and understand. The file system is well organized and not excessive in its quantity.
-Blatant lack of documentation beyond comments made in code. However, the comments are descriptive and not overused in "obvious" areas. 
-Code is generally well organized, but there are areas (such as network.py) in which some functions could be narrowed down into multiple, more specific ones.
-Seems like the asyncio library is what is being used to handle threads and communications in all but the elevator_driver.py file where "threading" is used. Don't know how much it matters, but making asyncio the default across all files seems prudent for ensuring concurrency across every domain.
-The reassigning of hall calls when a peer goes offline is well implemented.
-The cost function is based on absolute distance, which is good, but it's conceivable that elevator direction could perhaps also be taken into consideration?
-
