@@ -53,7 +53,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
             recv(elevator_outputs_receive) -> state_to_mirror => {
                 let received_state_to_mirror = state_to_mirror.unwrap();
 
-                mirror_movement_state(received_state_to_mirror.move_state, &elevator, num_floors);
+                mirror_movement_state(received_state_to_mirror.move_state, &elevator, num_floors, received_state_to_mirror.last_floor);
                 
                 mirror_lights(received_state_to_mirror, &elevator);
 
@@ -66,7 +66,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
                 let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap();
 
-                mirror_movement_state(current_state.move_state, &elevator, num_floors);
+                mirror_movement_state(current_state.move_state, &elevator, num_floors, current_state.last_floor);
                 
                 mirror_lights(current_state.clone(), &elevator);
             }
@@ -76,12 +76,12 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
 
 
-fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator, num_floors: u8) {
+fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator, num_floors: u8, last_floor: u8) {
     const GROUND_FLOOR: u8 = 0;
-    let current_floor = elevator.floor_sensor(); // Jens:  jeg liker ikke helt denne, hvorfor leser vi ikke bare hva som er i minne?
+
     match new_move_state {
-        MovementState::Moving(Direction::Down) if current_floor == Some(GROUND_FLOOR) => return, // TODO: NOWDO!: JENS: Check if this is correct and prohibits the elevator from going below ground floor or above top floor
-        MovementState::Moving(Direction::Up) if current_floor == Some(num_floors - 1) => return, // THIS IS AFFECTED IN MAIN AS WELL, CHECK EVERY INSTANCE OF num_floors IN main.rs and elevator_interface.rs
+        MovementState::Moving(Direction::Down) if last_floor == GROUND_FLOOR => return, // TODO: NOWDO!: JENS: Check if this is correct and prohibits the elevator from going below ground floor or above top floor
+        MovementState::Moving(Direction::Up) if last_floor == num_floors-1 => return, // THIS IS AFFECTED IN MAIN AS WELL, CHECK EVERY INSTANCE OF num_floors IN main.rs and elevator_interface.rs
         MovementState::Moving(dirn) => {
             match dirn {
                 Direction::Down => {
@@ -140,7 +140,7 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
 
 
 
-pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator, num_floors: u8) -> () {
+pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator) -> () {
 
     // Set poll period for buttons and sensors
     let poll_period = Duration::from_millis(25);
