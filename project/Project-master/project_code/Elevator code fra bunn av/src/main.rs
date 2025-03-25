@@ -23,7 +23,7 @@ use std::env;
 
 
 
-// Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000]
+// Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000] {do printout of state and spam the terminal}[true/false]
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
@@ -36,6 +36,8 @@ fn main() -> std::io::Result<()> {
     let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr");
     
     let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16");
+
+    let do_the_printout: bool =args[4].parse().expect("could not parse the fourth argument as a boolian value of wheither to do printout");
 
 
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
@@ -138,7 +140,7 @@ fn main() -> std::io::Result<()> {
         spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx));
     }
 
-    {
+    if do_the_printout {
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
         spawn(move || mem::printout(memory_request_channel, memory_recieve_channel));

@@ -78,7 +78,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
 fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator, num_floors: u8) {
     const GROUND_FLOOR: u8 = 0;
-    let current_floor = elevator.floor_sensor();
+    let current_floor = elevator.floor_sensor(); // Jens:  jeg liker ikke helt denne, hvorfor leser vi ikke bare hva som er i minne?
     match new_move_state {
         MovementState::Moving(Direction::Down) if current_floor == Some(GROUND_FLOOR) => return, // TODO: NOWDO!: JENS: Check if this is correct and prohibits the elevator from going below ground floor or above top floor
         MovementState::Moving(Direction::Up) if current_floor == Some(num_floors - 1) => return, // THIS IS AFFECTED IN MAIN AS WELL, CHECK EVERY INSTANCE OF num_floors IN main.rs and elevator_interface.rs
@@ -180,20 +180,20 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
 
         cbc::select! {
             recv(call_button_rx) -> call_button_notif => {
-                let button_pressed = call_button_notif.unwrap();
+                let button_pressed = call_button_notif.expect("Failed to unpack what putton was pressed");
 
-                //todo!("have to update the cyclic counter for this floor");
+                //todo! done I think - Jens ("have to update the cyclic counter for this floor");
                 // juct check if the current state is nothing then chnage to new, if else do nothing
 
                 memory_request_tx.send(mem::MemoryMessage::Request).expect("Failed to send request to memory");
                 let current_memory = memory_recieve_rx.recv().expect("Failed to recieve memory");
 
-                let current_calls = current_memory.state_list.get(&current_memory.my_id).expect("Failed to fetch current calls").call_list.clone();
+                let current_calls = current_memory.state_list.get(&current_memory.my_id).expect("Failed to fetch mmy memory by id").call_list.clone();
 
                 let equivilent_button_in_memory = mem::Call::from(button_pressed);
-
+                
                 let pressed_button_current_state = current_calls.get(&equivilent_button_in_memory).expect("Failed to fetch current call state of pressed button");
-
+                
                 if pressed_button_current_state == &CallState::Nothing {
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(equivilent_button_in_memory, CallState::New)).expect("Failed to send new call to memory");
                 }
@@ -230,7 +230,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let current_memory = memory_recieve_rx.recv().unwrap();
 
-                // todo!("we need to figure out how to do here");
+                // todo! done i think - jens ("we need to figure out how to do here");
                 // add new move state obstructed that wil force us to do nothing, but check if obstr gets remove
                 if obstruction_sensed {
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();

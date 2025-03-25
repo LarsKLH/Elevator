@@ -167,6 +167,10 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 }
  */
 
+
+
+// Jens: I really dont like this one
+
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
     loop {
         let memory = Memory::get(memory_request_channel.clone(), memory_recieve_channel.clone());
@@ -179,6 +183,6 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
                 println!("Call: {:?} {:?}", call, call_state);
             }
         }
-       thread::sleep(time::Duration::from_millis(500));
+       thread::sleep(time::Duration::from_millis(5000));
     }
 }
