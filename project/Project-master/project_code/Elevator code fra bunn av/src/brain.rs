@@ -40,10 +40,12 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
                         //println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.expect("Error reading from floor sensor"), my_state) {
+                            println!("Brain: Stopping and opening door");
                             // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
                         }
                         else {
+                            println!("Brain: Continuing in same direction");
                             // If we should continue, send the current movement state to memory
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
                         }
