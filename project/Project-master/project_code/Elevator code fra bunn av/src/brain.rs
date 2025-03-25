@@ -34,6 +34,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
+                        println!("Brain: Floor sensor detected, checking whether or not to stop");
                         // Update the last floor in memory
                         memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor"))).expect("Error updating floor");
 
@@ -48,7 +49,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                         }
                     }
                     recv(cbc::after(Duration::from_millis(100))) -> _a => {
-
+                        println!("Brain: No floor sensor detected, refreshing");
                         //println!("No new floor received, refreshing");
                         thread::sleep(Duration::from_millis(50));
                     }
