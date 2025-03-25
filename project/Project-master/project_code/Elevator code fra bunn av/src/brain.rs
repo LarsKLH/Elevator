@@ -65,6 +65,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 //println!("Stopping and closing door");
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
+                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+
                     println!("Brain: Moving again after stoped with closed door");
                     thread::sleep(Duration::from_millis(100));
 
@@ -75,6 +77,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);    
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
+                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+
                     println!("Brain: Moving again after stoped with open door");
                 }
             }
@@ -84,6 +88,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
+                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+
                     println!("Brain: Moving again after obstruction"); // dont allow for ANY movement until the obstruction is removed
                     thread::sleep(Duration::from_millis(100));
 
@@ -212,7 +218,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Brain: Ther are hall calls in my prev direction {:?} from before I stopped, contiuing to move in that direction", prev_dir);
                     thread::sleep(Duration::from_millis(100));
-                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+
                     return true;
                 }
                 else {
@@ -224,7 +230,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Brain: There are no more hall calls in my prev direction {:?} from before I stopped but there are hall calls in the other direction, turning around to move in that direction", prev_dir);
                     thread::sleep(Duration::from_millis(100));
-                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+
                     return true;
                 }
 
