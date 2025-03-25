@@ -213,7 +213,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 }
                 else {
                     // Move in the direction of the other hall call (turning around) and switch the privious direction
-                    turn_elevator_around(mut prev_dir, memory_request_tx.clone(), my_state.clone());
+                    turn_elevator_around(prev_dir, memory_request_tx.clone(), my_state.clone());
                     
                     return true;
                 }
@@ -276,10 +276,10 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 fn turn_elevator_around(prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> () {
     clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
     println!("Brain: There are no more hall calls in my prev direction {:?} from before I stopped but there are hall calls in the other direction, turning around to move in that direction", prev_dir);
-    match prev_dir {
-        Direction::Up => prev_dir = Direction::Down,
-        Direction::Down => prev_dir = Direction::Up,
-    }
+    let prev_dir = match prev_dir {
+                                        Direction::Up => Direction::Down,
+                                        Direction::Down => Direction::Up,
+                                    };
     clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Down))).expect("Error sending movement state to memory");
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Up))).expect("Error sending movement state to memory");
