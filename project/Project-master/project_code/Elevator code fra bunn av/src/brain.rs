@@ -35,7 +35,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
                         // Update the last floor in memory
-                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor")))expect("Error updating floor");;
+                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor"))).expect("Error updating floor");
 
                         //println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.expect("Error reading from floor sensor"), my_state) {
@@ -74,7 +74,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
                     println!("Moving again"); // dont allow for ANY movement until the obstruction is removed
-                }       
+                }  
+                 
                 
             }
         }
@@ -129,67 +130,90 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
     //          May need to use the distance function from the memory.rs file ??
     // # (Todo) Also needs to tidy up if statements to match statements and/or clean up number of cab_calls and hall_calls variables
 
-    //println!("Checking if I should go");
-    let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
-    let my_floor = my_state.last_floor;
-
-    // Check if elevator holds any cab or hall calls
-    let cab_calls = calls.iter()
-        .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
-
-    let cab_calls_in_prev_dir = calls.iter()
-        .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
-
-    let hall_calls = calls.iter()
-        .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
-
-    let hall_calls_in_prev_dir = calls.iter()
-        .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
-
-    if cab_calls {
-        // If there are cab calls, we should maybe start moving
-        // Move in the direction of previous call
-        if cab_calls_in_prev_dir {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-            println!("Moving in same direction");
-            return true;
+    match my_state.move_state {
+        elevint::MovementState::Obstructed => {
+            // If the elevator is obstructed, we should not move
+            return false;
         }
-        else {
-            // Move in the direction of the other cab call (turning around) and switch the privious direction
-            match prev_dir {
-                Direction::Up => prev_dir = Direction::Down,
-                Direction::Down => prev_dir = Direction::Up,
+        
+        _ => {
+
+            //println!("Checking if I should go");
+            let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
+            let my_floor = my_state.last_floor;
+
+            // Check if elevator holds any cab or hall calls
+            let cab_calls = calls.iter()
+                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
+
+            let cab_calls_in_prev_dir = calls.iter()
+                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+
+            let hall_calls = calls.iter()
+                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
+
+            let hall_calls_in_prev_dir = calls.iter()
+                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+
+            if cab_calls {
+                // If there are cab calls, we should maybe start moving
+                // Move in the direction of previous call
+                if cab_calls_in_prev_dir {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
+                    println!("Moving in same direction");
+                    return true;
+                }
+                else {
+                    // Move in the direction of the other cab call (turning around) and switch the privious direction
+                    match prev_dir {
+                        Direction::Up => prev_dir = Direction::Down,
+                        Direction::Down => prev_dir = Direction::Up,
+                    }
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
+                    println!("Turning around");
+                    return true;
+                }
             }
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-            println!("Turning around");
-            return true;
+
+            // We might add logic for checking if another elevator is closer to the call than this elevator. But do it later
+            else if hall_calls {
+                // If there are hall calls and no cab calls, we should maybe start moving in same direction as before
+                if hall_calls_in_prev_dir {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
+                    println!("Moving in same direction");
+                    return true;
+                }
+                else {
+                    // Move in the direction of the other hall call (turning around) and switch the privious direction
+                    match prev_dir {
+                        Direction::Up => prev_dir = Direction::Down,
+                        Direction::Down => prev_dir = Direction::Up,
+                    }
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
+                    println!("Turning around");
+                    return true;
+                }
+
+            } else {
+                // If there are no confrimed calls, we should do nothing, but first set state to stopAndCloseDoor
+                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+                println!("No confirmed calls, stopping and closing door");
+                return false;
+                };/* 
+                let has_calls = calls.iter().any(|(call, state)| *state == mem::CallState::Confirmed || *state == mem::CallState::PendingRemoval || *state == mem::CallState::New);
+                if has_calls {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
+                    };
+                has_calls;*/
+
+
         }
+
+    
+
+
+
     }
-
-    // We might add logic for checking if another elevator is closer to the call than this elevator. But do it later
-    else if hall_calls {
-        // If there are hall calls and no cab calls, we should maybe start moving in same direction as before
-        if hall_calls_in_prev_dir {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-            println!("Moving in same direction");
-            return true;
-        }
-        else {
-            // Move in the direction of the other hall call (turning around) and switch the privious direction
-            match prev_dir {
-                Direction::Up => prev_dir = Direction::Down,
-                Direction::Down => prev_dir = Direction::Up,
-            }
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-            println!("Turning around");
-            return true;
-        }
-
-    } else {
-        // If there are no calls, we should do nothing
-        return false;
-        };
-
 }
 
 // Clear the call from the memory

@@ -36,7 +36,7 @@ pub enum MovementState {
 
 // Motor controller function. Takes controller messages and sends them to the elevator
 // controller. Also updates the memory with the current direction of the elevator
-pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, elevator_outputs_receive: Receiver<State>, elevator: Elevator) -> () {
+pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, elevator_outputs_receive: Receiver<State>, elevator: Elevator, num_floors: u8) -> () {
     
     
     // TODO: jens want to remove the next two lines
@@ -53,7 +53,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
             recv(elevator_outputs_receive) -> state_to_mirror => {
                 let received_state_to_mirror = state_to_mirror.unwrap();
 
-                mirror_movement_state(received_state_to_mirror.move_state, &elevator);
+                mirror_movement_state(received_state_to_mirror.move_state, &elevator, num_floors);
                 
                 mirror_lights(received_state_to_mirror, &elevator);
 
@@ -66,7 +66,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
                 let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap();
 
-                mirror_movement_state(current_state.move_state, &elevator);
+                mirror_movement_state(current_state.move_state, &elevator, num_floors);
                 
                 mirror_lights(current_state.clone(), &elevator);
             }
@@ -76,8 +76,12 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
 
 
-fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator) {
+fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator, num_floors: u8) {
+    const GROUND_FLOOR: u8 = 0;
+    let current_floor = elevator.floor_sensor();
     match new_move_state {
+        MovementState::Moving(Direction::Down) if current_floor == Some(GROUND_FLOOR) => return, // TODO: NOWDO!: JENS: Check if this is correct and prohibits the elevator from going below ground floor or above top floor
+        MovementState::Moving(Direction::Up) if current_floor == Some(num_floors - 1) => return, // THIS IS AFFECTED IN MAIN AS WELL, CHECK EVERY INSTANCE OF num_floors IN main.rs and elevator_interface.rs
         MovementState::Moving(dirn) => {
             match dirn {
                 Direction::Down => {
@@ -136,7 +140,7 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
 
 
 
-pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator) -> () {
+pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator, num_floors: u8) -> () {
 
     // Set poll period for buttons and sensors
     let poll_period = Duration::from_millis(25);
@@ -181,26 +185,26 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 //todo!("have to update the cyclic counter for this floor");
                 // juct check if the current state is nothing then chnage to new, if else do nothing
 
-                memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-                let current_memory = memory_recieve_rx.recv().unwrap();
+                memory_request_tx.send(mem::MemoryMessage::Request).expect("Failed to send request to memory");
+                let current_memory = memory_recieve_rx.recv().expect("Failed to recieve memory");
 
-                let current_calls = current_memory.state_list.get(&current_memory.my_id).unwrap().call_list.clone();
+                let current_calls = current_memory.state_list.get(&current_memory.my_id).expect("Failed to fetch current calls").call_list.clone();
 
                 let equivilent_button_in_memory = mem::Call::from(button_pressed);
 
-                let pressed_button_current_state = current_calls.get(&equivilent_button_in_memory).unwrap();
+                let pressed_button_current_state = current_calls.get(&equivilent_button_in_memory).expect("Failed to fetch current call state of pressed button");
 
                 if pressed_button_current_state == &CallState::Nothing {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(equivilent_button_in_memory, CallState::New)).unwrap();
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(equivilent_button_in_memory, CallState::New)).expect("Failed to send new call to memory");
                 }
 
             }
 
             recv(floor_sensor_rx) -> floor_sensor_notif => {
-                let floor_sensed = floor_sensor_notif.unwrap();
+                let floor_sensed = floor_sensor_notif.expect("Failed to recieve floor sensor notification");
 
                 // might be a bad thing too do
-                memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(floor_sensed)).unwrap();
+                memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(floor_sensed)).expect("Failed to send floor to memory");
                 //this is a hardware thing, if we cant trust it we cant trust anything
                 
                 
@@ -210,7 +214,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
 
                 // this might be a bad idea, as i think this open for a race condition
                 // if the memory is not updated before the brain tries to read from the memory
-                floor_sensor_to_brain_tx.send(floor_sensed).unwrap(); 
+                floor_sensor_to_brain_tx.send(floor_sensed).expect("Failed to send floor to brain"); 
                 
             }
 
@@ -232,7 +236,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
                 }
                 else if current_memory.state_list.get(&current_memory.my_id).unwrap().move_state == MovementState::Obstructed {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::StopDoorClosed)).unwrap(); // LK: Changed MovementState::StopDoorClosed from MovementState::Obstructed
                 }
             }
         }

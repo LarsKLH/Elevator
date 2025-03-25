@@ -32,7 +32,7 @@ fn main() -> std::io::Result<()> {
 
 
     let num_floors: u8 = args[1].parse().expect("could not convert the first argument to a u8");
-    
+
     let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr");
     
     let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16");
@@ -65,7 +65,7 @@ fn main() -> std::io::Result<()> {
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
         let elevator_outputs_receive = elevator_outputs_receive.clone();
-        spawn(move || elevator_interface::elevator_outputs(memory_request_channel, memory_recieve_channel, elevator_outputs_receive, elevator));
+        spawn(move || elevator_interface::elevator_outputs(memory_request_channel, memory_recieve_channel, elevator_outputs_receive, elevator, num_floors));
     }
 
     // Run button checker thread
@@ -78,7 +78,7 @@ fn main() -> std::io::Result<()> {
 
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
-        spawn(move || elevator_interface::elevator_inputs(memory_request_channel, memory_recieve_channel, floor_sensor_tx,elevator));
+        spawn(move || elevator_interface::elevator_inputs(memory_request_channel, memory_recieve_channel, floor_sensor_tx,elevator, num_floors));
     }
 
 
