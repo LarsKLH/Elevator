@@ -212,7 +212,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Brain: Ther are hall calls in my prev direction {:?} from before I stopped, contiuing to move in that direction", prev_dir);
                     thread::sleep(Duration::from_millis(100));
-
+                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
                     return true;
                 }
                 else {
@@ -224,6 +224,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Brain: There are no more hall calls in my prev direction {:?} from before I stopped but there are hall calls in the other direction, turning around to move in that direction", prev_dir);
                     thread::sleep(Duration::from_millis(100));
+                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
                     return true;
                 }
 
