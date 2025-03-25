@@ -194,7 +194,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 }
                 else {
                     // Move in the direction of the other cab call (turning around) and switch the privious direction
-                    turn_elevator_around(prev_dir, memory_request_tx.clone());
+                    turn_elevator_around(prev_dir, memory_request_tx.clone(), my_state.clone());
 
                     return true;
                 }
@@ -213,7 +213,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 }
                 else {
                     // Move in the direction of the other hall call (turning around) and switch the privious direction
-                    turn_elevator_around(prev_dir, memory_request_tx.clone());
+                    turn_elevator_around(prev_dir, memory_request_tx.clone(), my_state.clone());
                     
                     return true;
                 }
@@ -273,7 +273,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 }
 
 // Turn the elevator around by clear calls in the original direction, clear calls in opposite direction, start moving in the new direction
-fn turn_elevator_around(prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
+fn turn_elevator_around(prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> () {
     clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
     println!("Brain: There are no more hall calls in my prev direction {:?} from before I stopped but there are hall calls in the other direction, turning around to move in that direction", prev_dir);
     match prev_dir {
