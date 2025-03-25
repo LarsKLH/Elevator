@@ -88,7 +88,7 @@ fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &H
 fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<Call, mem::CallState>) -> HashMap<Call, mem::CallState> {
     let mut difference: HashMap<Call, mem::CallState> = HashMap::new();
     for call in old_calls.clone() {
-        if new_calls.get(&call.0) == old_calls.get(&call.0) {
+        if new_calls.get(&call.0) != old_calls.get(&call.0) {
             difference.insert(call.0, *new_calls.get(&call.0).expect("Incorrect call state found"));
         }
     }
