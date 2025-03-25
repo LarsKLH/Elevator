@@ -21,7 +21,7 @@ use crate::elevator_interface as elevint;
 // Iterates the cyclic counter correctly
 fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<Call, mem::CallState> {
     let mut changed_state = state_to_change.clone();
-    for mut call in &state_to_change {
+    for call in &state_to_change {
         match call.1 {
             mem::CallState::Nothing => {
                 // If one of the others has a new order that passed sanity check, change our state to new
@@ -86,7 +86,7 @@ fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &H
 
 // Gets the difference between two call lists
 fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<Call, mem::CallState>) -> HashMap<Call, mem::CallState> {
-    let mut difference = old_calls.clone();
+    let mut difference: HashMap<Call, mem::CallState> = HashMap::new();
     for call in old_calls.clone() {
         if new_calls.get(&call.0) == old_calls.get(&call.0) {
             difference.insert(call.0, *new_calls.get(&call.0).expect("Incorrect call state found"));
