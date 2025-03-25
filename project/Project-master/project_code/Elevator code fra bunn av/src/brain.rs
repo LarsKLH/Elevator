@@ -23,9 +23,9 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
     // Infinite loop checking for memory messages
     loop {
 
-        memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-        let memory = memory_recieve_rx.recv().unwrap();
-        let my_state = memory.state_list.get(&memory.my_id).unwrap();
+        memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
+        let memory = memory_recieve_rx.recv().expect("Error receiving memory");
+        let my_state = memory.state_list.get(&memory.my_id).expect("Error getting own state");
         let my_movementstate = my_state.move_state;
         match my_movementstate {
 
@@ -35,16 +35,16 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
                         // Update the last floor in memory
-                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.unwrap())).unwrap();
+                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor")))expect("Error updating floor");;
 
                         //println!("New floor received, checking whether or not to stop");
-                        if should_i_stop(a.unwrap(), my_state) {
+                        if should_i_stop(a.expect("Error reading from floor sensor"), my_state) {
                             // Send StopAndOpen to memory to stop the elevator and open the door
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).unwrap();
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
                         }
                         else {
                             // If we should continue, send the current movement state to memory
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).unwrap();
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
                         }
                     }
                     recv(cbc::after(Duration::from_millis(100))) -> _a => {
@@ -150,7 +150,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
         // If there are cab calls, we should maybe start moving
         // Move in the direction of previous call
         if cab_calls_in_prev_dir {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).unwrap();
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
             println!("Moving in same direction");
             return true;
         }
@@ -160,7 +160,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 Direction::Up => prev_dir = Direction::Down,
                 Direction::Down => prev_dir = Direction::Up,
             }
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).unwrap();
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
             println!("Turning around");
             return true;
         }
@@ -170,7 +170,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
     else if hall_calls {
         // If there are hall calls and no cab calls, we should maybe start moving in same direction as before
         if hall_calls_in_prev_dir {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).unwrap();
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
             println!("Moving in same direction");
             return true;
         }
@@ -180,7 +180,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 Direction::Up => prev_dir = Direction::Down,
                 Direction::Down => prev_dir = Direction::Up,
             }
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).unwrap();
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
             println!("Turning around");
             return true;
         }
@@ -209,13 +209,13 @@ let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::Cal
 for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
     memory_request_tx
         .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
-        .unwrap();
+        .expect("Error sending call to memory");
 }
 
     // Wait 3 seconds
     thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
     // Update MoveState to StopDoorClosed
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).unwrap();
+    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
 }
 
 
