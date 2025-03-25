@@ -18,13 +18,13 @@ use crate::memory as mem;
 
 
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum Direction {
     Up,
     Down
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum MovementState {
     Moving(Direction),
     StopDoorClosed,
