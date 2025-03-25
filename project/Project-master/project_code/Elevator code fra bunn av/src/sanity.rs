@@ -276,7 +276,7 @@ fn merge_calls(old_calls: HashMap<Call, mem::CallState>, new_calls: HashMap<Call
         if old_calls.contains_key(&call.0) {
             match call.1 {
                 mem::CallState::Nothing => {
-                    let old_call = old_calls.get(&call.0).expect("Incorrect call found in mergin").clone();
+                    let old_call = old_calls.get(&call.0).expect("Incorrect call found in merging").clone();
                     match old_call {
                         mem::CallState::Nothing => {
                             merged_calls.insert(call.0, call.1);
@@ -287,7 +287,7 @@ fn merge_calls(old_calls: HashMap<Call, mem::CallState>, new_calls: HashMap<Call
                     }
                 }
                 mem::CallState::New => {
-                    let old_call = old_calls.get(&call.0).expect("Incorrect call found in mergin").clone();
+                    let old_call = old_calls.get(&call.0).expect("Incorrect call found in merging").clone();
                     match old_call {
                         mem::CallState::Nothing | mem::CallState::New => {
                             merged_calls.insert(call.0, call.1);
@@ -298,7 +298,7 @@ fn merge_calls(old_calls: HashMap<Call, mem::CallState>, new_calls: HashMap<Call
                     }
                 }
                 mem::CallState::Confirmed => {
-                    let old_call = old_calls.get(&call.0).expect("Incorrect call found in mergin").clone();
+                    let old_call = old_calls.get(&call.0).expect("Incorrect call found in merging").clone();
                     match old_call {
                         mem::CallState::PendingRemoval => {
                             merged_calls.insert(call.0, old_call);
@@ -384,20 +384,30 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     
                     // Summing up all accepted changes and commiting to memory
                     let mut received_state_new = received_state.clone();
-                    for change in differences_in_hall {
+                    for change in differences_in_hall.clone() {
                         received_state_new.call_list.insert(change.0, change.1);
                     }
-                    for change in differences_in_cab {
+                    for change in differences_in_cab.clone() {
                         received_state_new.call_list.insert(change.0, change.1);
                     }
 
                     let differences_initially = difference(old_memory.state_list.get(&received_state.id).expect("Incorrect state found").call_list.clone(), received_state_new.call_list.clone());
 
                     if differences_initially.len() > 0 {
-                        
+                        let mut differences_after = differences_in_hall.clone();
+                        for change in differences_in_cab.clone() {
+                            differences_after.insert(change.0, change.1);
+                        }
+                        differences_after = difference(differences_initially.clone(), differences_after.clone());
+                        if differences_after.len() > differences_initially.len()/2 {
+                            // Setting last received for this elevator to the current time
+                            last_received.insert(received_state.id.clone(), SystemTime::now());
+                        }
                     }
-                    // Setting last received for this elevator to the current time
-                    last_received.insert(received_state.id.clone(), SystemTime::now());
+                    else {
+                        // Setting last received for this elevator to the current time
+                        last_received.insert(received_state.id.clone(), SystemTime::now());
+                    }
 
                     // Sending the new state to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_new)).expect("Could not update memory");
