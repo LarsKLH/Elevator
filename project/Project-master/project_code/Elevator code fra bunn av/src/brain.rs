@@ -19,7 +19,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 // # (Todo) clean up references, clones and copies
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
 
-    let mut prev_direction = elevint::Direction::Up; // Store the previous direction of the elevator, currently set to Up
+    let mut prev_direction = elevint::Direction::Down; // Store the previous direction of the elevator, currently set to Down
     // Infinite loop checking for memory messages
     loop {
 
@@ -34,23 +34,26 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
+                        println!("Brain: Floor sensor detected, checking whether or not to stop");
                         // Update the last floor in memory
                         memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor"))).expect("Error updating floor");
 
                         //println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.expect("Error reading from floor sensor"), my_state) {
+                            println!("Brain: Stopping and opening door");
                             // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
                             println!("Brain: Stopped elevator with door open");
                         }
                         else {
+                            println!("Brain: Continuing in same direction");
                             // If we should continue, send the current movement state to memory
                             // Jens : is this neccescary, if we want to continue in the same direction do we send the same back aggain?
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
                         }
                     }
                     recv(cbc::after(Duration::from_millis(100))) -> _a => {
-
+                        println!("Brain: No floor sensor detected, refreshing");
                         //println!("No new floor received, refreshing");
                         thread::sleep(Duration::from_millis(50));
                     }
@@ -161,13 +164,13 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
 
             let cab_calls_in_prev_dir = calls.iter()
-                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && ((call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down)));
 
             let hall_calls = calls.iter()
                 .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
 
             let hall_calls_in_prev_dir = calls.iter()
-                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && ((call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down)));
 
             if cab_calls {
                 // If there are cab calls, we should maybe start moving
@@ -231,12 +234,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     };
                 has_calls;*/
 
-
-        }
-
-    
-
-
+        }    
 
     }
 }
