@@ -140,7 +140,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
             //elevint::Direction::Down => call.floor >= my_floor,
         //});
     
-    if !confirmed_calls_in_my_direction {
+    if !has_confirmed_calls_in_direction {
         return true;                    
     }
 
