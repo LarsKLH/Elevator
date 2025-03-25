@@ -115,14 +115,18 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
 
     
     // Check if there are no confirmed floors in the direction of the elevator -> stop
-    let no_confirmed_calls_in_direction = calls.iter()
-        .filter(|(call, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
-        .all(|(call, _)| match my_direction {                   // #should maybe use .any() instead of .all() here
-            elevint::Direction::Up => call.floor <= my_floor,
-            elevint::Direction::Down => call.floor >= my_floor,
+    let confirmed_calls_in_my_direction = calls.iter()
+        .any(|(call, state)| *state == mem::CallState::Confirmed && match my_direction {                  
+            elevint::Direction::Up => call.floor >= my_floor,
+            elevint::Direction::Down => call.floor <= my_floor,
         });
+        //.filter(|(call, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
+        //.any(|(call, _)| match my_direction {                  
+          //  elevint::Direction::Up => call.floor <= my_floor,
+            //elevint::Direction::Down => call.floor >= my_floor,
+        //});
     
-    if no_confirmed_calls_in_direction {
+    if !confirmed_calls_in_my_direction {
         return true;                    
     }
 
