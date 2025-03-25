@@ -8,6 +8,9 @@ use driver_rust::elevio;
 use postcard;
 use serde::{Serialize, Deserialize};
 
+use std::thread;
+use std::time;
+
 
 
 use crossbeam_channel::{Receiver, Sender};
@@ -34,7 +37,7 @@ pub struct State {
     pub call_list: HashMap<Call, CallState>
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum CallState {
     Nothing,
     New,
@@ -42,13 +45,13 @@ pub enum CallState {
     PendingRemoval
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize, Debug)]
 pub struct Call{
     pub call_type: CallType,
     pub floor: u8
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize, Debug)]
 pub enum CallType {
     Cab,
     Hall(elevint::Direction) 
@@ -164,9 +167,18 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 }
  */
 
-pub fn gui(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
+pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
     loop {
         let memory = Memory::get(memory_request_channel.clone(), memory_recieve_channel.clone());
-        
+        for state in memory.state_list.values() {
+            println!("Elevator: {}", state.id);
+            println!("Timed out: {}", state.timed_out);
+            println!("Movement state: {:?}", state.move_state);
+            println!("Last floor: {}", state.last_floor);
+            for (call, call_state) in state.call_list.iter() {
+                println!("Call: {:?} {:?}", call, call_state);
+            }
+        }
+       thread::sleep(time::Duration::from_millis(500));
     }
 }

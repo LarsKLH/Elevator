@@ -141,7 +141,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
-        spawn(move || mem::gui(memory_request_channel, memory_recieve_channel));
+        spawn(move || mem::printout(memory_request_channel, memory_recieve_channel));
     }
 
 
