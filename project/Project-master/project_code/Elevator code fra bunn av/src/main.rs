@@ -31,13 +31,13 @@ fn main() -> std::io::Result<()> {
     //print!("arguments are: arg 1 = {}, arg 2 = {}, arg 3 = {}", args[1], args[2], args[3]);
 
 
-    let num_floors: u8 = args[1].parse().expect("could not convert the first argument to a u8");
+    let num_floors: u8 = args[1].parse().expect("could not convert the first argument to a u8, could i recomend '4'");
 
-    let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr");
+    let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr, could i recomend '127.0.0.x'");
     
-    let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16");
+    let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16, could i recomend '50026'");
 
-    let do_the_printout: bool =args[4].parse().expect("could not parse the fourth argument as a boolian value of wheither to do printout");
+    let do_the_printout: bool =args[4].parse().expect("could not parse the fourth argument as a boolian value of wheither to do printout, could i recomend 'false'");
 
 
     let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
@@ -80,7 +80,7 @@ fn main() -> std::io::Result<()> {
 
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
-        spawn(move || elevator_interface::elevator_inputs(memory_request_channel, memory_recieve_channel, floor_sensor_tx,elevator, num_floors));
+        spawn(move || elevator_interface::elevator_inputs(memory_request_channel, memory_recieve_channel, floor_sensor_tx,elevator));
     }
 
 
