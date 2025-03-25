@@ -20,7 +20,9 @@ use crate::elevator_interface as elevint;
 
 // Iterates the cyclic counter correctly
 fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &HashMap<Ipv4Addr, mem::State>) -> HashMap<Call, mem::CallState> {
+    
     let mut changed_state = state_to_change.clone();
+    
     for call in &state_to_change {
         match call.1 {
             mem::CallState::Nothing => {
@@ -28,10 +30,12 @@ fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &H
                 for state in state_list {
                     if *state.1.call_list.get(call.0).expect("Incorrect call state found") == mem::CallState::New {
                         changed_state.insert(call.0.clone(), mem::CallState::New);
+                        println!("Sanity: Want to update cyclic counter for call {:?} from Nothing to New", call.0);
                         break;
                     }
                 }
             }
+
             mem::CallState::New => {
                 // If all the others are either new or confirmed, change our state to confirmed
                 let mut new = 0;
@@ -48,13 +52,16 @@ fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &H
                 }
                 if (new + confirmed) == total {
                     changed_state.insert(call.0.clone(), mem::CallState::Confirmed);
+                    println!("Sanity: Want to update cyclic counter for call {:?} from New to Confirmed", call.0);
                 }
             }
+
             mem::CallState::Confirmed => {
                 // If one of the others has removed an order that passed sanity check, change our state to new
                 for state in state_list {
                     if *state.1.call_list.get(call.0).expect("Incorrect call state found") == mem::CallState::PendingRemoval {
                         changed_state.insert(call.0.clone(), mem::CallState::PendingRemoval);
+                        println!("Sanity: Want to update cyclic counter for call {:?} from Confirmed to PendingRemoval", call.0);
                         break;
                     }
                 }
@@ -77,6 +84,7 @@ fn cyclic_counter(state_to_change: HashMap<Call, mem::CallState>, state_list: &H
                 }
                 if (pending + nothing) == total {
                     changed_state.insert(call.0.clone(), mem::CallState::Nothing);
+                    println!("Sanity: Want to update cyclic counter for call {:?} from PendingRemoval to Nothing", call.0);
                 }
             }
         }
