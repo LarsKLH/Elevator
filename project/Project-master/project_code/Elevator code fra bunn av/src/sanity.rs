@@ -325,9 +325,16 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     let new_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Up) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Down)).collect();
                     let old_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Up) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Down)).collect();
 
-                    let modified_calls = merge_calls(old_calls, new_calls);
+                    let mut modified_calls = merge_calls(old_calls.clone(), new_calls.clone());
 
-                    
+                    modified_calls = difference(old_calls, modified_calls);
+
+                    for change in modified_calls {
+                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
+                    }
+
+                    // Sending the data for the updated elevator to memory
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state)).expect("Could not update memory");
 
                     // Here we probably need to merge our and their states somehow, but I'm not sure how to do that yet
                 }

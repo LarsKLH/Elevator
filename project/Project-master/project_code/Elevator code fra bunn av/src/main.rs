@@ -138,6 +138,13 @@ fn main() -> std::io::Result<()> {
         spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx));
     }
 
+    {
+        let memory_request_channel = memory_request_channel.clone();
+        let memory_recieve_channel = memory_recieve_channel.clone();
+        spawn(move || mem::gui(memory_request_channel, memory_recieve_channel));
+    }
+
+
     // Loop forever, error handling goes here somewhere
     loop {
         sleep(Duration::from_millis(1000));

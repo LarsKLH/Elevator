@@ -163,3 +163,10 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
     }
 }
  */
+
+pub fn gui(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
+    loop {
+        let memory = Memory::get(memory_request_channel.clone(), memory_recieve_channel.clone());
+        
+    }
+}
