@@ -19,7 +19,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 // # (Todo) clean up references, clones and copies
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
 
-    let mut prev_direction = elevint::Direction::Up; // Store the previous direction of the elevator, currently set to Up
+    let mut prev_direction = elevint::Direction::Down; // Store the previous direction of the elevator, currently set to Down
     // Infinite loop checking for memory messages
     loop {
 
@@ -153,13 +153,13 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
 
             let cab_calls_in_prev_dir = calls.iter()
-                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && ((call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down)));
 
             let hall_calls = calls.iter()
                 .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
 
             let hall_calls_in_prev_dir = calls.iter()
-                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && (call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down));
+                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && ((call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down)));
 
             if cab_calls {
                 // If there are cab calls, we should maybe start moving
@@ -220,12 +220,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     };
                 has_calls;*/
 
-
-        }
-
-    
-
-
+        }    
 
     }
 }
