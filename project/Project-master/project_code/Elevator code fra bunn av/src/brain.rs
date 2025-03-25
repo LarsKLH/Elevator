@@ -59,6 +59,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
                     println!("Moving again");
+                    thread::sleep(Duration::from_millis(100));
+
                 }
             }
             elevint::MovementState::StopAndOpen => {
@@ -71,9 +73,13 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             }
             elevint::MovementState::Obstructed => {
                 println!("Elevator is obstructed");
+                thread::sleep(Duration::from_millis(100));
+
                 let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
                 if going {
                     println!("Moving again"); // dont allow for ANY movement until the obstruction is removed
+                    thread::sleep(Duration::from_millis(100));
+
                 }  
                  
                 
@@ -161,6 +167,8 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 if cab_calls_in_prev_dir {
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Moving in same direction");
+                    thread::sleep(Duration::from_millis(100));
+
                     return true;
                 }
                 else {
@@ -171,6 +179,8 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     }
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Turning around");
+                    thread::sleep(Duration::from_millis(100));
+
                     return true;
                 }
             }
@@ -181,6 +191,8 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 if hall_calls_in_prev_dir {
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Moving in same direction");
+                    thread::sleep(Duration::from_millis(100));
+
                     return true;
                 }
                 else {
@@ -191,6 +203,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                     }
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
                     println!("Turning around");
+                    thread::sleep(Duration::from_millis(100));
                     return true;
                 }
 
@@ -198,6 +211,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
                 // If there are no confrimed calls, we should do nothing, but first set state to stopAndCloseDoor
                 memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
                 println!("No confirmed calls, stopping and closing door");
+                thread::sleep(Duration::from_millis(100));
                 return false;
                 };/* 
                 let has_calls = calls.iter().any(|(call, state)| *state == mem::CallState::Confirmed || *state == mem::CallState::PendingRemoval || *state == mem::CallState::New);
