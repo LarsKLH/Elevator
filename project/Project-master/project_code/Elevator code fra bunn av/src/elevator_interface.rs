@@ -47,6 +47,12 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
     // Update direction in memory
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
 
+    memory_request_tx.send(mem::MemoryMessage::Request).expect("Could not request memory");
+
+    let original_memory = memory_recieve_rx.recv().expect("Could not recieve memory");  
+
+    let mut prev_state = original_memory.state_list.get(&original_memory.my_id).expect("could not extract my memory from memory").clone();
+
     // Infinite loop checking for elevator controller messages
     loop {
         cbc::select! {
@@ -64,11 +70,18 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let current_memory = memory_recieve_rx.recv().unwrap();
 
-                let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap();
+                let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap().clone();
 
-                mirror_movement_state(current_state.move_state, &elevator, num_floors, current_state.last_floor);
+                // Dont need to send commands to the elevator if there is nothing to change
+                if current_state != prev_state {
+                    mirror_movement_state(current_state.move_state, &elevator, num_floors, current_state.last_floor);
+                    
+                    mirror_lights(current_state.clone(), &elevator);
+
+                    prev_state = current_state;
+                }
                 
-                mirror_lights(current_state.clone(), &elevator);
+                
             }
         }
     }
