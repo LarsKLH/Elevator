@@ -167,6 +167,9 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
     loop {
         let memory = Memory::get(memory_request_channel.clone(), memory_recieve_channel.clone());
+        println!("-----------------------------------------------------------------------------------------------");
+        println!("my_id: {}", memory.my_id);
+
         for state in memory.state_list.values() {
             println!("Elevator: {}", state.id);
             println!("Timed out: {}", state.timed_out);
