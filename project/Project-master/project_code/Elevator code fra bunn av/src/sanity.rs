@@ -440,6 +440,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     let differences_in_cab = handle_cab_calls_for_other(old_memory.clone(), received_memory.clone(), memory_request_tx.clone());
                     handle_cab_calls_for_me(old_memory.clone(), received_memory.clone(), memory_request_tx.clone());
 
+                    println!("Sanity: Hall call changes: {:?}", differences_in_hall);
+                    println!("Sanity: Cab call changes: {:?}", differences_in_cab);
                     
                     // Summing up all accepted changes and commiting to memory
                     let mut received_state_with_only_accepted = old_memory.state_list.get(&received_state.id).expect("Incorrect state found").clone();
