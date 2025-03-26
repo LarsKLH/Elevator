@@ -17,7 +17,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 // # (Todo) clean up references, clones and copies
-pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
+pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>) -> () {
 
     let mut prev_direction = elevint::Direction::Down; // Store the previous direction of the elevator, currently set to Down
     // Infinite loop checking for memory messages
@@ -26,7 +26,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
         memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
         let memory = memory_recieve_rx.recv().expect("Error receiving memory");
-        let my_state = memory.state_list.get(&memory.my_id).expect("Error getting own state");
+        let mut my_state = memory.state_list.get(&memory.my_id).expect("Error getting own state").clone();
         let my_movementstate = my_state.move_state;
         match my_movementstate {
 
@@ -41,8 +41,11 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                         memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor"))).expect("Error updating floor");
 
                         //println!("New floor received, checking whether or not to stop");
-                        if should_i_stop(a.expect("Error reading from floor sensor"), my_state) {
+                        if should_i_stop(a.expect("Error reading from floor sensor"), my_state.clone()) {
                             println!("Brain: Stopping and opening door");
+                            my_state.last_floor = a.expect("Error reading from floor sensor");
+                            my_state.move_state = elevint::MovementState::StopAndOpen;
+                            brain_stop_direct_link.send(my_state).expect("Error sending stop and open to brain");
                             // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
                             println!("Brain: Stopped elevator with door open");
@@ -95,7 +98,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 }
 
 // Check if the elevator should stop or not
-fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bool {
+fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> bool {
 
     let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
     let my_floor = floor_to_consider_stopping_at;

@@ -62,7 +62,7 @@ fn main() -> std::io::Result<()> {
 
     // Initialize motor controller channel
     // - Only goes one way
-    let (elevator_outputs_send, elevator_outputs_receive) = cbc::unbounded::<mem::State>();
+    let (brain_stop_direct_link_tx, brain_stop_direct_link_rx ) = cbc::unbounded::<mem::State>();
 
     // Run motor controller thread
     // - Accesses motor controls, other functions command it and it updates direction in memory
@@ -71,8 +71,8 @@ fn main() -> std::io::Result<()> {
 
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
-        let elevator_outputs_receive = elevator_outputs_receive.clone();
-        spawn(move || elevator_interface::elevator_outputs(memory_request_channel, memory_recieve_channel, elevator_outputs_receive, elevator, num_floors));
+        let brain_stop_direct_link = brain_stop_direct_link_rx.clone();
+        spawn(move || elevator_interface::elevator_outputs(memory_request_channel, memory_recieve_channel, brain_stop_direct_link, elevator, num_floors));
     }
 
     // Run button checker thread
@@ -127,7 +127,8 @@ fn main() -> std::io::Result<()> {
         let memory_request_channel = memory_request_channel.clone();
         let memory_recieve_channel = memory_recieve_channel.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
-        spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx));
+        let brain_stop_direct_link = brain_stop_direct_link_tx.clone();
+        spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx, brain_stop_direct_link));
     }
 
     if do_the_printout {
