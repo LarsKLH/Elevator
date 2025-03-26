@@ -86,7 +86,15 @@ impl Memory {
             state_list: received_memory.state_list
         }
     }
-        
+
+    pub fn am_i_closest(&self, my_id: Ipv4Addr, call_floor: u8) -> bool {
+        self.state_list
+            .iter()
+            .filter(|(_, state)| !state.timed_out)
+            .min_by_key(|(_, state)| (state.last_floor as i8 - call_floor as i8).abs())
+            .map(|(id, _)| *id == my_id)
+            .unwrap_or(false)
+    }
 }
 
 impl State {

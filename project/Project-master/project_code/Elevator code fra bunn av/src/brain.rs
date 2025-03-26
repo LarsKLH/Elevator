@@ -344,6 +344,20 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
     }
 }
 
+fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory) -> bool {
+    my_id = memory.my_id;
+    my_floor = memory.state_list.get(&my_id).unwrap().last_floor;
+    current_dir = memory.state_list.get(&my_id).unwrap().move_state;
+    let call_floor = call.floor;
+    if (current_dir == elevint::Direction::Up && call_floor < my_floor)
+        || (current_dir == elevint::Direction::Down && call_floor > my_floor)
+    {
+        return false;
+    }
+
+    return memory.am_i_closest(my_id, call_floor, current_dir as i8);
+}
+
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     // TODO
     println!("Restarting elevator");
