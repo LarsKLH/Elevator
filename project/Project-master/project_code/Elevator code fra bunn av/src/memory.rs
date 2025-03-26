@@ -11,7 +11,7 @@ use serde::{Serialize, Deserialize};
 use std::thread;
 use std::time;
 
-
+use itertools::Itertools;
 
 use crossbeam_channel::{Receiver, Sender};
 
@@ -37,7 +37,7 @@ pub struct State {
     pub call_list: HashMap<Call, CallState>
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Debug, Ord, PartialOrd)]
 pub enum CallState {
     Nothing,
     New,
@@ -45,13 +45,13 @@ pub enum CallState {
     PendingRemoval
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize, Debug, Ord, PartialOrd)]
 pub struct Call{
     pub call_type: CallType,
     pub floor: u8
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize, Debug)]
+#[derive(Eq, PartialEq, Clone, Copy, Hash, Serialize, Deserialize, Debug, Ord, PartialOrd)]
 pub enum CallType {
     Cab,
     Hall(elevint::Direction) 
@@ -162,21 +162,6 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
     }
 }
 
-
-
-/* pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
-    
-    loop {
-        memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-        let memory = memory_recieve_rx.recv().unwrap();
-        let my_state = memory.state_list.get(&memory.my_id).unwrap();
-        
-    }
-}
- */
-
-
-
 // Jens: I really dont like this one
 
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
@@ -187,10 +172,10 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
             println!("Timed out: {}", state.timed_out);
             println!("Movement state: {:?}", state.move_state);
             println!("Last floor: {}", state.last_floor);
-            for (call, call_state) in state.call_list.iter() {
-                println!("Call: {:?} {:?}", call, call_state);
+            for (call, call_state) in state.call_list.iter().sorted() {
+                println!("Call: {:?} {:?} {:?}", call.call_type, call.floor, call_state);
             }
         }
-       thread::sleep(time::Duration::from_millis(5000));
+       thread::sleep(time::Duration::from_millis(1000));
     }
 }

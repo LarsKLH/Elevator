@@ -18,7 +18,7 @@ use crate::memory as mem;
 
 
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug, Ord, PartialOrd)]
 pub enum Direction {
     Up,
     Down
@@ -66,9 +66,8 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
                 
             }
-            default(Duration::from_millis(100))  => {
-                memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-                let current_memory = memory_recieve_rx.recv().unwrap();
+            default(Duration::from_millis(50))  => {
+                let current_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
 
                 let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap().clone();
 

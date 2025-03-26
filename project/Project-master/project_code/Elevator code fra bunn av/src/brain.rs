@@ -46,6 +46,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                             // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
                             println!("Brain: Stopped elevator with door open");
+                            thread::sleep(Duration::from_secs(3));
                         }
                         else {
                             println!("Brain: Continuing in same direction");
@@ -66,8 +67,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             } 
             elevint::MovementState::StopDoorClosed => {
                 //println!("Stopping and closing door");
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);
+                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
                     //thread::sleep(Duration::from_millis(100));
@@ -146,104 +147,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
 
 }
 
-// Check if the elevator should continue moving or not
-/*fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage> ) -> bool {
 
-    // This function check both cab calls and hall calls for determining the next movement of the elevator
-    // # (Todo) Also needs to check if another elevator is closer to the call than this elevator
-    //          May need to use the distance function from the memory.rs file ??
-    // # (Todo) Also needs to tidy up if statements to match statements and/or clean up number of cab_calls and hall_calls variables
-
-    let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
-    let my_floor = my_state.last_floor;
-
-    match my_state.move_state {
-        elevint::MovementState::Obstructed => {
-            // If the elevator is obstructed, we should not move
-            return false;
-        }
-        
-        /*
-        elevint::MovementState::StopAndOpen => {
-            let any_calls_on_my_floor_pending_removal = calls.iter().any(|(call, state)| call.floor == my_floor)
-        }
-        */
-
-        _ => {
-
-            //println!("Checking if I should go");
-
-            // Check if elevator holds any cab or hall calls
-            let cab_calls = calls.iter()
-                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed);
-
-            let cab_calls_in_prev_dir = calls.iter()
-                .any(|(call, state)| call.call_type == mem::CallType::Cab && *state == mem::CallState::Confirmed && ((call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down)));
-
-            let hall_calls = calls.iter()
-                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed);
-
-            let hall_calls_in_prev_dir = calls.iter()
-                .any(|(call, state)| (call.call_type == mem::CallType::Hall(Direction::Up) || call.call_type == mem::CallType::Hall(Direction::Down)) && *state == mem::CallState::Confirmed && ((call.floor > my_floor && prev_dir == Direction::Up) || (call.floor < my_floor && prev_dir == Direction::Down)));
-
-            if cab_calls {
-                // If there are cab calls, we should maybe start moving
-                // Move in the direction of previous call
-                if cab_calls_in_prev_dir {
-                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-                    println!("Brain: I have cab calls in my prev direction {:?} from before I stopped, continueing to move in that direction", prev_dir);
-                    //thread::sleep(Duration::from_millis(100));
-
-                    return true;
-                }
-                else {
-                    // Move in the direction of the other cab call (turning around) and switch the privious direction
-                    turn_elevator_around(prev_dir, memory_request_tx.clone(), my_state.clone());
-
-                    return true;
-                }
-            }
-
-            // We might add logic for checking if another elevator is closer to the call than this elevator. But do it later
-            else if hall_calls {
-                // If there are hall calls and no cab calls, we should maybe start moving in same direction as before
-                if hall_calls_in_prev_dir {
-                    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-                    println!("Brain: Ther are hall calls in my prev direction {:?} from before I stopped, contiuing to move in that direction", prev_dir);
-                    //thread::sleep(Duration::from_millis(100));
-
-                    return true;
-                }
-                else {
-                    // Move in the direction of the other hall call (turning around) and switch the privious direction
-                    turn_elevator_around(prev_dir, memory_request_tx.clone(), my_state.clone());
-                    
-                    return true;
-                }
-
-            } else {
-                // If there are no confrimed calls, we should do nothing, but first set state to stopAndCloseDoor
-                memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
-                
-                // Jens: This one spammed the terminal with the same message, commenting it out
-                //println!("Brain: There are no more calls to take, stoping with door open at floor {}", my_floor);
-                
-                thread::sleep(Duration::from_millis(100));
-                return false;
-                };/* 
-                let has_calls = calls.iter().any(|(call, state)| *state == mem::CallState::Confirmed || *state == mem::CallState::PendingRemoval || *state == mem::CallState::New);
-                if has_calls {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(prev_dir))).expect("Error sending movement state to memory");
-                    };
-                has_calls;*/
-
-        }    
-
-    }
-}
-*/
 
 // Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
@@ -254,7 +158,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
     my_state.call_list.clone()
         .into_iter()
         .filter(|(call, state)| {
-            println!("Brain: Checking call {:?} at floor {} w/ state {:?}", call, my_state.last_floor, state);
+            //println!("Brain: Checking call {:?} at floor {} w/ state {:?}", call, my_state.last_floor, state);
 
             call.floor == my_state.last_floor &&
             *state == mem::CallState::Confirmed &&
@@ -345,7 +249,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                     //thread::sleep(Duration::from_millis(100));
                     return true;
                 }
-                _ => ()
+                _ => {}
             }
             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
             return false;
@@ -371,34 +275,34 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
 
 fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     
-let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
-    my_state.call_list.clone()
-        .into_iter()
-        .filter(|(call, state)| {
-            println!("Checking call {:?} at floor {}", call, my_state.last_floor);
+    let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
+        my_state.call_list.clone()
+            .into_iter()
+            .filter(|(call, state)| {
+                //println!("Checking call {:?} at floor {}", call, my_state.last_floor);
 
-            call.floor == my_state.last_floor &&
-            *state == mem::CallState::Confirmed &&
-            (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
-        })
-        .collect(); // Collect into a HashMap
+                call.floor == my_state.last_floor &&
+                *state == mem::CallState::Confirmed &&
+                (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
+            })
+            .collect(); // Collect into a HashMap
 
-          
-println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
-                    
-// Change CallState of each call to PendingRemoval
-for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
-memory_request_tx
-.send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
-.expect("Error sending call to memory");
-                }
+            
+    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
+                        
+    // Change CallState of each call to PendingRemoval
+    for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
+    memory_request_tx
+    .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+    .expect("Error sending call to memory");
+                    }
 
-// Wait 3 seconds
-thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
-// Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
+    // Wait 3 seconds
+    thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
+    // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
 
-// Update MoveState to StopDoorClosed
-memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+    // Update MoveState to StopDoorClosed
+    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
 
 }
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {

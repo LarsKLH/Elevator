@@ -107,21 +107,6 @@ fn main() -> std::io::Result<()> {
         spawn(move || sanity::sanity_check_incomming_message(memory_request_channel, memory_recieve_channel, rx_get));
     }
 
-
-    /* 
-
-    Deprecated code
-
-    // Run State machine thread
-    // - Checks whether to change the calls in the call lists' state based on recieved broadcasts from other elevators
-    {
-        let memory_request_channel = memory_request_channel.clone();
-        let memory_recieve_channel = memory_recieve_channel.clone();
-        spawn(move || mem::state_machine_check(memory_request_channel, memory_recieve_channel));
-    }
-    */
-
-
     // Run Transmitter thread
     // - Constantly sends elevator direction, last floor and call list
     {
