@@ -129,7 +129,7 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator, nu
             // Turn on light for now
             elevator.door_light(true);
         }
-        MovementState::Obstructed => {/* Do nothing, as per spec we must just make sure that the doors dont close */}
+        MovementState::Obstructed => {elevator.motor_direction(elevio::elev::DIRN_STOP);/* Allow NO movement or open doors*/}
     }
 }
 
