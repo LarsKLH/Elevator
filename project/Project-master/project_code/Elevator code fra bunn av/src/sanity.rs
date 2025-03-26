@@ -458,9 +458,11 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
                     // Getting differences initially
                     let differences_initially = difference(old_memory.state_list.get(&received_state.id).expect("Incorrect state found").call_list.clone(), state_list_with_changes.get(&received_state.id).expect("Incorrect state found").call_list.clone());
-
+                    println!("Sanity: Initial differences: {:?}", differences_initially);
+                    
                     if differences_initially.len() > 0 {
                         let differences_after = difference(old_memory.state_list.get(&received_state.id).expect("Incorrect state found").call_list.clone(), received_state_with_only_accepted.call_list.clone());
+                        println!("Sanity: Differences after: {:?}", differences_after);
 
                         // If less than half of the changes aren't accepted we do not accept the changes
                         // This ensures out of sync elevators will eventually be considered timed out and merged
@@ -478,7 +480,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_with_only_accepted)).expect("Could not update memory");
                 }
 
-                println!("Sanity: Checking timeout");
+                //println!("Sanity: Checking timeout");
                 timeout_check(last_received.clone(), memory_request_tx.clone());
             }
 
