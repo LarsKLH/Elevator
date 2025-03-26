@@ -48,6 +48,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
                         }
                     }
+                    default(Duration::from_millis(1000)) => {
+                    }
                 }
             } 
             elevint::MovementState::StopDoorClosed => {
