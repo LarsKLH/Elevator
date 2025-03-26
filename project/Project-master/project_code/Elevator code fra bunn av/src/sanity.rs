@@ -207,6 +207,8 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, memory
      // Getting the relevant calls from my state
      let my_diff: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Invalid state list received").call_list.clone().into_iter().filter(|x| differences.contains_key(&x.0)).collect();
 
+    println!("Sanity: My diff: {:?}", my_diff);
+
      // Running the state machine on only the changed calls
      let my_diff_changed = cyclic_counter(my_diff.clone(), &state_list_with_changes);
 
