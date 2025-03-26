@@ -50,7 +50,7 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
 
     let native_send_socket = UdpSocket::bind((ipv4, wanted_port)).unwrap();
 
-    native_send_socket.set_broadcast(true);
+    native_send_socket.set_broadcast(true).expect("NetWork: Failed to set socket to broadcast");
 
     let native_list_socket = native_send_socket.try_clone().unwrap();
 
