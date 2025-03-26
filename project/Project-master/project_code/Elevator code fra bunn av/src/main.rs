@@ -23,7 +23,7 @@ use std::env;
 
 
 
-// Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000] {do printout of state and spam the terminal}[true/false]
+// Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000] {do printout of state and spam the terminal}[true/false] {port the server is on}[int under like 60 000]
 fn main() -> std::io::Result<()> {
 
     let args: Vec<String> = env::args().collect();
@@ -35,12 +35,17 @@ fn main() -> std::io::Result<()> {
 
     let ipv4_id: Ipv4Addr = args[2].parse().expect("could not convert the second argument to a ipv4addr, could i recomend '127.0.0.x'");
     
-    let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16, could i recomend '50026'");
+    let socket_number: u16 = args[3].parse().expect("could not convert the second argument to a socket/u16 to broadcast to, could i recomend '50026'");
 
-    let do_the_printout: bool =args[4].parse().expect("could not parse the fourth argument as a boolian value of wheither to do printout, could i recomend 'false'");
+    let do_the_printout: bool = args[4].parse().expect("could not parse the fourth argument as a boolian value of wheither to do printout, could i recomend 'false'");
 
+    let elevator_server_port_u16_val: u16 = args[5].parse().expect("could not parse the fith argument as a socket/u16 where the server is, could i recomend '15657'");
 
-    let elevator = elevio::elev::Elevator::init("localhost:15657", num_floors)?;
+    
+    
+    let elevator_server_port_string = format!("localhost:{}",elevator_server_port_u16_val);
+
+    let elevator = elevio::elev::Elevator::init(elevator_server_port_string.as_str(), num_floors)?;
 
     // Initialize memory access channels
     // - One for requests, one for receiving

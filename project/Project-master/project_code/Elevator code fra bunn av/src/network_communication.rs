@@ -69,14 +69,16 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
     let recv_socket = net_config.listning_socket;
 
-    recv_socket.set_nonblocking(false).unwrap();
+    recv_socket.set_nonblocking(false).expect("NetWork: Failed to set the recv socket to non-blocking");
 
     loop{
-        recv_socket.recv(&mut recieve_buffer).unwrap();
+        let (number_of_bytes_recieved, address_of_sender) = recv_socket.recv_from(&mut recieve_buffer).expect("NetWork: Failed to recv packet, if this is ever a problem add error handling");
 
-        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).unwrap();
+        println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, address_of_sender);
+
+        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
     
-        rx_sender_to_memory.send(recieved_memory).unwrap();
+        rx_sender_to_memory.send(recieved_memory).expect("NetWork: Failed to send message to memory");
     }
 
 }
