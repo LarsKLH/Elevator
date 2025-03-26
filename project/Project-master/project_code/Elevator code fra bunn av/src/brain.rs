@@ -169,24 +169,27 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 }
 
 fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
-    //println!("Brain: Checking if I should go");
     match my_state.move_state {
-        elevint::MovementState::Obstructed => {
-            return false;
-            
-        }
+        elevint::MovementState::Obstructed => {return false;}
         _ => {
-            let calls: Vec<_> = my_state.call_list.into_iter().collect();
+            let calls: Vec<_> = my_state.call_list.into_iter()
+                .collect();
             let my_floor = my_state.last_floor;
-            let confirmed_calls: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed).collect();
-            let calls_in_current_direction: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
-                elevint::Direction::Up => call.floor > my_floor,
-                elevint::Direction::Down => call.floor < my_floor,
-            }).collect();
-            let calls_in_opposite_direction: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
-                elevint::Direction::Up => call.floor < my_floor,
-                elevint::Direction::Down => call.floor > my_floor,
-            }).collect();
+            let confirmed_calls: Vec<_> = calls.iter()
+                .filter(|(call, state)| *state == mem::CallState::Confirmed)
+                .collect();
+            let calls_in_current_direction: Vec<_> = calls.iter()
+                .filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
+                    elevint::Direction::Up => call.floor > my_floor,
+                    elevint::Direction::Down => call.floor < my_floor,
+                    })
+                .collect();
+            let calls_in_opposite_direction: Vec<_> = calls.iter()
+                .filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
+                    elevint::Direction::Up => call.floor < my_floor,
+                    elevint::Direction::Down => call.floor > my_floor,
+                    })
+                .collect();
             
             match confirmed_calls.is_empty() {
                 true => {
@@ -197,7 +200,6 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
             }
             match calls_in_current_direction.is_empty() {
                 false => {
-                    //clear_confirmed_calls_on_floor_matching_direction(my_state.clone(),  memory_request_tx.clone(), current_dir);
                     println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
                     return true;
