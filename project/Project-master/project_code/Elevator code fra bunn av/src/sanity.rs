@@ -155,7 +155,11 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
 
                 let mut others_agree = false;
                 for state in state_list_with_changes.values() {
-                    if *state.call_list.get(&change.0.clone()).expect("Incorrect call state found") == change.1 {
+                    if *state.call_list.get(&change.0.clone()).expect("Incorrect call state found") == mem::CallState::PendingRemoval {
+                        others_agree = true;
+                        break;
+                    }
+                    else if *state.call_list.get(&change.0.clone()).expect("Incorrect call state found") == mem::CallState::Nothing {
                         others_agree = true;
                         break;
                     }
@@ -366,8 +370,6 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 if received_memory.my_id == old_memory.my_id {
                     // Do same as default if we get our own state back
 
-                    timeout_check(last_received.clone(), memory_request_tx.clone());
-
                     // Getting old memory and extracting my own call list
                     let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
                     let my_call_list = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list;
@@ -475,6 +477,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     // Sending the new state to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_with_only_accepted)).expect("Could not update memory");
                 }
+
+                timeout_check(last_received.clone(), memory_request_tx.clone());
             }
 
             // If we don't get a new state within 100 ms
