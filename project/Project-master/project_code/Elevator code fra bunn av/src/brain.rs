@@ -64,6 +64,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopDoorClosed => {
                 //println!("Stopping and closing door");
                 let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
                     thread::sleep(Duration::from_millis(100));
