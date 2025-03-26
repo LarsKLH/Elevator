@@ -15,8 +15,8 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
     let mut prev_direction = elevint::Direction::Down; // Store previous direction of elevator, default Down
     loop {
-        println!("Brain: Requesting memory");
-
+        //println!("Brain: Requesting memory");
+        //thread::sleep(Duration::from_millis(100));
         memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
         let memory = memory_recieve_rx.recv().expect("Error receiving memory");
         let mut my_state = memory.state_list.get(&memory.my_id).expect("Error getting own state").clone();
@@ -25,7 +25,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
             elevint::MovementState::Moving(dirn) => {
                 prev_direction = dirn;
-                println!("Brain: Moving in direction {:?} and updating previous direction to {:?}", dirn, prev_direction);
+                //println!("Brain: Moving in direction {:?} and updating previous direction to {:?}", dirn, prev_direction);
                 // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
@@ -152,7 +152,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 
 // Check if the elevator should go or not
 fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
-    println!("Brain: Checking if I should go w/ current direction {:?} and movement state {:?}", current_dir, my_state.move_state);
+    //println!("Brain: Checking if I should go w/ current direction {:?} and movement state {:?}", current_dir, my_state.move_state);
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
         _ => {
