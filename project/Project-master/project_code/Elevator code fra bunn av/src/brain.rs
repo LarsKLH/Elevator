@@ -367,17 +367,18 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
 
 fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     
-    let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState>
-    = my_state.call_list.clone()
-                        .into_iter()
-                        .filter(|(call, state)| {
-                            call.floor == my_state.last_floor &&
-                            *state == mem::CallState::Confirmed &&
-                            (call.call_type == mem::CallType::Hall(prev_dir) || call.call_type == mem::CallType::Cab)
-                        })
-                        .collect(); // Collect into a HashMap
+let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
+    my_state.call_list.clone()
+        .into_iter()
+        .filter(|(call, state)| {
+            println!("Checking call {:?} at floor {}", call, my_state.last_floor);
 
-println!("Filtering call: {:?}, direction: {:?}", call_list, prev_dir);
+            call.floor == my_state.last_floor &&
+            *state == mem::CallState::Confirmed &&
+            (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
+        })
+        .collect(); // Collect into a HashMap
+    
           
 println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
                     
