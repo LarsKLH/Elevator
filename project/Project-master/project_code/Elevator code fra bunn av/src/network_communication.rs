@@ -51,6 +51,9 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
     let native_send_socket = UdpSocket::bind((ipv4, wanted_port)).expect("NetWork: Failed to bind to socket");
 
     native_send_socket.set_broadcast(true).expect("NetWork: Failed to set socket to broadcast");
+    native_send_socket.set_multicast_loop_v4(true).expect("NetWork: Failed to set socket to multicasr loop");
+    
+    native_send_socket.connect(socket_to_target).expect("NetWork: Failed to connect socket to broadcast");
 
     let native_list_socket = native_send_socket.try_clone().expect("NetWork: Failed to clone socket");
 
@@ -68,13 +71,21 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
     let mut recieve_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
 
     let recv_socket = net_config.listning_socket;
+    let broad_socket = net_config.target_socket;
 
     recv_socket.set_nonblocking(false).expect("NetWork: Failed to set the recv socket to non-blocking");
+    recv_socket.set_broadcast(true).expect("NetWork: Failed to set the recv socket to broadcast");
+    recv_socket.set_multicast_loop_v4(true).expect("NetWork: Failed to set socket to multicasr loop");
+
+    recv_socket.connect(broad_socket).expect("NetWork: Failed to connect to the broadcast address");
 
     loop{
-        let (number_of_bytes_recieved, address_of_sender) = recv_socket.recv_from(&mut recieve_buffer).expect("NetWork: Failed to recv packet, if this is ever a problem add error handling");
 
-        println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, address_of_sender);
+        println!("NetWork: Trying to recieve message on {:?}, with broadcast set to {:?}", recv_socket, recv_socket.broadcast());
+
+        let number_of_bytes_recieved = recv_socket.recv(&mut recieve_buffer).expect("NetWork: Failed to recv packet, if this is ever a problem add error handling");
+
+        println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, broad_socket);
 
         let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
     
@@ -88,6 +99,11 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
     let from_socket = net_config.sending_socket;
     let to_socket = net_config.target_socket;
 
+    from_socket.set_broadcast(true).expect("NetWork: Failed to set socket to broadcast");
+    from_socket.set_multicast_loop_v4(true).expect("NetWork: Failed to set socket to multicasr loop");
+    
+    from_socket.connect(to_socket).expect("NetWork: Failed to connect to the broadcast address");
+    
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
         let memory = memory_recieve_rx.recv().unwrap();
@@ -98,7 +114,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
 
         println!("NetWork: Trying to send post out over the net from {:?} to {:?}", from_socket, to_socket);
         
-        from_socket.send_to(&written_card, to_socket).expect("was not able to transmit to target socket");
+        from_socket.send(&written_card).expect("was not able to transmit to target socket");
 
         sleep(Duration::from_millis(1000)); // The devil made me do it
 

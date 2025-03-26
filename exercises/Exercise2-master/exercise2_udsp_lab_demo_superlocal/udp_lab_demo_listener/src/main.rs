@@ -1,6 +1,6 @@
 use std::{str, net::UdpSocket, thread::sleep, time::Duration};
 
-const chosen_ip_sock: &str = "0.0.0.0:30000";
+const chosen_ip_sock: &str = "127.0.0.5:30005";
 
 const lisnr_sleep_time: Duration = Duration::from_millis(200);
 

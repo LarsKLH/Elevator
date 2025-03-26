@@ -4,16 +4,18 @@ use std::{str, net::UdpSocket, thread::{self, sleep}, time::Duration};
 fn main() {
     println!("Hello, world!");
 
-    let chosen_ip_sock: &str = "0.0.0.0:20005";
+    let list_sock_addr: &str = "127.0.0.1:20005";
 
-    let broadcast_addr_sock: &str = "0.0.0.255:20005";
+    let send_sock_addr: &str = "127.0.0.2:20005";
+
+    let broadcast_sock_addr: &str = "255.255.255.255:20005";
 
     let sendr_sleep_time = Duration::from_millis(300);
     let recvr_sleep_time = Duration::from_millis(100);
 
-    let socket_reader = UdpSocket::bind(chosen_ip_sock).unwrap();
+    let socket_reader = UdpSocket::bind(list_sock_addr).unwrap();
 
-    let socket_sender =  UdpSocket::bind(broadcast_addr_sock).unwrap();
+    let socket_sender =  UdpSocket::bind(send_sock_addr).unwrap();
     
     socket_reader.set_broadcast(true).unwrap();
     socket_sender.set_broadcast(true).unwrap();
@@ -26,10 +28,10 @@ fn main() {
             let buf_sendr = "Message from sending thread".as_bytes();
 
             println!("Sending from thred");
-            socket_sender.send(buf_sendr).expect("couldn't send data");
+            socket_sender.send_to(buf_sendr, broadcast_sock_addr).expect("couldn't send data");
 
             let buf_sendr = "Sending a second message".as_bytes();
-            socket_sender.send(buf_sendr).expect("couldn't send data");
+            socket_sender.send_to(buf_sendr, broadcast_sock_addr).expect("couldn't send data");
 
             sleep(sendr_sleep_time);
         };
