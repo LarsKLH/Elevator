@@ -11,6 +11,8 @@ use std::time::{Duration, SystemTime};
 use crate::memory::{self as mem, Call};
 use crate::elevator_interface as elevint;
 
+use log;
+
 // Basics of our cyclic counter:
 // - It only goes one way, from Nothing to new to confirmed to pendingremoval and then back around
 // - To go from nothing to new or from confirmed to pendingremoval only one elevator needs to be in the previous state, ie. we do not need the others to agree
@@ -336,11 +338,23 @@ fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx
     }
 }
 
+fn testing_function() -> bool {
+    let mut memory_before = mem::Memory::new(0.into(), 4);
+    memory_before.state_list.get_mut(&memory_before.my_id).expect("Incorrect state found").call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
+    memory_before.state_list.get_mut(&memory_before.my_id).expect("Incorrect state found").call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::New);
+
+
+    return true;
+}
+
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
 pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::Memory>) -> () {
     // Setting up a hashmap to keep track of the last time a message was received from each elevator
     let mut last_received: HashMap<Ipv4Addr, SystemTime> = HashMap::new();
-    
+
+    println!("Sanity: Starting sanity check");
+    println!("Sanity: Testing function returned: {}", testing_function());
+
     loop {
         cbc::select! {
             recv(rx_get) -> rx => {

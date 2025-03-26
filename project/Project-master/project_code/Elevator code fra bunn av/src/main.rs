@@ -18,6 +18,9 @@ use crate::memory as mem;
 
 use std::env;
 
+use env_logger;
+
+
 
 // TODO: change all intences of unwrap to expect with sensible error messages
 
@@ -25,6 +28,11 @@ use std::env;
 
 // Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000] {do printout of state and spam the terminal}[true/false] {port the server is on}[int under like 60 000]
 fn main() -> std::io::Result<()> {
+
+    let mut builder = env_logger::Builder::from_default_env();
+    builder.target(env_logger::Target::Stdout);
+
+    builder.init();
 
     let args: Vec<String> = env::args().collect();
 
