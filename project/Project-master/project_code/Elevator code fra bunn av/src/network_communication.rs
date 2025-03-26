@@ -89,8 +89,8 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
         recieved_memory.my_id = address_of_sender_ipv4;
 
-        println!("Network: Received memory from {}", recieved_memory.my_id);
-        println!("Network: Memory state list: {:?}", recieved_memory.state_list);
+        //println!("Network: Received memory from {}", recieved_memory.my_id);
+        //println!("Network: Received state list: {:?}", recieved_memory.state_list);
 
         rx_sender_to_memory.send(recieved_memory).expect("NetWork: Failed to send message to memory");
     }
