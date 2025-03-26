@@ -47,11 +47,11 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
     // Update direction in memory
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Moving(Direction::Down))).unwrap();
 
-    memory_request_tx.send(mem::MemoryMessage::Request).expect("Could not request memory");
+    memory_request_tx.send(mem::MemoryMessage::Request).expect("ElevInt: Could not request memory");
 
-    let original_memory = memory_recieve_rx.recv().expect("Could not recieve memory");  
+    let original_memory = memory_recieve_rx.recv().expect("ElevInt: Could not recieve memory");  
 
-    let mut prev_state = original_memory.state_list.get(&original_memory.my_id).expect("could not extract my memory from memory").clone();
+    let mut prev_state = original_memory.state_list.get(&original_memory.my_id).expect("ElevInt: could not extract my memory from memory").clone();
 
     // Infinite loop checking for elevator controller messages
     loop {

@@ -107,8 +107,8 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
             elevint::Direction::Up                                        // Provide a fallback value
 
             // Jens: in this case shouldnt we just crash here? as something, somewere is wery wrong if we arrive at at a floor without moving
-        };
-    }
+        }
+    };
 
 
     // Check if my current floor is confirmed using filter, if so we should stop -> return true
