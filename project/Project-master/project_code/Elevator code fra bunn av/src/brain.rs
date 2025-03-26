@@ -123,8 +123,6 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
 
 }
 
-
-
 // Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     use std::collections::HashMap;
@@ -151,44 +149,10 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
         memory_request_tx
         .send(mem::MemoryMessage::UpdateOwnCall(hall_call_to_check, mem::CallState::PendingRemoval))
         .expect("Error sending call to memory");
-    }
-
-    //println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
-
-    /*
-    // Jens: this seems like incredably overkill, isnt the only applicable calls in last_floor
-    let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
-    my_state.call_list.into_iter()
-        .filter(|(call, state)| {
-            //println!("Brain: Checking call {:?} at floor {} w/ state {:?}", call, my_state.last_floor, state);
-
-            call.floor == my_state.last_floor &&
-            *state == mem::CallState::Confirmed &&
-            (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
-        })
-        .collect(); // Collect into a HashMap
-
-    if (my_state.last_floor == call floor && prev_dir == call_dir) {
-        memory_request_tx
-        .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
-        .expect("Error sending call to memory");
-    } else if (my floor == cab call floor) {
-        memory_request_tx
-        .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
-        .expect("Error sending call to memory");
-    } else {
-        // do nothing
-    }
-
-
-                            
-    */                        
-
-    
-    // Update MoveState to StopDoorClosed
-    
+    } 
 }
 
+// Check if the elevator should go or not
 fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
@@ -249,6 +213,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
     }
 }
 
+// Check if the elevator is the best elevator to respond to a call
 fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_dir: Direction) -> bool {
     let my_id = memory.my_id;
     let my_floor = memory.state_list.get(&my_id).unwrap().last_floor;
@@ -262,35 +227,6 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
     }
 
     return memory.am_i_closest(my_id, call_floor);
-}
-
-fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
-    
-    let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
-        my_state.call_list
-            .into_iter()
-            .filter(|(call, state)| {
-                //println!("Checking call {:?} at floor {}", call, my_state.last_floor);
-
-                call.floor == my_state.last_floor &&
-                *state == mem::CallState::Confirmed &&
-                (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
-            })
-            .collect(); // Collect into a HashMap
-
-            
-    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
-                        
-    // Change CallState of each call to PendingRemoval
-    for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
-
-        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval)).expect("Error sending call to memory");
-        
-        }
-
-    // Update MoveState to StopDoorClosed
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
-
 }
 
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
