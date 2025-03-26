@@ -142,7 +142,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
 }
 
 // Check if the elevator should continue moving or not
-fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage> ) -> bool {
+/*fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage> ) -> bool {
 
     // This function check both cab calls and hall calls for determining the next movement of the elevator
     // # (Todo) Also needs to check if another elevator is closer to the call than this elevator
@@ -238,6 +238,7 @@ fn should_i_go(my_state: mem::State, mut prev_dir: Direction, memory_request_tx:
 
     }
 }
+*/
 
 // Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
@@ -273,16 +274,74 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 }
 
 // Turn the elevator around by clear calls in the original direction, clear calls in opposite direction, start moving in the new direction
-fn turn_elevator_around(prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> () {
-    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+/*fn turn_elevator_around(prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> elevint::Direction {
+    //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
     println!("Brain: There are no more hall calls in my prev direction {:?} from before I stopped but there are hall calls in the other direction, turning around to move in that direction", prev_dir);
     let prev_dir = match prev_dir {
                                         Direction::Up => Direction::Down,
                                         Direction::Down => Direction::Up,
                                     };
-    clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Down))).expect("Error sending movement state to memory");
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Up))).expect("Error sending movement state to memory");
+    //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
+    //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Down))).expect("Error sending movement state to memory");
+    //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Up))).expect("Error sending movement state to memory");
+}*/
+
+fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
+    match my_state.move_state {
+        elevint::MovementState::Obstructed => {
+            return false;
+            
+        }
+        _ => {
+            let calls: Vec<_> = my_state.call_list.clone().into_iter().collect();
+            let my_floor = my_state.last_floor;
+            let confirmed_calls: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed).collect();
+            let calls_in_current_direction: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
+                elevint::Direction::Up => call.floor >= my_floor,
+                elevint::Direction::Down => call.floor <= my_floor,
+            }).collect();
+            let calls_in_opposite_direction: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
+                elevint::Direction::Up => call.floor <= my_floor,
+                elevint::Direction::Down => call.floor >= my_floor,
+            }).collect();
+            
+            match confirmed_calls.is_empty() {
+                true => {
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+                    return false;
+                }
+            }
+            match calls_in_current_direction.is_empty() {
+                false => {
+                    clear_confirmed_calls_on_floor_matching_direction();
+                    println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
+                    thread::sleep(Duration::from_millis(100));
+                    return true;
+                }
+                _ => ()
+            }
+
+            match calls_in_opposite_direction.is_empty() {
+                false => {
+                    clear_confirmed_calls_on_floor_matching_direction();
+                    println!("Brain: There are no more hall calls in my previous direction {:?} from before I stopped but there are calls in the other direction, turning around to move in other direction", current_dir);
+                    let current_dir = match current_dir {
+                        Direction::Up => Direction::Down,
+                        Direction::Down => Direction::Up,
+                    };
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
+                    clear_confirmed_calls_on_floor_matching_direction();
+                    thread::sleep(Duration::from_millis(100));
+                    return true;
+                }
+                _ => ()
+            }
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+            return false;
+
+        }
+    }
 }
 
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
