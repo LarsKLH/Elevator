@@ -32,6 +32,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
             elevint::MovementState::Moving(dirn) => {
                 prev_direction = dirn;
+                println!("Brain: Moving in direction {:?} and updating previous direction to {:?}", dirn, prev_direction);
                 // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
