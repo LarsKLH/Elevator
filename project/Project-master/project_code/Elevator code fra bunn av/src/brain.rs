@@ -52,7 +52,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopDoorClosed => {
                 //println!("Stopping and closing door");
                 //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
                 }
@@ -61,14 +61,14 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 //println!("Stopping and opening door");
                 thread::sleep(Duration::from_secs(3));
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);    
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with open door");
                 }
             }
             elevint::MovementState::Obstructed => {
                 println!("Brain: Elevator is obstructed");
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after obstruction"); // dont allow for ANY movement until the obstruction is removed
                 }  
@@ -153,7 +153,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 }
 
 // Check if the elevator should go or not
-fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
+fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
         _ => {
@@ -191,7 +191,10 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                         true => {
                             println!("Brain: There are no more hall calls in my current direction {:?} from before I stopped but there are calls in the other direction, opening doors before turning around to move in other direction", current_dir);
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
-                            // Change prev_direction globaly
+                            let current_dir = match current_dir {
+                                Direction::Up => Direction::Down,
+                                Direction::Down => Direction::Up,
+                            };
                             return true;
                         }
                     }
