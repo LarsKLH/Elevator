@@ -316,7 +316,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
             }
             match calls_in_current_direction.is_empty() {
                 false => {
-                    clear_confirmed_calls_on_floor_matching_direction(my_state.clone(),  memory_request_tx.clone(), current_dir);
+                    //clear_confirmed_calls_on_floor_matching_direction(my_state.clone(),  memory_request_tx.clone(), current_dir);
                     println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
                     thread::sleep(Duration::from_millis(100));
