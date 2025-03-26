@@ -280,10 +280,10 @@ fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memo
                         
     // Change CallState of each call to PendingRemoval
     for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
-    memory_request_tx
-    .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
-    .expect("Error sending call to memory");
-                    }
+
+        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval)).expect("Error sending call to memory");
+        
+        }
 
     // Wait 3 seconds
     thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
