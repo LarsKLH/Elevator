@@ -41,6 +41,8 @@ fn main() -> std::io::Result<()> {
 
     let elevator_server_port_u16_val: u16 = args[5].parse().expect("could not parse the fith argument as a socket/u16 where the server is, could i recomend '15657'");
 
+    
+    
     let elevator_server_port_string = format!("localhost:{}",elevator_server_port_u16_val);
 
     let elevator = elevio::elev::Elevator::init(elevator_server_port_string.as_str(), num_floors)?;
