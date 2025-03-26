@@ -288,6 +288,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 
 fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     println!("Brain: Checking if I should go");
+    tread::sleep(Duration::from_millis(100));
     match my_state.move_state {
         elevint::MovementState::Obstructed => {
             return false;
