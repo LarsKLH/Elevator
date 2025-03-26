@@ -175,7 +175,7 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
             for (call, call_state) in state.call_list.iter().sorted() {
                 println!("Call: {:?} {:?} {:?}", call.call_type, call.floor, call_state);
             }
+            thread::sleep(time::Duration::from_millis(500));
         }
-       thread::sleep(time::Duration::from_millis(1000));
     }
 }
