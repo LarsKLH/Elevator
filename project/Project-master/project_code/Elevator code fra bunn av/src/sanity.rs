@@ -166,7 +166,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if received_state.last_floor != change.0.floor || !others_agree {
+                if received_state.last_floor != change.0.floor || others_agree != true {
                     new_differences.remove(&change.0);
                 }
             }
