@@ -15,6 +15,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
     let mut prev_direction = elevint::Direction::Down; // Store previous direction of elevator, default Down
     loop {
+        println!("Brain: Requesting memory");
 
         memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
         let memory = memory_recieve_rx.recv().expect("Error receiving memory");
@@ -154,6 +155,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 
 // Check if the elevator should go or not
 fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
+    println!("Brain: Checking if I should go w/ current direction {:?} and movement state {:?}", current_dir, my_state.move_state);
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
         _ => {
@@ -168,12 +170,6 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
                 .filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
                     elevint::Direction::Up => call.floor > my_floor,
                     elevint::Direction::Down => call.floor < my_floor,
-                    })
-                .collect();
-            let calls_in_opposite_direction: Vec<_> = calls.iter()
-                .filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
-                    elevint::Direction::Up => call.floor < my_floor,
-                    elevint::Direction::Down => call.floor > my_floor,
                     })
                 .collect();
             
