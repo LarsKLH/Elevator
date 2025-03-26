@@ -344,10 +344,10 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
     }
 }
 
-fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory) -> bool {
-    my_id = memory.my_id;
-    my_floor = memory.state_list.get(&my_id).unwrap().last_floor;
-    current_dir = memory.state_list.get(&my_id).unwrap().move_state;
+fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_dir: Direction) -> bool {
+    let my_id = memory.my_id;
+    let my_floor = memory.state_list.get(&my_id).unwrap().last_floor;
+    let current_dir = memory.state_list.get(&my_id).unwrap().move_state;
     let call_floor = call.floor;
     if (current_dir == elevint::Direction::Up && call_floor < my_floor)
         || (current_dir == elevint::Direction::Down && call_floor > my_floor)
