@@ -36,7 +36,7 @@ pub enum MovementState {
 
 // Motor controller function. Takes controller messages and sends them to the elevator
 // controller. Also updates the memory with the current direction of the elevator
-pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, elevator_outputs_receive: Receiver<State>, elevator: Elevator, num_floors: u8) -> () {
+pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, brain_stop_direct_link: Receiver<mem::State>, elevator: Elevator, num_floors: u8) -> () {
     
     
     // TODO: jens want to remove the next two lines
@@ -49,22 +49,22 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
     memory_request_tx.send(mem::MemoryMessage::Request).expect("ElevInt: Could not request memory");
 
-    let original_memory = memory_recieve_rx.recv().expect("ElevInt: Could not recieve memory");  
+    let original_memory = memory_recieve_rx.recv().expect("ElevInt: Could not recieve memory");
 
     let mut prev_state = original_memory.state_list.get(&original_memory.my_id).expect("ElevInt: could not extract my memory from memory").clone();
 
     // Infinite loop checking for elevator controller messages
     loop {
         cbc::select! {
-            recv(elevator_outputs_receive) -> state_to_mirror => {
-                let received_state_to_mirror = state_to_mirror.unwrap();
+            recv(brain_stop_direct_link) -> received_state => {
+                let received_state_to_mirror = received_state.unwrap();
 
                 mirror_movement_state(received_state_to_mirror.move_state, &elevator, num_floors, received_state_to_mirror.last_floor);
                 
                 mirror_lights(received_state_to_mirror, &elevator);
-
-
                 
+                sleep(Duration::from_secs(1));
+
             }
             default(Duration::from_millis(50))  => {
                 let current_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
