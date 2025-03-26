@@ -63,7 +63,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             } 
             elevint::MovementState::StopDoorClosed => {
                 //println!("Stopping and closing door");
-                let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
+                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
                     thread::sleep(Duration::from_millis(100));
@@ -73,7 +73,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopAndOpen => {
                 //println!("Stopping and opening door");
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);    
-                let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
+                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with open door");
                 }
@@ -82,7 +82,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 println!("Brain: Elevator is obstructed");
                 thread::sleep(Duration::from_millis(100));
 
-                let going = should_i_go(my_state.clone(), prev_direction, memory_request_tx.clone());
+                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after obstruction"); // dont allow for ANY movement until the obstruction is removed
                     thread::sleep(Duration::from_millis(100));
@@ -355,9 +355,38 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory) -> bool {
         return false;
     }
 
-    return memory.am_i_closest(my_id, call_floor, current_dir as i8);
+    return memory.am_i_closest(my_id, call_floor);
 }
 
+fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
+    
+    let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState>
+    = my_state.call_list.clone()
+                        .into_iter()
+                        .filter(|(call, state)| {
+                            call.floor == my_state.last_floor &&
+                            *state == mem::CallState::Confirmed &&
+                            (call.call_type == mem::CallType::Hall(prev_dir) || call.call_type == mem::CallType::Cab)
+                        })
+                        .collect(); // Collect into a HashMap
+                    
+println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
+                    
+// Change CallState of each call to PendingRemoval
+for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
+memory_request_tx
+.send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+.expect("Error sending call to memory");
+                }
+
+// Wait 3 seconds
+thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
+// Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
+
+// Update MoveState to StopDoorClosed
+memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+
+}}
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     // TODO
     println!("Restarting elevator");
