@@ -74,7 +74,7 @@ pub enum MemoryMessage {
 }
 
 impl Memory {
-    fn new (ip: Ipv4Addr, n: u8) -> Self {
+    pub fn new (ip: Ipv4Addr, n: u8) -> Self {
         Self { my_id: ip,
             state_list: HashMap::from([(ip, State::new(ip, n))]) 
         }
