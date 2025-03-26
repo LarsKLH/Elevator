@@ -267,14 +267,11 @@ fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memo
         
         }
 
-    // Wait 3 seconds
-    thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
-    // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
-
     // Update MoveState to StopDoorClosed
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
 
 }
+
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     // TODO
     println!("Restarting elevator");
