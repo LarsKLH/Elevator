@@ -102,13 +102,10 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
 
     let my_direction: elevint::Direction = match my_state.move_state {
         elevint::MovementState::Moving(dirn) => dirn,
-        _ => {                                                            // This should never happen
-            //println!("Error: Elevator is not moving. Defaulting to Up."); 
-            elevint::Direction::Up                                        // Provide a fallback value
-
+        _ => elevint::Direction::Up
+            // This should never happen
             // Jens: in this case shouldnt we just crash here? as something, somewere is wery wrong if we arrive at at a floor without moving
-        };
-    }
+    };
 
 
     // Check if my current floor is confirmed using filter, if so we should stop -> return true
@@ -124,7 +121,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
     // Check if there are no confirmed floors in the direction of the elevator,
     // if there is not we should not continue in that direction and we should stop -> return true
     let confirmed_calls_in_direction = calls.iter()
-        .any(|(call, state)| *state == mem::CallState::Confirmed && match my_direction {                   // #should maybe use .any() instead of .all() here
+        .any(|(call, state)| *state == mem::CallState::Confirmed && match my_direction {
             elevint::Direction::Up => call.floor >= my_floor,
             elevint::Direction::Down => call.floor <= my_floor,
         });
