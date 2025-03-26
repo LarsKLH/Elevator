@@ -162,21 +162,6 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
     }
 }
 
-
-
-/* pub fn state_machine_check(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>) -> () {
-    
-    loop {
-        memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-        let memory = memory_recieve_rx.recv().unwrap();
-        let my_state = memory.state_list.get(&memory.my_id).unwrap();
-        
-    }
-}
- */
-
-
-
 // Jens: I really dont like this one
 
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
@@ -191,6 +176,6 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
                 println!("Call: {:?} {:?} {:?}", call.call_type, call.floor, call_state);
             }
         }
-       thread::sleep(time::Duration::from_millis(5000));
+       thread::sleep(time::Duration::from_millis(1000));
     }
 }
