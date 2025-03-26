@@ -204,16 +204,17 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, memory
 
      // Changing our hall calls based on the changes to the received state
 
-     // Getting the relevant calls from my state
-     let my_diff: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Invalid state list received").call_list.clone().into_iter().filter(|x| differences.contains_key(&x.0)).collect();
-
-    println!("Sanity: My diff: {:?}", my_diff);
+     let my_old_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list
+     .clone()
+     .into_iter()
+     .filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Down) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Up))
+     .collect();
 
      // Running the state machine on only the changed calls
-     let my_diff_changed = cyclic_counter(my_diff.clone(), &state_list_with_changes);
+     let my_diff_changed = cyclic_counter(my_old_calls.clone(), &state_list_with_changes);
 
      // Extracting the calls that were actually changed to minimize memory changing and avoid errors
-     let changed_calls = difference(my_diff, my_diff_changed);
+     let changed_calls = difference(my_old_calls, my_diff_changed);
 
      // Sending the changes to memory one after the other
      for change in changed_calls {
