@@ -478,6 +478,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_with_only_accepted)).expect("Could not update memory");
                 }
 
+                println!("Sanity: Checking timeout");
                 timeout_check(last_received.clone(), memory_request_tx.clone());
             }
 
