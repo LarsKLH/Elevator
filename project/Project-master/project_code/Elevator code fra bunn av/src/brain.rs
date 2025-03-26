@@ -181,30 +181,23 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                     //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
                     return false;
                 }
-                _ => ()
-            }
-            match calls_in_current_direction.is_empty() {
-                false => {
-                    println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
-                    return true;
+                _ => {
+                    match calls_in_current_direction.is_empty() {
+                        false => {
+                            println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
+                            return true;
+                        }
+                        true => {
+                            println!("Brain: There are no more hall calls in my current direction {:?} from before I stopped but there are calls in the other direction, opening doors before turning around to move in other direction", current_dir);
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
+                            // Change prev_direction globaly
+                            return true;
+                        }
+                    }
                 }
-                _ => ()
             }
-
-            match calls_in_opposite_direction.is_empty() {
-                false => {
-                    println!("Brain: There are no more hall calls in my previous direction {:?} from before I stopped but there are calls in the other direction, turning around to move in other direction", current_dir);
-                    let current_dir = match current_dir {
-                        Direction::Up => Direction::Down,
-                        Direction::Down => Direction::Up,
-                    };
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
-                    return true;
-                }
-                _ => {}
-            }
-
+            
             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
             return false;
 
