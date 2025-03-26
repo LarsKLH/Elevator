@@ -83,11 +83,13 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
             _ => panic!("NetWork: Recieved a non ipv4 address")
         };
 
+        /*
         recieved_memory.state_list.get_mut(&recieved_memory.my_id).expect("Network: Could not get state").id = address_of_sender_ipv4;
         let state_get = recieved_memory.state_list.remove(&recieved_memory.my_id).expect("Network: Could not remove state");
         recieved_memory.state_list.insert(address_of_sender_ipv4, state_get);
 
         recieved_memory.my_id = address_of_sender_ipv4;
+        */
 
         //println!("Network: Received memory from {}", recieved_memory.my_id);
         //println!("Network: Received state list: {:?}", recieved_memory.state_list);
