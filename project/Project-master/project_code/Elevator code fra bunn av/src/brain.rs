@@ -199,8 +199,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                         Direction::Up => Direction::Down,
                         Direction::Down => Direction::Up,
                     };
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
-                    clear_call(my_state.clone(),  memory_request_tx.clone(), current_dir);
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
                     return true;
                 }
                 _ => {}
