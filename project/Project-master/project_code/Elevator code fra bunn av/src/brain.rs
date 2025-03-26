@@ -2,26 +2,18 @@ use std::collections::HashMap;
 use std::net::Ipv4Addr;
 use std::time::Duration;
 use std::thread;
-
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
-
-
 use crate::memory as mem;
 use crate::elevator_interface::{self as elevint, Direction};
-
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 
-// The symbol # is used where the code is not yet implemented and needs to be done later, or i have questions about the code
-
+// (Todo) clean up references, clones and copies
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
-// # (Todo) clean up references, clones and copies
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>) -> () {
 
-    let mut prev_direction = elevint::Direction::Down; // Store the previous direction of the elevator, currently set to Down
-    // Infinite loop checking for memory messages
-
+    let mut prev_direction = elevint::Direction::Down; // Store previous direction of elevator, default Down
     loop {
 
         memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
@@ -59,7 +51,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             } 
             elevint::MovementState::StopDoorClosed => {
                 //println!("Stopping and closing door");
-                clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);
+                //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);
                 let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
