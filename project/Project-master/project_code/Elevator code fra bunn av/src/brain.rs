@@ -156,19 +156,22 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
             (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
         })
         .collect(); // Collect into a HashMap
-                            
-    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
-                            
-    // Change CallState of each call to PendingRemoval
-    for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
+
+    if (my_state.last_floor == call floor && prev_dir == call_dir) {
         memory_request_tx
         .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
         .expect("Error sending call to memory");
-                        }
+    } else if (my floor == cab call floor) {
+        memory_request_tx
+        .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+        .expect("Error sending call to memory");
+    } else {
+        // do nothing
+    }
+                            
+    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
+                            
 
-    // Wait 3 seconds
-    thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
-    // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
     
     // Update MoveState to StopDoorClosed
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
