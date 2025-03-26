@@ -365,7 +365,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let received_memory = rx.expect("Invalid memory found");
                 let received_state = received_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone();
 
-                println!("Sanity: Received state: {:?}", received_state);
+                //println!("Sanity: Received state: {:?}", received_state);
 
                 if received_memory.my_id == old_memory.my_id {
                     // Do same as default if we get our own state back
