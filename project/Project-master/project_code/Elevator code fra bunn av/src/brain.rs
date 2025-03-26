@@ -376,7 +376,9 @@ fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memo
                             (call.call_type == mem::CallType::Hall(prev_dir) || call.call_type == mem::CallType::Cab)
                         })
                         .collect(); // Collect into a HashMap
-                    
+
+println!("Filtering call: {:?}, direction: {:?}", call, prev_dir);
+          
 println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
                     
 // Change CallState of each call to PendingRemoval
