@@ -252,7 +252,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
     my_state.call_list.clone()
         .into_iter()
         .filter(|(call, state)| {
-            println!("Checking call {:?} at floor {}", call, my_state.last_floor);
+            println!("Checking call {:?} at floor {} w/ state {:?}", call, my_state.last_floor, state);
 
             call.floor == my_state.last_floor &&
             *state == mem::CallState::Confirmed &&
