@@ -67,8 +67,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
                 
             }
             default(Duration::from_millis(50))  => {
-                memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-                let current_memory = memory_recieve_rx.recv().unwrap();
+                let current_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
 
                 let current_state = current_memory.state_list.get(&current_memory.my_id).unwrap().clone();
 
