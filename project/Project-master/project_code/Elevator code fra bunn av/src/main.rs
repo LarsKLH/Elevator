@@ -1,4 +1,5 @@
 
+use std::net::IpAddr;
 use std::net::Ipv4Addr;
 use std::thread::*;
 use std::time::*;
@@ -18,8 +19,7 @@ use crate::memory as mem;
 
 use std::env;
 
-use env_logger;
-
+use local_ip_address::local_ip;
 
 
 // TODO: change all intences of unwrap to expect with sensible error messages
@@ -29,12 +29,13 @@ use env_logger;
 // Argument list order methinks should be ./elevator_code {number of floors}[an u8] {id/ipv4}[xxx.xxx.xxx.xxx] {socket to broadcast to}[int under like 60 000] {do printout of state and spam the terminal}[true/false] {port the server is on}[int under like 60 000]
 fn main() -> std::io::Result<()> {
 
-    let mut builder = env_logger::Builder::from_default_env();
-    builder.target(env_logger::Target::Stdout);
-
-    builder.init();
-
     let args: Vec<String> = env::args().collect();
+
+    let my_local_ip = match local_ip().unwrap() {
+        IpAddr::V4(v4) => v4,
+        _ => panic!("NetWork: Recieved a non ipv4 address")
+    };
+    
 
     //print!("arguments are: arg 1 = {}, arg 2 = {}, arg 3 = {}", args[1], args[2], args[3]);
 
@@ -65,7 +66,7 @@ fn main() -> std::io::Result<()> {
     {
         let memory_request_channel_rx = memory_request_channel_rx.clone();
         let memory_receive_channel_tx = memory_receive_channel_tx.clone();
-        spawn(move || mem::memory(memory_receive_channel_tx, memory_request_channel_rx, ipv4_id, num_floors));
+        spawn(move || mem::memory(memory_receive_channel_tx, memory_request_channel_rx, my_local_ip, num_floors));
     }
 
     // Initialize motor controller channel

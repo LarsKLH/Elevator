@@ -28,7 +28,7 @@ pub struct Memory {
 }
 
 
-#[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct State {
     pub id: Ipv4Addr,
     pub timed_out: bool,
