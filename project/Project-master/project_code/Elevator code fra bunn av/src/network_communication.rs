@@ -48,11 +48,11 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
 
     let socket_to_target = SocketAddrV4::new(target_ip, wanted_port);
 
-    let native_send_socket = UdpSocket::bind((ipv4, wanted_port)).unwrap();
+    let native_send_socket = UdpSocket::bind((ipv4, wanted_port)).expect("NetWork: Failed to bind to socket");
 
     native_send_socket.set_broadcast(true).expect("NetWork: Failed to set socket to broadcast");
 
-    let native_list_socket = native_send_socket.try_clone().unwrap();
+    let native_list_socket = native_send_socket.try_clone().expect("NetWork: Failed to clone socket");
 
     let net_config = NetWorkConfig {
         sending_socket: native_send_socket,
@@ -93,12 +93,14 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
         let memory = memory_recieve_rx.recv().unwrap();
 
 
-        let written_card= postcard::to_slice(&memory, &mut card_buffer).unwrap();
-        
+        let written_card= postcard::to_slice(&memory, &mut card_buffer).expect("NetWork: Was not able to serialize the memory");
 
+
+        println!("NetWork: Trying to send post out over the net from {:?} to {:?}", from_socket, to_socket);
+        
         from_socket.send_to(&written_card, to_socket).expect("was not able to transmit to target socket");
 
-        sleep(Duration::from_millis(69)); // The devil made me do it
+        sleep(Duration::from_millis(1000)); // The devil made me do it
 
 
         // Dersom vi er obstructed burde vi kanskje ikke sende noe så de andre heisene antar at vi er døde
