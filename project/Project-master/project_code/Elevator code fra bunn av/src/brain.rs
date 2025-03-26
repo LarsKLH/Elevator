@@ -19,8 +19,7 @@ use driver_rust::elevio::{self, elev::{self, Elevator}};
 // # (Todo) clean up references, clones and copies
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>) -> () {
 
-    let mut prev_direction: Option<elevint::Direction> = None;
-     // Store the previous direction of the elevator, currently set to Down
+    let mut prev_direction = elevint::Direction::Down; // Store the previous direction of the elevator, currently set to Down
     // Infinite loop checking for memory messages
 
     loop {
@@ -32,7 +31,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
         match my_movementstate {
 
             elevint::MovementState::Moving(dirn) => {
-                prev_direction = Some(dirn); // Update prev_direction on moving
+                prev_direction = dirn;
                 println!("Brain: Moving in direction {:?} and updating previous direction to {:?}", dirn, prev_direction);
                 // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
