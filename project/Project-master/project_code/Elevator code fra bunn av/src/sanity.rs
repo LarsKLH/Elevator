@@ -339,10 +339,6 @@ fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx
 }
 
 fn testing_function() -> bool {
-    let mut memory_before = mem::Memory::new(0.into(), 4);
-    memory_before.state_list.get_mut(&memory_before.my_id).expect("Incorrect state found").call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
-    memory_before.state_list.get_mut(&memory_before.my_id).expect("Incorrect state found").call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::New);
-
 
     return true;
 }
