@@ -88,7 +88,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
 
     let my_direction: elevint::Direction = match my_state.move_state {
         elevint::MovementState::Moving(dirn) => dirn,
-        _ => elevint::Direction::Up
+        _ => //elevint::Direction::Up
             // This should never happen
             panic!("Error: Elevator is not moving, should not be checking if it should stop"),
     };
@@ -157,7 +157,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
         _ => {
-            let calls: Vec<_> = my_state.call_list.into_iter()
+            let calls: Vec<_> = my_state.call_list.clone().into_iter()
                 .collect();
             let my_floor = my_state.last_floor;
             let confirmed_calls: Vec<_> = calls.iter()
