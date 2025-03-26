@@ -178,7 +178,7 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
             
             match confirmed_calls.is_empty() {
                 true => {
-                    //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
                     return false;
                 }
                 _ => {
