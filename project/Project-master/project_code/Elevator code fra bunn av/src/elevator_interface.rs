@@ -18,7 +18,7 @@ use crate::memory as mem;
 
 
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug, Ord, PartialOrd)]
 pub enum Direction {
     Up,
     Down
