@@ -8,7 +8,7 @@ use crate::memory as mem;
 use crate::elevator_interface::{self as elevint, Direction};
 use driver_rust::elevio::{self, elev::{self, Elevator}};
 
-// (Todo) clean up references, clones and copies
+// (Todo) clean up references and clones
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>) -> () {
@@ -52,7 +52,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopDoorClosed => {
                 //println!("Stopping and closing door");
                 //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
                 }
@@ -61,14 +61,14 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 //println!("Stopping and opening door");
                 thread::sleep(Duration::from_secs(3));
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);    
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with open door");
                 }
             }
             elevint::MovementState::Obstructed => {
                 println!("Brain: Elevator is obstructed");
-                let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
+                let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after obstruction"); // dont allow for ANY movement until the obstruction is removed
                 }  
@@ -153,10 +153,11 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 }
 
 // Check if the elevator should go or not
-fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
+fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
         _ => {
+            
             let calls: Vec<_> = my_state.call_list.clone().into_iter()
                 .collect();
             let my_floor = my_state.last_floor;
@@ -178,34 +179,30 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
             
             match confirmed_calls.is_empty() {
                 true => {
-                    //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
                     return false;
                 }
-                _ => ()
-            }
-            match calls_in_current_direction.is_empty() {
-                false => {
-                    println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
-                    return true;
+                _ => {
+                    match calls_in_current_direction.is_empty() {
+                        false => {
+                            let copy_of_current_dir = current_dir.clone();
+                            println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(copy_of_current_dir))).expect("Error sending movement state to memory");
+                            return true;
+                        }
+                        true => {
+                            println!("Brain: There are no more hall calls in my current direction {:?} from before I stopped but there are calls in the other direction, opening doors before turning around to move in other direction", current_dir);
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
+                            let current_dir = match current_dir {
+                                Direction::Up => Direction::Down,
+                                Direction::Down => Direction::Up,
+                            };
+                            return true;
+                        }
+                    }
                 }
-                _ => ()
             }
-
-            match calls_in_opposite_direction.is_empty() {
-                false => {
-                    println!("Brain: There are no more hall calls in my previous direction {:?} from before I stopped but there are calls in the other direction, turning around to move in other direction", current_dir);
-                    let current_dir = match current_dir {
-                        Direction::Up => Direction::Down,
-                        Direction::Down => Direction::Up,
-                    };
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
-                    clear_call(my_state.clone(),  memory_request_tx.clone(), current_dir);
-                    return true;
-                }
-                _ => {}
-            }
-
+            
             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
             return false;
 
