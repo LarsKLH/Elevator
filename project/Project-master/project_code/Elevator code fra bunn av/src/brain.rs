@@ -36,9 +36,6 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
-                        println!("\nBrain: Floor sensor detected, checking whether or not to stop");
-                        // Update the last floor in memory
-                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnFloor(a.expect("Error reading from floor sensor"))).expect("Error updating floor");
 
                         //println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.expect("Error reading from floor sensor"), my_state.clone()) {
@@ -49,7 +46,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                             // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
                             println!("Brain: Stopped elevator with door open");
-                            thread::sleep(Duration::from_secs(3));
+                            
                         }
                         else {
                             println!("Brain: Continuing in same direction");
@@ -58,13 +55,6 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
                         }
                     }
-                    /*
-                    recv(cbc::after(Duration::from_millis(100))) -> _a => {
-
-                        // Jens: We do not need to spam the terminal with messages that does not communicate any information
-                        // println!("Brain: No floor sensor detected, refreshing");
-                    }
-                    */
                 }
             } 
             elevint::MovementState::StopDoorClosed => {
@@ -77,6 +67,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             }
             elevint::MovementState::StopAndOpen => {
                 //println!("Stopping and opening door");
+                thread::sleep(Duration::from_secs(3));
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);    
                 let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
@@ -100,16 +91,15 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 // Check if the elevator should stop or not
 fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> bool {
 
-    let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
+    let calls: Vec<_> = my_state.call_list.into_iter().collect(); // Store call_list as a vec for future filtering    
     let my_floor = floor_to_consider_stopping_at;
 
     let my_direction: elevint::Direction = match my_state.move_state {
         elevint::MovementState::Moving(dirn) => dirn,
         _ => elevint::Direction::Up
             // This should never happen
-            // Jens: in this case shouldnt we just crash here? as something, somewere is wery wrong if we arrive at at a floor without moving
+            panic!("Error: Elevator is not moving, should not be checking if it should stop"),
     };
-
 
     // Check if my current floor is confirmed using filter, if so we should stop -> return true
     let my_call_is_confirmed = calls.iter()
@@ -149,8 +139,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 
     // Jens: this seems like incredably overkill, isnt the only applicable calls in last_floor
     let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
-    my_state.call_list.clone()
-        .into_iter()
+    my_state.call_list.into_iter()
         .filter(|(call, state)| {
             //println!("Brain: Checking call {:?} at floor {} w/ state {:?}", call, my_state.last_floor, state);
 
@@ -159,37 +148,27 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
             (matches!(call.call_type, mem::CallType::Hall(d) if d == prev_dir) || call.call_type == mem::CallType::Cab)
         })
         .collect(); // Collect into a HashMap
-                            
-    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
-                            
-    // Change CallState of each call to PendingRemoval
-    for (call, _) in confirmed_calls_on_my_floor_with_same_direction {
+
+    if (my_state.last_floor == call floor && prev_dir == call_dir) {
         memory_request_tx
         .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
         .expect("Error sending call to memory");
-                        }
+    } else if (my floor == cab call floor) {
+        memory_request_tx
+        .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+        .expect("Error sending call to memory");
+    } else {
+        // do nothing
+    }
+                            
+    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
+                            
 
-    // Wait 3 seconds
-    thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
-    // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
     
     // Update MoveState to StopDoorClosed
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
     
 }
-
-// Turn the elevator around by clear calls in the original direction, clear calls in opposite direction, start moving in the new direction
-/*fn turn_elevator_around(prev_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> elevint::Direction {
-    //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
-    println!("Brain: There are no more hall calls in my prev direction {:?} from before I stopped but there are hall calls in the other direction, turning around to move in that direction", prev_dir);
-    let prev_dir = match prev_dir {
-                                        Direction::Up => Direction::Down,
-                                        Direction::Down => Direction::Up,
-                                    };
-    //clear_call(my_state.clone(),  memory_request_tx.clone(), prev_dir);
-    //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Down))).expect("Error sending movement state to memory");
-    //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(Direction::Up))).expect("Error sending movement state to memory");
-}*/
 
 fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     //println!("Brain: Checking if I should go");
@@ -199,7 +178,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
             
         }
         _ => {
-            let calls: Vec<_> = my_state.call_list.clone().into_iter().collect();
+            let calls: Vec<_> = my_state.call_list.into_iter().collect();
             let my_floor = my_state.last_floor;
             let confirmed_calls: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed).collect();
             let calls_in_current_direction: Vec<_> = calls.iter().filter(|(call, state)| *state == mem::CallState::Confirmed && match current_dir {
@@ -242,6 +221,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                 }
                 _ => {}
             }
+
             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
             return false;
 
@@ -267,7 +247,7 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
 fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     
     let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
-        my_state.call_list.clone()
+        my_state.call_list
             .into_iter()
             .filter(|(call, state)| {
                 //println!("Checking call {:?} at floor {}", call, my_state.last_floor);
@@ -288,14 +268,11 @@ fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memo
         
         }
 
-    // Wait 3 seconds
-    thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
-    // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
-
     // Update MoveState to StopDoorClosed
     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
 
 }
+
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     // TODO
     println!("Restarting elevator");
