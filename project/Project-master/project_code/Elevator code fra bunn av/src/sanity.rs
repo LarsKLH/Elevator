@@ -440,6 +440,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     // Getting a new state list with the changes added
                     let mut state_list_with_changes: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
                     state_list_with_changes.insert(received_state.id, received_state.clone());
+                    state_list_with_changes.remove(&old_memory.my_id);
 
                     // Dealing with the new hall calls
                     let differences_in_hall = handle_hall_calls(old_memory.clone(), received_state.clone(), memory_request_tx.clone(), state_list_with_changes.clone());
@@ -506,10 +507,9 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 if !changed_calls.is_empty() {
                     println!("Sanity: Changed calls: {:?}", changed_calls);
                     // Sending the changes to memory one after the other
-                }
-                
-                for change in changed_calls {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
+                    for change in changed_calls {
+                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
+                    }
                 }
             }
         }
