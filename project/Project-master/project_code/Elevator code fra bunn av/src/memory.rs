@@ -188,7 +188,7 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
             println!("Movement state: {:?}", state.move_state);
             println!("Last floor: {}", state.last_floor);
             for (call, call_state) in state.call_list.iter() {
-                println!("Call: {:?} {:?}", call, call_state);
+                println!("Call: {:?} {:?} {:?}", call.call_type, call.floor, call_state);
             }
         }
        thread::sleep(time::Duration::from_millis(5000));
