@@ -105,7 +105,6 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
         _ => elevint::Direction::Up
             // This should never happen
             // Jens: in this case shouldnt we just crash here? as something, somewere is wery wrong if we arrive at at a floor without moving
-        }
     };
 
 
