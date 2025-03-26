@@ -387,11 +387,12 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     if !changed_calls.is_empty() {
                         println!("Sanity: Changed calls: {:?}", changed_calls);
                         // Sending the changes to memory one after the other
+                        for change in changed_calls {
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
+                        }
                     }
                     
-                    for change in changed_calls {
-                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
-                    }
+                    
                 }
                 else if !old_memory.state_list.contains_key(&received_memory.my_id) {
 
