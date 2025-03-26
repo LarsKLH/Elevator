@@ -273,7 +273,7 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
                         }
 
     // Wait 3 seconds
-    //thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
+    thread::sleep(Duration::from_secs(1));              // Figure out how to do this without sleeping
     // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
     
     // Update MoveState to StopDoorClosed
@@ -395,7 +395,7 @@ fn clear_confirmed_calls_on_floor_matching_direction(my_state: mem::State,  memo
                     }
 
     // Wait 3 seconds
-    //thread::sleep(Duration::from_secs(3));              // Figure out how to do this without sleeping
+    thread::sleep(Duration::from_secs(1));              // Figure out how to do this without sleeping
     // Jens: We should take note at the current time, and chack back and confirm that we have been stopped for long enough 
 
     // Update MoveState to StopDoorClosed
