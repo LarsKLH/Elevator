@@ -350,7 +350,32 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let received_memory = rx.expect("Invalid memory found");
                 let received_state = received_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone();
 
-                if !old_memory.state_list.contains_key(&received_memory.my_id) {
+                if received_memory.my_id == old_memory.my_id {
+                    // Do same as default if we get our own state back
+
+                    timeout_check(last_received.clone(), memory_request_tx.clone());
+
+                    // Getting old memory and extracting my own call list
+                    let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                    let my_call_list = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list;
+
+                    // Running the state machine on my own calls
+                    let new_call_list = cyclic_counter(my_call_list.clone(), &old_memory.state_list);
+
+                    // Extracting the calls that were actually changed to minimize memory changing and avoid errors
+                    let changed_calls = difference(my_call_list, new_call_list);
+
+                    // No need to print that there is nothing to change 
+                    if !changed_calls.is_empty() {
+                        println!("Sanity: Changed calls: {:?}", changed_calls);
+                        // Sending the changes to memory one after the other
+                    }
+                    
+                    for change in changed_calls {
+                        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
+                    }
+                }
+                else if !old_memory.state_list.contains_key(&received_memory.my_id) {
 
                     // Sending the data for the new elevator to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state.clone())).expect("Could not update memory");
