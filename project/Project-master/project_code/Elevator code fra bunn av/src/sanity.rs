@@ -340,6 +340,7 @@ fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx
 pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, rx_get: Receiver<mem::Memory>) -> () {
     // Setting up a hashmap to keep track of the last time a message was received from each elevator
     let mut last_received: HashMap<Ipv4Addr, SystemTime> = HashMap::new();
+    
     loop {
         cbc::select! {
             recv(rx_get) -> rx => {
