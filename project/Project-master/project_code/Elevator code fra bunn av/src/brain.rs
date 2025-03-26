@@ -157,7 +157,7 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
     match my_state.move_state {
         elevint::MovementState::Obstructed => {return false;}
         _ => {
-            
+
             let calls: Vec<_> = my_state.call_list.clone().into_iter()
                 .collect();
             let my_floor = my_state.last_floor;
@@ -185,15 +185,14 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
                 _ => {
                     match calls_in_current_direction.is_empty() {
                         false => {
-                            let copy_of_current_dir = current_dir.clone();
                             println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(copy_of_current_dir))).expect("Error sending movement state to memory");
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(*current_dir))).expect("Error sending movement state to memory");
                             return true;
                         }
                         true => {
                             println!("Brain: There are no more hall calls in my current direction {:?} from before I stopped but there are calls in the other direction, opening doors before turning around to move in other direction", current_dir);
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
-                            let current_dir = match current_dir {
+                            *current_dir = match *current_dir {
                                 Direction::Up => Direction::Down,
                                 Direction::Down => Direction::Up,
                             };
