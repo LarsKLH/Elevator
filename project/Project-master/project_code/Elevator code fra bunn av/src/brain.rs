@@ -60,7 +60,6 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
                         // Jens: We do not need to spam the terminal with messages that does not communicate any information
                         // println!("Brain: No floor sensor detected, refreshing");
-                        thread::sleep(Duration::from_millis(50));
                     }
                     */
                 }
@@ -71,8 +70,6 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after stoped with closed door");
-                    //thread::sleep(Duration::from_millis(100));
-
                 }
             }
             elevint::MovementState::StopAndOpen => {
@@ -85,13 +82,9 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             }
             elevint::MovementState::Obstructed => {
                 println!("Brain: Elevator is obstructed");
-                //thread::sleep(Duration::from_millis(100));
-
                 let going = should_i_go(prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
                     println!("Brain: Moving again after obstruction"); // dont allow for ANY movement until the obstruction is removed
-                    //thread::sleep(Duration::from_millis(100));
-
                 }  
                  
                 
@@ -106,6 +99,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
 
     let calls: Vec<_> = my_state.call_list.clone().into_iter().collect(); // Store call_list as a vec for future filtering    
     let my_floor = floor_to_consider_stopping_at;
+
     let my_direction: elevint::Direction = match my_state.move_state {
         elevint::MovementState::Moving(dirn) => dirn,
         _ => {                                                            // This should never happen
@@ -114,7 +108,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
 
             // Jens: in this case shouldnt we just crash here? as something, somewere is wery wrong if we arrive at at a floor without moving
         }
-    };
+    }
 
 
     // Check if my current floor is confirmed using filter, if so we should stop -> return true
@@ -199,7 +193,6 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
 
 fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     //println!("Brain: Checking if I should go");
-    //thread::sleep(Duration::from_millis(100));
     match my_state.move_state {
         elevint::MovementState::Obstructed => {
             return false;
@@ -230,7 +223,6 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                     //clear_confirmed_calls_on_floor_matching_direction(my_state.clone(),  memory_request_tx.clone(), current_dir);
                     println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
-                    //thread::sleep(Duration::from_millis(100));
                     return true;
                 }
                 _ => ()
@@ -246,7 +238,6 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                     };
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(current_dir))).expect("Error sending movement state to memory");
                     clear_confirmed_calls_on_floor_matching_direction(my_state.clone(),  memory_request_tx.clone(), current_dir);
-                    //thread::sleep(Duration::from_millis(100));
                     return true;
                 }
                 _ => {}
