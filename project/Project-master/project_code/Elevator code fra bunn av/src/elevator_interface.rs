@@ -62,6 +62,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
                 mirror_movement_state(received_state_to_mirror.move_state, &elevator, num_floors, received_state_to_mirror.last_floor);
                 
                 mirror_lights(received_state_to_mirror, &elevator);
+                
                 sleep(Duration::from_secs(1));
 
             }
