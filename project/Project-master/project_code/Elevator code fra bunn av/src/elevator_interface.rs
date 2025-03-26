@@ -66,7 +66,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
                 
             }
-            default(Duration::from_millis(100))  => {
+            default(Duration::from_millis(50))  => {
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let current_memory = memory_recieve_rx.recv().unwrap();
 
