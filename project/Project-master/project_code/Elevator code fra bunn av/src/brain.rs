@@ -144,6 +144,33 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: &mem::State) -> bo
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     use std::collections::HashMap;
 
+    let current_floor = my_state.last_floor;
+
+    let cab_call_to_check = mem::Call { call_type: mem::CallType::Cab, floor: current_floor };
+
+    let hall_call_to_check = mem::Call { call_type: mem::CallType::Hall(prev_dir), floor: current_floor};
+
+    if my_state.call_list.get(&cab_call_to_check) == Some(&mem::CallState::Confirmed) {
+        
+        println!("Brain: Want to clear call {:?} at my floor {} and in my direction {:?}", cab_call_to_check, current_floor, prev_dir);
+
+        memory_request_tx
+        .send(mem::MemoryMessage::UpdateOwnCall(cab_call_to_check, mem::CallState::PendingRemoval))
+        .expect("Error sending call to memory");
+    }
+    
+    if my_state.call_list.get(&hall_call_to_check) == Some(&mem::CallState::Confirmed) {
+
+        println!("Brain: Want to clear call {:?} at my floor {} and in my direction {:?}", hall_call_to_check, current_floor, prev_dir);
+        
+        memory_request_tx
+        .send(mem::MemoryMessage::UpdateOwnCall(hall_call_to_check, mem::CallState::PendingRemoval))
+        .expect("Error sending call to memory");
+    }
+
+    //println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
+
+    /*
     // Jens: this seems like incredably overkill, isnt the only applicable calls in last_floor
     let confirmed_calls_on_my_floor_with_same_direction: HashMap<mem::Call, mem::CallState> =
     my_state.call_list.clone()
@@ -168,13 +195,13 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
     } else {
         // do nothing
     }
+
+
                             
-    println!("Brain: Want to clear all calls at my floor and in my direction, currently at floor {} with direction {:?}, calls to clear: {:?}", my_state.last_floor, prev_dir, confirmed_calls_on_my_floor_with_same_direction.clone());
-                            
+    */                        
 
     
     // Update MoveState to StopDoorClosed
-    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
     
 }
 
