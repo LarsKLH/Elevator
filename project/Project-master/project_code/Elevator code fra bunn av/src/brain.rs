@@ -310,6 +310,7 @@ fn should_i_go(current_dir: Direction, memory_request_tx: Sender<mem::MemoryMess
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
                     return false;
                 }
+                _ => ()
             }
             match calls_in_current_direction.is_empty() {
                 false => {
@@ -349,8 +350,9 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
     let my_floor = memory.state_list.get(&my_id).unwrap().last_floor;
     let current_dir = memory.state_list.get(&my_id).unwrap().move_state;
     let call_floor = call.floor;
-    if (current_dir == elevint::Direction::Up && call_floor < my_floor)
-        || (current_dir == elevint::Direction::Down && call_floor > my_floor)
+    if (current_dir == elevint::MovementState::Moving(Direction::Up) && call_floor < my_floor)
+        || (current_dir == elevint::MovementState::Moving(Direction::Down) && call_floor > my_floor)
+        
     {
         return false;
     }
