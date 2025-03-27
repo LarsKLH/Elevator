@@ -56,7 +56,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopAndOpen => {
                 thread::sleep(Duration::from_secs(3));
                 clear_call(&mut my_state,  &memory_request_tx, prev_direction);    
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state, &memory);
                 if going {
                     //println!("Brain: Moving again after stoped with open door");
                 }
@@ -142,7 +142,7 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::Memo
     let mut has_any_calls = false;
 
     // Collect confirmed calls where this elevator is the best responder
-    let mut best_calls = Vec::new();
+    let mut best_calls: Vec<mem::Call> = Vec::new();
     for (call, state) in &my_state.call_list {
         match *state {
             mem::CallState::Confirmed => {
