@@ -409,6 +409,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
                     // Merging the calls from the old and new state
                     let my_merged_calls = merge_calls(my_old_calls.clone(), my_new_calls.clone());
+                    println!("Sanity: Merging calls")
 
                     let my_modified_calls = difference(my_old_calls, my_merged_calls);
 
