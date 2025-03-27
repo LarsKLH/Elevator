@@ -159,10 +159,10 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
             }
             mem::CallState::PendingRemoval => {
 
-                let mut others_agree = false;
+                let mut others_agree = true;
                 for state in state_list_with_changes.values() {
-                    if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() != mem::CallState::New {
-                        others_agree = true;
+                    if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::New {
+                        others_agree = false;
                     }
                 }
 
