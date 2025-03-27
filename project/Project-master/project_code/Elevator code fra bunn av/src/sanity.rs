@@ -306,7 +306,7 @@ fn testing_function() -> bool {
     let mut differences_inserted = memory.state_list.get(&memory.my_id).expect("Sanity: Wrong state in test").call_list.clone();
     differences_inserted.extend(differences.clone());
 
-    let test_filter_calls = filter_changes(differences.clone(), 7, memory.state_list.clone());
+    let test_filter_calls = filter_changes(differences.clone(), 3, memory.state_list.clone());
 
     println!("Sanity: Filtered calls: {:?}", test_filter_calls.clone().iter().sorted());
 
