@@ -42,9 +42,11 @@ pub fn elevator_logic(
             }
             elevint::MovementState::StopAndOpen => {
                 thread::sleep(Duration::from_secs(3));
-                clear_call(&my_state,  &memory_request_tx, prev_direction);    
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
-                if going {}
+                clear_call(&mut my_state,  &memory_request_tx, prev_direction);    
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state, &memory);
+                if going {
+                    //println!("Brain: Moving again after stoped with open door");
+                }
             }
             elevint::MovementState::Obstructed => {
                 let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
@@ -94,9 +96,7 @@ fn should_i_stop(
 }
 
 // Clear the call from the memory
-fn clear_call(my_state: &mem::State, memory_request_tx: &Sender<mem::MemoryMessage>, 
-    prev_dir: Direction) {
-
+fn clear_call(my_state: &mut mem::State, memory_request_tx: &Sender<mem::MemoryMessage>, prev_dir: Direction) {
     let floor = my_state.last_floor;
     let cab_call = mem::Call { call_type: mem::CallType::Cab, floor };
     let hall_call = mem::Call { call_type: mem::CallType::Hall(prev_dir), floor };
@@ -107,6 +107,7 @@ fn clear_call(my_state: &mem::State, memory_request_tx: &Sender<mem::MemoryMessa
             memory_request_tx
                 .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
                 .expect("Error sending call update");
+            *my_state.call_list.get_mut(&call).expect("Could not get mutable call to change") = mem::CallState::PendingRemoval;
         }
     }
 }
@@ -123,7 +124,8 @@ fn should_i_go(
     let mut has_calls_ahead = false;
     let mut has_any_calls = false;
 
-    let mut best_calls = Vec::new();
+    // Collect confirmed calls where this elevator is the best responder
+    let mut best_calls: Vec<&mem::Call> = Vec::new();
     for (call, state) in &my_state.call_list {
         if *state == mem::CallState::Confirmed {
             if call.call_type != mem::CallType::Cab {
