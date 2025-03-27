@@ -73,7 +73,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
     }
 }
 
-// Check if the elevator should stop or not
+// Check if the elevator should stop or not | Todo: Maybe turn if into a match statement
 fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> bool {
 
     let calls: Vec<_> = my_state.call_list.into_iter().collect(); // Store call_list as a vec for future filtering    
@@ -93,23 +93,21 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
         return true;
     }
 
-    
-    // Check if there are no confirmed floors in the direction of the elevator,
-    // if there is not we should not continue in that direction and we should stop -> return true
+    /* Check if there are no confirmed floors in the direction of the elevator,
+     if there is not we should not continue in that direction and we should stop -> return true*/
     let confirmed_calls_in_direction = calls.iter()
         .any(|(call, state)| *state == mem::CallState::Confirmed && match my_direction {
             elevint::Direction::Up => call.floor >= my_floor,
             elevint::Direction::Down => call.floor <= my_floor,
         });
 
-    
     if !confirmed_calls_in_direction {
-        println!("Brain: There is no more confiremed orders beyond this floor, currently at floor {}, stopping", my_floor);
+        //println!("Brain: There is no more confirmed orders beyond this floor, currently at floor {}, stopping", my_floor);
         return true;                    
     }
 
-    // Else continue moving in current direction
-    println!("Brain: There is more confiremed orders beyond this floor, currently at floor {}, continuuing ", my_floor);
+    // If no conditions are met, we should continue -> return false
+    //println!("Brain: There is more confirmed orders beyond this floor, currently at floor {}, continuing ", my_floor);
     return false;
 
 }
@@ -171,12 +169,12 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
                 _ => {
                     match calls_in_current_direction.is_empty() {
                         false => {
-                            println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
+                            //println!("Brain: There are more calls in my current direction {:?} from before I stopped, continuing to move in that direction", current_dir);
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(*current_dir))).expect("Error sending movement state to memory");
                             return true;
                         }
                         true => {
-                            println!("Brain: There are no more hall calls in my current direction {:?} from before I stopped but there are calls in the other direction, opening doors before turning around to move in other direction", current_dir);
+                            //println!("Brain: There are no more hall calls in my current direction {:?} from before I stopped but there are calls in the other direction, opening doors before turning around to move in other direction", current_dir);
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending movement state to memory");
                             *current_dir = match *current_dir {
                                 Direction::Up => Direction::Down,
@@ -187,10 +185,6 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
                     }
                 }
             }
-            
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending movement state to memory");
-            return false;
-
         }
     }
 }
@@ -202,9 +196,7 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
     let current_dir = memory.state_list.get(&my_id).unwrap().move_state;
     let call_floor = call.floor;
     if (current_dir == elevint::MovementState::Moving(Direction::Up) && call_floor < my_floor)
-        || (current_dir == elevint::MovementState::Moving(Direction::Down) && call_floor > my_floor)
-        
-    {
+        || (current_dir == elevint::MovementState::Moving(Direction::Down) && call_floor > my_floor){
         return false;
     }
 
