@@ -167,6 +167,9 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
                     else if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::Nothing {
                         others_agree = true;
                     }
+                    else if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::Confirmed {
+                        others_agree = true;
+                    }
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
