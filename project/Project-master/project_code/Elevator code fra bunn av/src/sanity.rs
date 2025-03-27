@@ -106,7 +106,7 @@ fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<
 }
 
 // Checks whether the changes follow the rules for the cyclic counter
-fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_state: mem::State, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
+fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last_floor: u8, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
     let mut new_differences = differences.clone();
     for change in differences {
         match change.1 {
@@ -168,7 +168,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if received_state.last_floor != change.0.floor {
+                if received_last_floor != change.0.floor {
                     new_differences.remove(&change.0);
                 }
                 else if others_agree {
@@ -204,7 +204,7 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, memory
      let mut differences = difference(old_calls.clone(), new_calls.clone());
 
      // Check whether the changed orders are valid or not
-     differences = filter_changes(differences, received_state.clone(), state_list_with_changes.clone());
+     differences = filter_changes(differences, received_state.clone().last_floor, state_list_with_changes.clone());
 
 
      // Changing our hall calls based on the changes to the received state
@@ -254,8 +254,9 @@ fn handle_cab_calls_for_other(old_memory: mem::Memory, received_memory: mem::Mem
     others_states_for_comparison.insert(0.into(), old_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone());
 
     // Check whether the changed cab calls are valid or not
-    others_differences_cab = filter_changes(others_differences_cab, received_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone(), others_states_for_comparison.clone());
+    others_differences_cab = filter_changes(others_differences_cab, received_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone().last_floor, others_states_for_comparison.clone());
 
+    println!("Sanity: Other elevator cab calls: {:?}", others_differences_cab);
     // Returning the cab call changes for the other elevator so it can be included in a state update later
     return others_differences_cab;
 }
@@ -282,6 +283,8 @@ fn handle_cab_calls_for_me(old_memory: mem::Memory, received_memory: mem::Memory
     let my_modified_cab_calls = cyclic_counter(my_old_cab_calls.clone(), &received_state_for_comparison);
 
     let my_modified_cab_calls_only_changes = difference(my_old_cab_calls.clone(), my_modified_cab_calls);
+
+    println!("Sanity: My cab calls: {:?}", my_modified_cab_calls_only_changes);
 
     // Sending the changes to memory one after the other
     for change in my_modified_cab_calls_only_changes {
