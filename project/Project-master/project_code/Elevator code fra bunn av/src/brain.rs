@@ -55,7 +55,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             }
             elevint::MovementState::StopAndOpen => {
                 thread::sleep(Duration::from_secs(3));
-                clear_call(&my_state,  &memory_request_tx, prev_direction);    
+                clear_call(&mut my_state,  &memory_request_tx, prev_direction);    
                 let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state);
                 if going {
                     //println!("Brain: Moving again after stoped with open door");
@@ -114,7 +114,7 @@ fn should_i_stop(floor: u8, my_state: &mem::State) -> bool {
 }
 
 // Clear the call from the memory
-fn clear_call(my_state: &mem::State, memory_request_tx: &Sender<mem::MemoryMessage>, prev_dir: Direction) {
+fn clear_call(my_state: &mut mem::State, memory_request_tx: &Sender<mem::MemoryMessage>, prev_dir: Direction) {
     let floor = my_state.last_floor;
 
     let cab_call = mem::Call { call_type: mem::CallType::Cab, floor };
@@ -126,6 +126,7 @@ fn clear_call(my_state: &mem::State, memory_request_tx: &Sender<mem::MemoryMessa
             memory_request_tx
                 .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
                 .expect("Error sending call update");
+            *my_state.call_list.get_mut(&call).expect("Could not get mutable call to change") = mem::CallState::PendingRemoval;
         }
     }
 }
@@ -141,15 +142,23 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::Memo
     let mut has_any_calls = false;
 
     for (call, state) in &my_state.call_list {
-        if *state == mem::CallState::Confirmed {
-            has_any_calls = true;
-            if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
-                || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
-            {
-                has_calls_ahead = true;
-                break;
-            }
-        }
+        match *state {
+            mem::CallState::Confirmed => {
+                has_any_calls = true;
+                if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
+                    || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
+                        {
+                            has_calls_ahead = true;
+                        }
+            },
+            mem::CallState::PendingRemoval => {
+                if call.floor == my_floor && (call.call_type == CallType::Cab || call.call_type == CallType::Hall(*current_dir)) {
+                    //there is a call that has not been removed yet, cannot leave untill that is the case
+                    return  false;
+                }
+            },
+            _ => {}
+        }  
     }
 
     match (has_any_calls, has_calls_ahead) {
