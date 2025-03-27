@@ -408,6 +408,14 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
         }
     }
 
+    for cab_call in cab_calls.clone() {
+        println!("Sanity: Cab call: {:?} {:?}", cab_call.0, cab_call.1);
+    }
+
+    for hall_call in hall_calls.clone() {
+        println!("Sanity: Hall call: {:?} {:?}", hall_call.0, hall_call.1);
+    }
+
     let mut cab_calls_difference = cab_calls.clone();
 
     if received_memory.my_id != old_memory.my_id {
@@ -434,6 +442,8 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 
     for change in calls_difference_assembled.clone() {
         received_state_to_commit.call_list.insert(change.0, change.1);
+        println!("Sanity: Received call update for {:?}", change.0);
+        println!("Sanity: New call state: {:?}", change.1);
     }
 
     if calls_difference_assembled.is_empty() {
