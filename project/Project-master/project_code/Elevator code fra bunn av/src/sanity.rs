@@ -566,7 +566,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
             }
 
             // If we don't get a new state within 100 ms
-            default(Duration::from_millis(100)) => {
+            default(Duration::from_millis(1000)) => {
                 timeout_check(last_received.clone(), memory_request_tx.clone());
 
                 // Getting old memory and extracting my own call list
