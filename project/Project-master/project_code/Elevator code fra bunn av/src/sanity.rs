@@ -422,8 +422,12 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 
     let mut received_state_to_commit = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
 
-    for change in calls_difference_assembled {
+    for change in calls_difference_assembled.clone() {
         received_state_to_commit.call_list.insert(change.0, change.1);
+    }
+
+    if calls_difference_assembled.is_empty() {
+        received_state_to_commit.timed_out = old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").timed_out;
     }
 
     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_to_commit.clone())).expect("Sanity: Could not send state update");
