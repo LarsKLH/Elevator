@@ -433,10 +433,10 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 
 fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, accepted_changes: HashMap<Call, mem::CallState>) -> bool {
     let mut did_i_deal_with_it = false;
-    let received_hall_calls = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
-    .iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
-    let old_hall_calls = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
-    .iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
+    let received_hall_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
+    let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
 
 
     return did_i_deal_with_it;
