@@ -482,6 +482,10 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::
     let mut dealt_with = false;
 
     if !old_memory.state_list.contains_key(&received_memory.my_id) {
+        if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") != &mem::State::new(received_memory.my_id, (received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.len()/3) as u8) {
+            merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
+
+        }
         println!("Sanity: Received memory from new elevator");
         memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
         dealt_with = true;
