@@ -364,7 +364,7 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
     }
 }
 
-fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
+fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> HashMap<Call, mem::CallState> {
     let mut cab_calls = HashMap::new();
     let mut hall_calls = HashMap::new();
     for call in received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone() {
@@ -398,7 +398,9 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
         received_state_to_commit.call_list.insert(change.0, change.1);
     }
 
-    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_to_commit)).expect("Sanity: Could not send state update");
+    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_to_commit.clone())).expect("Sanity: Could not send state update");
+
+    return received_state_to_commit.call_list;
 }
 
 fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
@@ -441,8 +443,10 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::
     else {
         println!("Sanity: Received memory from elevator that isn't timed out");
         deal_with_calls_for_me(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
-        deal_with_calls_for_other(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
-        dealt_with = true;
+        let accepted_changes = deal_with_calls_for_other(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
+        if !accepted_changes.is_empty() {
+            dealt_with = true;
+        }
     }
     
     return dealt_with;
