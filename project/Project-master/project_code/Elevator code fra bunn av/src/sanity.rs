@@ -424,6 +424,7 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
         cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
         //cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
         let cab_calls_filtered = filter_changes(cab_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, cab_calls_for_comparison.clone());
+        println!("Sanity: Cab calls filtered: {:?}", cab_calls_filtered.clone());
 
         cab_calls_difference = difference(cab_calls.clone(), cab_calls_filtered.clone());
     }
@@ -432,6 +433,7 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     //hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     //hall_calls_for_comparison.remove(&received_memory.my_id);
     let hall_calls_filtered = filter_changes(hall_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, hall_calls_for_comparison.clone());
+    println!("Sanity: Hall calls filtered: {:?}", hall_calls_filtered.clone());
 
     let hall_calls_difference = difference(hall_calls.clone(), hall_calls_filtered.clone());
 
@@ -442,8 +444,6 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 
     for change in calls_difference_assembled.clone() {
         received_state_to_commit.call_list.insert(change.0, change.1);
-        println!("Sanity: Received call update for {:?}", change.0);
-        println!("Sanity: New call state: {:?}", change.1);
     }
 
     if calls_difference_assembled.is_empty() {
