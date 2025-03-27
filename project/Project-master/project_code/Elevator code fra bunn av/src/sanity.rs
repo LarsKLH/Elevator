@@ -191,13 +191,13 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, memory
      let old_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&received_state.id).expect("Incorrect state found").call_list
      .clone()
      .into_iter()
-     .filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Down) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Up))
+     .filter(|x| x.0.call_type != mem::CallType::Cab)
      .collect();
 
      let new_calls: HashMap<mem::Call, mem::CallState> = received_state.call_list
      .clone()
      .into_iter()
-     .filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Down) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Up))
+     .filter(|x| x.0.call_type != mem::CallType::Cab)
      .collect();
 
      // Getting the difference between the old and new calls to get what calls have changed since last time
@@ -212,7 +212,7 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, memory
      let my_old_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list
      .clone()
      .into_iter()
-     .filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Down) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Up))
+     .filter(|x| x.0.call_type != mem::CallType::Cab)
      .collect();
 
      // Running the state machine on only the changed calls
@@ -267,11 +267,6 @@ fn handle_cab_calls_for_me(old_memory: mem::Memory, received_memory: mem::Memory
 
     // Checking for cab calls concerning our elevator
     let my_old_cab_calls: HashMap<mem::Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list
-    .clone()
-    .into_iter()
-    .filter(|x| x.0.call_type == mem::CallType::Cab)
-    .collect();
-    let my_new_cab_calls: HashMap<mem::Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list
     .clone()
     .into_iter()
     .filter(|x| x.0.call_type == mem::CallType::Cab)
@@ -489,8 +484,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 }
                 else if old_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").timed_out {
                     
-                    let my_new_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Up) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Down)).collect();
-                    let my_old_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Up) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Down)).collect();
+                    let my_new_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
+                    let my_old_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
 
                     // Merging the calls from the old and new state
                     let my_merged_calls = merge_calls(my_old_calls.clone(), my_new_calls.clone());
