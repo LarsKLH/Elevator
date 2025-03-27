@@ -74,7 +74,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
     loop{
         let (number_of_bytes_recieved, address_of_sender) = recv_socket.recv_from(&mut recieve_buffer).expect("NetWork: Failed to recv packet, if this is ever a problem add error handling");
 
-        println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, address_of_sender);
+        // println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, address_of_sender);
 
         let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
         
