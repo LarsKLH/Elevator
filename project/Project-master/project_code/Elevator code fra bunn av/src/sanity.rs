@@ -467,6 +467,7 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
 
         let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
+        println!("Sanity: Merged cab calls: {:?}", merged_cab_calls.clone());
         let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
 
         let mut merged_calls_difference = merged_hall_difference.clone();
