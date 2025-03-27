@@ -421,8 +421,7 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     }
 
     let mut hall_calls_for_comparison = old_memory.state_list.clone();
-    //hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    hall_calls_for_comparison.remove(&received_memory.my_id);
+    hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     let hall_calls_filtered = filter_changes(hall_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, hall_calls_for_comparison.clone());
 
     let hall_calls_difference = difference(hall_calls.clone(), hall_calls_filtered.clone());
@@ -463,7 +462,6 @@ fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, acc
 }
 
 fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
-    let new_calls = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone();
 
     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
