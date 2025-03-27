@@ -406,6 +406,10 @@ fn deal_with_received_orders(received_memory: mem::Memory, old_memory: mem::Memo
         println!("Sanity: Received memory from timed out elevator");
 
     }
+    else if !old_memory.state_list.contains_key(&received_memory.my_id) {
+        memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
+        dealt_with = true;
+    }
     else {
         println!("Sanity: Received memory from elevator that isn't timed out");
         deal_with_calls_for_me(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
