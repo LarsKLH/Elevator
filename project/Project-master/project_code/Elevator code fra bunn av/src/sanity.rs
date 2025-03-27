@@ -369,7 +369,8 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
     cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    println!("Sanity: Cab calls for comparison: {:?}", cab_calls_for_comparison.clone());
     let cab_calls_cycled = cyclic_counter(cab_calls.clone(), &cab_calls_for_comparison.clone());
 
     let cab_calls_difference = difference(cab_calls.clone(), cab_calls_cycled.clone());
@@ -455,8 +456,6 @@ fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, acc
 fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
     let new_calls = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone();
 
-    println!("\nSanity: New calls: {:?}", new_calls.clone());
-
     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
     let new_hall_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
@@ -469,10 +468,8 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
     .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
     let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
-    println!("Sanity: New cab calls: {:?}", new_cab_calls.clone());
 
     let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
-    println!("Sanity: Merged cab calls: {:?}", merged_cab_calls.clone());
     let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
 
     let mut merged_calls_difference = merged_hall_difference.clone();
