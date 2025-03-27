@@ -173,11 +173,8 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if received_last_floor != change.0.floor {
+                if received_last_floor != change.0.floor && !others_agree {
                     new_differences.remove(&change.0);
-                }
-                else if others_agree {
-                    new_differences.insert(change.0, change.1);
                 }
             }
         }
