@@ -76,7 +76,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
         println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, address_of_sender);
 
-        let mut recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
+        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
         
         let address_of_sender_ipv4 = match address_of_sender {
             SocketAddr::V4(v4) => *v4.ip(),
@@ -112,7 +112,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
         let written_card= postcard::to_slice(&memory, &mut card_buffer).expect("NetWork: Was not able to serialize the memory");
 
 
-        println!("NetWork: Trying to send post out over the net from {:?} to {:?}", from_socket, to_socket);
+        // println!("NetWork: Trying to send post out over the net from {:?} to {:?}", from_socket, to_socket);
         
         from_socket.send_to(&written_card, to_socket).expect("was not able to transmit to target socket");
 

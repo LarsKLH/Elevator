@@ -119,10 +119,9 @@ impl Decision {
 
     }
 */
+    // Function that assign hall orders to elevators when they are confirmed
     pub async fn hall_order_assigner(& self) { //check if mut is needed here
-        //1. map broadcast Message to Elevator system struct
-        //take even dead elevators? and then reassign orders
-        //status assigned stays but elevators take possibly diff orders
+        
         let memory = memory_recieve_rx.recv().expect("Error receiving memory");
 
         let mut broadcast = self.local_broadcastmessage.write().await;
@@ -148,7 +147,7 @@ impl Decision {
                 continue;
             }
         
-            // Get cab calls
+            // Get confirmed cab calls
             let cab_requests: Vec<bool> = (1..=MAX_FLOORS) 
             .map(|floor| {
                 broadcast.orders.values().any(|orders| {
@@ -168,7 +167,7 @@ impl Decision {
                 "idle"
             };
         
-            // insert states(the values) into the hashmap based on id(the key), states is to be changed to state_list
+            // insert states(the values) into the hashmap called state_list based on id(the key), states is to be changed to state_list
             states.insert(id.clone(), serde_json::json!({
                 "behaviour": behaviour,
                 "floor": state.current_floor,
@@ -189,7 +188,7 @@ impl Decision {
         
         println!("{}", serde_json::to_string_pretty(&input_json).unwrap());
 
-        // Execute hall_request_assigner for optimal hall order assignment
+        // Execute hall_request_assigner for optimal hall order assignment, where the input is the json variable (of all confirmed orders)
         let hra_output = Command::new("./hall_request_assigner")
         .arg("--input")
         .arg(&input_json)
