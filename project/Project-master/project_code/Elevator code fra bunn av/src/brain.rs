@@ -48,7 +48,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 }
             } 
             elevint::MovementState::StopDoorClosed => {
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
                 if going {
                     //println!("Brain: Moving again after stoped with closed door");
                 }
@@ -56,14 +56,14 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopAndOpen => {
                 thread::sleep(Duration::from_secs(3));
                 clear_call(&my_state,  &memory_request_tx, prev_direction);    
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
                 if going {
                     //println!("Brain: Moving again after stoped with open door");
                 }
             }
             elevint::MovementState::Obstructed => {
                 //println!("Brain: Elevator is obstructed");
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
                 if going {
                     //println!("Brain: Moving again after obstruction");
                 }  
@@ -131,7 +131,7 @@ fn clear_call(my_state: &mem::State, memory_request_tx: &Sender<mem::MemoryMessa
 }
 
 // Check if the elevator should go or not
-fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::MemoryMessage>, my_state: &mem::State) -> bool {
+fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::MemoryMessage>, my_state: &mem::State, memory: &mem::Memory) -> bool {
     if my_state.move_state == elevint::MovementState::Obstructed {
         return false;
     }
@@ -140,29 +140,63 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::Memo
     let mut has_calls_ahead = false;
     let mut has_any_calls = false;
 
+    // Collect confirmed calls where this elevator is the best responder
+    let mut best_calls = Vec::new();
     for (call, state) in &my_state.call_list {
         if *state == mem::CallState::Confirmed {
-            has_any_calls = true;
-            if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
-                || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
-            {
-                has_calls_ahead = true;
-                break;
+            if call.call_type != mem::CallType::Cab { // Only check hall calls for load balancing
+                if !am_i_best_elevator_to_respond(*call, memory.clone(), *current_dir) {
+                    continue; // Skip if another elevator is better suited
+                }
             }
+            best_calls.push(call);
+        }
+    }
+
+    // Check if any calls remain after filtering
+    if best_calls.is_empty() {
+        memory_request_tx
+            .send(mem::MemoryMessage::UpdateOwnMovementState(
+                elevint::MovementState::StopDoorClosed,
+            ))
+            .unwrap();
+        return false;
+    }
+
+    // Determine direction based on remaining calls
+    for call in best_calls {
+        has_any_calls = true;
+        if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
+            || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
+        {
+            has_calls_ahead = true;
+            break;
         }
     }
 
     match (has_any_calls, has_calls_ahead) {
         (false, _) => {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).unwrap();
+            memory_request_tx
+                .send(mem::MemoryMessage::UpdateOwnMovementState(
+                    elevint::MovementState::StopDoorClosed,
+                ))
+                .unwrap();
             false
         }
         (true, true) => {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(*current_dir))).unwrap();
+            memory_request_tx
+                .send(mem::MemoryMessage::UpdateOwnMovementState(
+                    elevint::MovementState::Moving(*current_dir),
+                ))
+                .unwrap();
             true
         }
         (true, false) => {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).unwrap();
+            memory_request_tx
+                .send(mem::MemoryMessage::UpdateOwnMovementState(
+                    elevint::MovementState::StopAndOpen,
+                ))
+                .unwrap();
             *current_dir = match *current_dir {
                 Direction::Up => Direction::Down,
                 Direction::Down => Direction::Up,
@@ -180,47 +214,56 @@ fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_d
     let my_floor = my_state.last_floor;
     let my_calls = my_state.call_list.len();
     
+    // Skip if obstructed (worst case)
+    if matches!(my_state.move_state, elevint::MovementState::Obstructed) {
+        return false;
+    }
+
     let call_floor = call.floor;
-    let is_moving_towards = match my_state.move_state {
-        elevint::MovementState::Moving(Direction::Up) => call_floor >= my_floor,
-        elevint::MovementState::Moving(Direction::Down) => call_floor <= my_floor,
-        _ => false,
+    
+    // --- Direction/Movement Scoring ---
+    let direction_score = match my_state.move_state {
+        // Best: Already moving toward the call
+        elevint::MovementState::Moving(dir) if (dir == Direction::Up && call_floor >= my_floor)
+                                           || (dir == Direction::Down && call_floor <= my_floor) => 0,
+        // Neutral: Stopped (can respond immediately but not moving yet)
+        elevint::MovementState::StopDoorClosed | elevint::MovementState::StopAndOpen => 5,
+        // Worst: Moving away or idle in wrong direction
+        _ => 10,
     };
 
-    // Compute a simple heuristic score
-    let my_score = (call_floor as i32 - my_floor as i32).abs() as u32 // Distance weight
-        + if is_moving_towards { 0 } else { 10 } // Favor elevators already moving in the right direction
-        + (my_calls as u32 * 2); // Load balancing: Prefer elevators with fewer calls
+    // --- Distance + Load ---
+    let my_score = (call_floor as i32 - my_floor as i32).abs() as u32  // Distance penalty
+        + direction_score                                             // Movement penalty
+        + (my_calls as u32 * 2);                                     // Load penalty
 
-    // Compare against all other elevators
+    // Compare against other elevators
     for (elev_id, elev_state) in &memory.state_list {
-        if elev_state.move_state == elevint::MovementState::Obstructed || elev_state.timed_out == true {
-            continue; // Skip obstructed or timed out elevators
-        }
-        if *elev_id == my_id {
-            continue; // Skip self
+        if *elev_id == my_id || matches!(elev_state.move_state, elevint::MovementState::Obstructed) {
+            continue; // Skip self or obstructed elevators
         }
 
         let other_floor = elev_state.last_floor;
         let other_calls = elev_state.call_list.len();
-        let other_is_moving_towards = match elev_state.move_state {
-            elevint::MovementState::Moving(Direction::Up) => call_floor >= other_floor,
-            elevint::MovementState::Moving(Direction::Down) => call_floor <= other_floor,
-            _ => false,
+        
+        let other_direction_score = match elev_state.move_state {
+            elevint::MovementState::Moving(dir) if (dir == Direction::Up && call_floor >= other_floor)
+                                               || (dir == Direction::Down && call_floor <= other_floor) => 0,
+            elevint::MovementState::StopDoorClosed | elevint::MovementState::StopAndOpen => 5,
+            _ => 10,
         };
 
         let other_score = (call_floor as i32 - other_floor as i32).abs() as u32
-            + if other_is_moving_towards { 0 } else { 10 }
+            + other_direction_score
             + (other_calls as u32 * 2);
 
         if other_score < my_score {
-            return false; // Another elevator is a better choice
+            return false; // Another elevator is better
         }
     }
 
     true
 }
-
 
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     // TODO
