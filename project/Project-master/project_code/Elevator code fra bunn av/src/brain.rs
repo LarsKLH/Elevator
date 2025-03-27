@@ -1,12 +1,9 @@
-use std::collections::HashMap;
-use std::net::Ipv4Addr;
 use std::time::Duration;
 use std::thread;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 use crate::memory::{self as mem, Call, CallState, CallType};
 use crate::elevator_interface::{self as elevint, Direction};
-use driver_rust::elevio::{self, elev::{self, Elevator}};
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
@@ -44,9 +41,7 @@ pub fn elevator_logic(
                 thread::sleep(Duration::from_secs(3));
                 clear_call(&mut my_state,  &memory_request_tx, prev_direction);    
                 let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state, &memory);
-                if going {
-                    //println!("Brain: Moving again after stoped with open door");
-                }
+                if going {}
             }
             elevint::MovementState::Obstructed => {
                 let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
@@ -128,6 +123,8 @@ fn should_i_go(
     if my_state.call_list.get(&Call { call_type: CallType::Cab, floor: my_state.last_floor}) == Some(&CallState::PendingRemoval)
         || my_state.call_list.get(&Call { call_type: CallType::Hall(*current_dir), floor: my_state.last_floor}) == Some(&CallState::PendingRemoval) {
             // There is a call that still needs top be removed so we cant move further untill it is
+            
+            println!("Brain: Cannot leave floor {} in direction {:?} as there are calls that are pending removal here", my_floor, current_dir);
             return false;
         }
 
