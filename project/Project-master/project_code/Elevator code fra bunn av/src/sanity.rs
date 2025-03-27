@@ -523,9 +523,6 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     // Dealing with the new cab calls
                     let differences_in_cab = handle_cab_calls_for_other(old_memory.clone(), received_memory.clone(), memory_request_tx.clone());
                     handle_cab_calls_for_me(old_memory.clone(), received_memory.clone(), memory_request_tx.clone());
-
-                    println!("Sanity: Hall call changes: {:?}", differences_in_hall);
-                    println!("Sanity: Cab call changes: {:?}", differences_in_cab);
                     
                     // Summing up all accepted changes and commiting to memory
                     let mut received_state_with_only_accepted = old_memory.state_list.get(&received_state.id).expect("Incorrect state found").clone();
@@ -555,6 +552,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                         // Setting last received for this elevator to the current time
                         last_received.insert(received_state.id.clone(), SystemTime::now());
                     }
+
+                    println!("Sanity: Received state with only accepted changes: {:?}", received_state_with_only_accepted);
 
                     // Sending the new state to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_with_only_accepted)).expect("Could not update memory");
