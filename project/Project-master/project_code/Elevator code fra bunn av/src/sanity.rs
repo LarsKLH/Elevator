@@ -368,9 +368,15 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
 
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
-    cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    //cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    let cab_calls_cycled = cyclic_counter(cab_calls.clone(), &cab_calls_for_comparison.clone());
+    let mut cab_calls_cycled = cab_calls.clone();
+    if received_memory.my_id != old_memory.my_id {
+        cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+        //cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+        cab_calls_cycled = cyclic_counter(cab_calls.clone(), &cab_calls_for_comparison.clone());
+    }
+        
+    
+    
 
     let cab_calls_difference = difference(cab_calls.clone(), cab_calls_cycled.clone());
 
@@ -402,13 +408,17 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
         }
     }
 
-    // Getting the old and received interpretations of our cab calls
-    let mut cab_calls_for_comparison = HashMap::new();
-    cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    //cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    let cab_calls_filtered = filter_changes(cab_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, cab_calls_for_comparison.clone());
+    let mut cab_calls_difference = cab_calls.clone();
 
-    let cab_calls_difference = difference(cab_calls.clone(), cab_calls_filtered.clone());
+    if received_memory.my_id != old_memory.my_id {
+        // Getting the old and received interpretations of our cab calls
+        let mut cab_calls_for_comparison = HashMap::new();
+        cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+        //cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+        let cab_calls_filtered = filter_changes(cab_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, cab_calls_for_comparison.clone());
+
+        cab_calls_difference = difference(cab_calls.clone(), cab_calls_filtered.clone());
+    }
 
     let mut hall_calls_for_comparison = old_memory.state_list.clone();
     //hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
@@ -420,7 +430,7 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     let mut calls_difference_assembled = hall_calls_difference.clone();
     calls_difference_assembled.extend(cab_calls_difference.clone());
 
-    let mut received_state_to_commit = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
+    let mut received_state_to_commit = old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
 
     for change in calls_difference_assembled.clone() {
         received_state_to_commit.call_list.insert(change.0, change.1);
@@ -455,8 +465,6 @@ fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, acc
 fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
     let new_calls = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone();
 
-    println!("Sanity: New calls: {:?}", new_calls.clone());
-
     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
     let new_hall_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
@@ -469,10 +477,8 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
     .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
     let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
-    println!("Sanity: New cab calls: {:?}", new_cab_calls.clone());
 
     let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
-    println!("Sanity: Merged cab calls: {:?}", merged_cab_calls.clone());
     let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
 
     let mut merged_calls_difference = merged_hall_difference.clone();
@@ -492,17 +498,34 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
     let mut dealt_with = false;
 
     if !old_memory.state_list.contains_key(&received_memory.my_id) {
-        if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") != &mem::State::new(received_memory.my_id, (received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.len()/3) as u8) {
-            //received_memory.state_list.insert(old_memory.my_id, old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-            old_memory.state_list.insert(received_memory.my_id, received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-            merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
+        if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") != old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") {
+            let mut my_state_for_insertion = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
+            if received_memory.state_list.contains_key(&old_memory.my_id) {
+                for call in received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone() {
+                    if call.0.call_type == mem::CallType::Cab {
+                        my_state_for_insertion.call_list.insert(call.0, call.1);
+                    }
+                }
+            }
+            received_memory.state_list.insert(old_memory.my_id, my_state_for_insertion.clone());
 
+            let mut others_state_for_insertion = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
+            if old_memory.state_list.contains_key(&received_memory.my_id) {
+                for call in old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone() {
+                    if call.0.call_type == mem::CallType::Cab {
+                        others_state_for_insertion.call_list.insert(call.0, call.1);
+                    }
+                }
+            }
+
+            old_memory.state_list.insert(received_memory.my_id, others_state_for_insertion.clone());
+            merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         }
         println!("Sanity: Received memory from new elevator");
         memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
         dealt_with = true;
     }
-    else if old_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state received").timed_out
+    else if old_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state already").timed_out
     || received_memory.state_list.get(&old_memory.my_id).expect("Sanity: wrong state received").timed_out {
         println!("Sanity: Received memory from timed out elevator");
         merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
