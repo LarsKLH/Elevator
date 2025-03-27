@@ -443,7 +443,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
         cbc::select! {
             recv(rx_get) -> rx => {
                 // Getting old memory
-                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
 
                 // Getting new state from rx, extracting both old and new calls for comparison
                 let received_memory = rx.expect("Invalid memory found");
@@ -455,8 +455,9 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     // Do same as default if we get our own state back
 
                     // Getting old memory and extracting my own call list
-                    let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
                     let my_call_list = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list;
+
+                    old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
 
                     // Running the state machine on my own calls
                     let new_call_list = cyclic_counter(my_call_list.clone(), &old_memory.state_list);
