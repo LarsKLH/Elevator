@@ -114,6 +114,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                 // If the others don't agree, then we cannot update the order to none
 
                 let mut pending = 0;
+                let mut none = 0;
                 let mut new = 0;
                 let mut total = 0;
                 for state in state_list_with_changes.clone(){
@@ -121,11 +122,14 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                     if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::PendingRemoval {
                         pending += 1;
                     }
+                    else if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::Nothing {
+                        none += 1;
+                    }
                     else if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::New {
                         new += 1;
                     }
                 }
-                if (pending + new) != total {
+                if (pending + none + new) != total {
                     new_differences.remove(&change.0);
                 }
             }
@@ -140,10 +144,10 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
                 let mut total = 0;
                 for state in state_list_with_changes.clone(){
                     total += 1;
-                    if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::New {
+                    if state.1.call_list.get(&change.0).expect("Incorrect call state found").clone() == mem::CallState::New {
                         new += 1;
                     }
-                    else if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::Confirmed {
+                    else if state.1.call_list.get(&change.0).expect("Incorrect call state found").clone() == mem::CallState::Confirmed {
                         confirmed += 1;
                     }
                 }
@@ -155,19 +159,20 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_stat
 
                 let mut others_agree = false;
                 for state in state_list_with_changes.values() {
-                    if *state.call_list.get(&change.0.clone()).expect("Incorrect call state found") == mem::CallState::PendingRemoval {
+                    if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::PendingRemoval {
                         others_agree = true;
-                        break;
                     }
-                    else if *state.call_list.get(&change.0.clone()).expect("Incorrect call state found") == mem::CallState::Nothing {
+                    else if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::Nothing {
                         others_agree = true;
-                        break;
                     }
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if received_state.last_floor != change.0.floor || others_agree != true {
+                if received_state.last_floor != change.0.floor {
                     new_differences.remove(&change.0);
+                }
+                else if others_agree {
+                    new_differences.insert(change.0, change.1);
                 }
             }
         }
@@ -473,8 +478,6 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
                         }
                     }
-                    
-                    
                 }
                 else if !old_memory.state_list.contains_key(&received_memory.my_id) {
 
@@ -499,21 +502,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                         memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
                     }
 
-                    let others_new_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Up) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Down)).collect();
-                    let others_old_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type == mem::CallType::Hall(elevint::Direction::Up) || x.0.call_type == mem::CallType::Hall(elevint::Direction::Down)).collect();
-
-                    // Merging the calls from the old and new state
-                    let others_merged_calls = merge_calls(others_old_calls.clone(), others_new_calls.clone());
-
-                    let others_modified_calls = difference(others_old_calls, others_merged_calls);
-
-                    let mut others_state_with_only_accepted = old_memory.state_list.get(&received_state.id).expect("Incorrect state found").clone();
-                    for change in others_modified_calls.clone() {
-                        others_state_with_only_accepted.call_list.insert(change.0, change.1);
-                    }
-
                     // Sending the data for the updated elevator to memory
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(others_state_with_only_accepted.clone())).expect("Could not update memory");
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state.clone())).expect("Could not update memory");
 
                     // Setting last received for this elevator to the current time
                     last_received.insert(received_state.id.clone(), SystemTime::now());
@@ -524,6 +514,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     let mut state_list_with_changes: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
                     state_list_with_changes.insert(received_state.id, received_state.clone());
                     state_list_with_changes.remove(&old_memory.my_id);
+
+                    old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
 
                     // Dealing with the new hall calls
                     let differences_in_hall = handle_hall_calls(old_memory.clone(), received_state.clone(), memory_request_tx.clone(), state_list_with_changes.clone());
