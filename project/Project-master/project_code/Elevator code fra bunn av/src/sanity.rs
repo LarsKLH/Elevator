@@ -159,15 +159,28 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
             }
             mem::CallState::PendingRemoval => {
 
-                let mut others_agree = true;
-                for state in state_list_with_changes.values() {
-                    if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::New {
-                        others_agree = false;
+                let mut other_was_first = false;
+                let mut others_set_wrong = false;
+
+                let mut confirmed = 0;
+                let mut pending = 0;
+                let mut total = 0;
+                for state in state_list_with_changes.clone() {
+                    total += 1;
+                    if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::Confirmed {
+                        confirmed += 1;
                     }
+                    else if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::PendingRemoval {
+                        pending += 1;
+                        other_was_first = true;
+                    }
+                }
+                if (pending + confirmed) != total {
+                    others_set_wrong = true;
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if received_last_floor != change.0.floor && !others_agree {
+                if (received_last_floor != change.0.floor && !other_was_first) || others_set_wrong {
                     new_differences.remove(&change.0);
                 }
             }
@@ -236,8 +249,110 @@ fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx
     }
 }
 
+fn testing_function() -> bool {
+    let mut memory = mem::Memory::new(Ipv4Addr::new(0, 0, 0, 0), 8);
+
+    let mut state1 = mem::State::new(Ipv4Addr::new(0, 0, 0, 1), 8);
+
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 2 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 3 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 4 }, mem::CallState::New);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 5 }, mem::CallState::New);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 6 }, mem::CallState::New);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 7 }, mem::CallState::New);
+
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 0 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 1 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 3 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 4 }, mem::CallState::PendingRemoval);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 5 }, mem::CallState::PendingRemoval);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 6 }, mem::CallState::PendingRemoval);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::PendingRemoval);
 
 
+    let mut state2 = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
+
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 2 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 3 }, mem::CallState::PendingRemoval);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 4 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 5 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 6 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 7 }, mem::CallState::PendingRemoval);
+
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 0 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 1 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 3 }, mem::CallState::PendingRemoval);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 4 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 5 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 6 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::PendingRemoval);
+
+
+    memory.state_list.insert(state2.id.clone(), state2.clone());
+    let mut test_calls = cyclic_counter(state1.call_list.clone(), &memory.state_list.clone());
+
+    memory.state_list.insert(state2.id.clone(), state1.clone());
+
+    let differences = difference(memory.state_list.get(&memory.my_id).expect("Sanity: Wrong state in test").call_list.clone(), state2.call_list.clone());
+
+    println!("Sanity: Unfiltered differences: {:?}", differences.clone().iter().sorted());
+
+    let mut differences_inserted = memory.state_list.get(&memory.my_id).expect("Sanity: Wrong state in test").call_list.clone();
+    differences_inserted.extend(differences.clone());
+
+    let test_filter_calls = filter_changes(differences.clone(), 3, memory.state_list.clone());
+
+    println!("Sanity: Filtered calls: {:?}", test_filter_calls.clone().iter().sorted());
+
+    memory.state_list.get_mut(&state2.id).expect("Sanity: Wrong state in test").call_list.extend(test_filter_calls.clone());
+
+    for call in state1.call_list.clone().iter().sorted() {
+        println!("Direction: {:?} Floor: {:?} - Other state: {:?}, Attempted: {:?}, State after {:?}", call.0.call_type, call.0.floor, call.1, differences_inserted.get(call.0).expect("Sanity: Wrong call in test"), memory.state_list.get(&state2.id).expect("Sanity: Wrong state in test").call_list.get(call.0).expect("Sanity: Wrong call in test"));
+    }
+
+    let expected_state = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
+    let mut expected_calls = expected_state.call_list.clone();
+
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 2 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 3 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 4 }, mem::CallState::New);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 5 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 6 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 7 }, mem::CallState::New);
+
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 0 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 1 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 3 }, mem::CallState::PendingRemoval);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 4 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 5 }, mem::CallState::PendingRemoval);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 6 }, mem::CallState::PendingRemoval);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::Nothing);
+
+    let wrong_answers = difference(test_calls, expected_calls);
+
+    println!("Sanity: Wrong calls:");
+    for mistake in wrong_answers.clone() {
+        println!("Sanity: {:?} {:?}", mistake.0, mistake.1);
+    }
+
+
+    if wrong_answers.is_empty() {
+        println!("Sanity: All good!");
+        return true;
+    } else {
+        println!("Sanity: Something went wrong!");
+        return false;
+    }
+}
 
 fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
     let mut cab_calls = HashMap::new();
@@ -254,7 +369,7 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
     cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     let cab_calls_cycled = cyclic_counter(cab_calls.clone(), &cab_calls_for_comparison.clone());
 
     let cab_calls_difference = difference(cab_calls.clone(), cab_calls_cycled.clone());
@@ -290,13 +405,14 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
     cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     let cab_calls_filtered = filter_changes(cab_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, cab_calls_for_comparison.clone());
 
     let cab_calls_difference = difference(cab_calls.clone(), cab_calls_filtered.clone());
 
     let mut hall_calls_for_comparison = old_memory.state_list.clone();
-    hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    hall_calls_for_comparison.remove(&received_memory.my_id);
     let hall_calls_filtered = filter_changes(hall_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, hall_calls_for_comparison.clone());
 
     let hall_calls_difference = difference(hall_calls.clone(), hall_calls_filtered.clone());
@@ -318,7 +434,13 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
     let mut dealt_with = false;
 
-    if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state received").timed_out {
+    if !old_memory.state_list.contains_key(&received_memory.my_id) {
+        println!("Sanity: Received memory from new elevator");
+        memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
+        dealt_with = true;
+    }
+    else if old_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state received").timed_out
+    || received_memory.state_list.get(&old_memory.my_id).expect("Sanity: wrong state received").timed_out {
         println!("Sanity: Received memory from timed out elevator");
         let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
         .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
@@ -348,16 +470,16 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::
         memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
         dealt_with = true;
     }
-    else if !old_memory.state_list.contains_key(&received_memory.my_id) {
-        memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
-        dealt_with = true;
-    }
     else {
         println!("Sanity: Received memory from elevator that isn't timed out");
-        deal_with_calls_for_me(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         let accepted_changes = deal_with_calls_for_other(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
+        received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.extend(accepted_changes.clone());
+        deal_with_calls_for_me(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         if !accepted_changes.is_empty() {
             dealt_with = true;
+        }
+        if !difference(old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()).is_empty() {
+            dealt_with = false;
         }
     }
     
@@ -376,7 +498,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
         cbc::select! {
             recv(rx_get) -> rx => {
                 // Getting old memory
-                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| !x.1.timed_out).collect();
 
                 // Getting new state from rx, extracting both old and new calls for comparison
                 let received_memory = rx.expect("Invalid memory found");

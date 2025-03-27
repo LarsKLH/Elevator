@@ -111,11 +111,36 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
     return false;
 
 }
+// Potential improvement of should_i_stop:
+/*
+fn should_i_stop(floor: u8, my_state: &mem::State) -> bool {
+    let my_direction = match my_state.move_state {
+        elevint::MovementState::Moving(dir) => dir,
+        _ => return false, // Not moving, shouldn't be checking
+    };
+
+    let mut has_confirmed_call = false;
+    let mut has_call_ahead = false;
+
+    for (call, state) in &my_state.call_list {
+        if *state == mem::CallState::Confirmed {
+            if call.floor == floor {
+                return true; // Confirmed call at current floor
+            }
+            if (my_direction == elevint::Direction::Up && call.floor > floor)
+                || (my_direction == elevint::Direction::Down && call.floor < floor)
+            {
+                has_call_ahead = true;
+            }
+        }
+    }
+
+    !has_call_ahead // Stop if no confirmed calls in the current direction
+} */
 
 // Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
     let current_floor = my_state.last_floor;
-
     let cab_call_to_check = mem::Call { call_type: mem::CallType::Cab, floor: current_floor };
 
     let hall_call_to_check = mem::Call { call_type: mem::CallType::Hall(prev_dir), floor: current_floor};
@@ -139,6 +164,44 @@ fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessag
     } 
 }
 
+// Potential improvements of clear_call:
+/*fn clear_call(my_state: mem::State, memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) {
+    let current_floor = my_state.last_floor;
+    let mut calls_to_clear = Vec::new();
+
+    for (call, state) in &my_state.call_list {
+        if call.floor == current_floor && *state == mem::CallState::Confirmed {
+            calls_to_clear.push(call.clone());
+        }
+    }
+
+    if !calls_to_clear.is_empty() {
+        println!("Brain: Clearing {} calls at floor {}", calls_to_clear.len(), current_floor);
+
+        for call in calls_to_clear {
+            memory_request_tx
+                .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+                .expect("Error sending call to memory");
+        }
+    }
+} */
+/* I like this one better (bellow)
+fn clear_call(my_state: &mem::State, memory_request_tx: &Sender<mem::MemoryMessage>, prev_dir: Direction) {
+    let floor = my_state.last_floor;
+
+    let cab_call = mem::Call { call_type: mem::CallType::Cab, floor };
+    let hall_call = mem::Call { call_type: mem::CallType::Hall(prev_dir), floor };
+
+    for &call in &[cab_call, hall_call] {
+        if my_state.call_list.contains_key(&call) {
+            println!("Brain: Clearing call {:?} at floor {}", call, floor);
+            memory_request_tx
+                .send(mem::MemoryMessage::UpdateOwnCall(call, mem::CallState::PendingRemoval))
+                .expect("Error sending call update");
+        }
+    }
+} */
+
 // Check if the elevator should go or not
 fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
     //println!("Brain: Checking if I should go w/ current direction {:?} and movement state {:?}", current_dir, my_state.move_state);
@@ -146,7 +209,8 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
         elevint::MovementState::Obstructed => {return false;}
         _ => {
 
-            let calls: Vec<_> = my_state.call_list.clone().into_iter()
+            let calls: Vec<_> = my_state.call_list.clone()
+            .into_iter()
                 .collect();
             let my_floor = my_state.last_floor;
             let confirmed_calls: Vec<_> = calls.iter()
@@ -187,19 +251,129 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::Memor
     }
 }
 
-// Check if the elevator is the best elevator to respond to a call
-fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_dir: Direction) -> bool {
-    let my_id = memory.my_id;
-    let my_floor = memory.state_list.get(&my_id).unwrap().last_floor;
-    let current_dir = memory.state_list.get(&my_id).unwrap().move_state;
-    let call_floor = call.floor;
-    if (current_dir == elevint::MovementState::Moving(Direction::Up) && call_floor < my_floor)
-        || (current_dir == elevint::MovementState::Moving(Direction::Down) && call_floor > my_floor){
+// Possible improvements of should_i_go:
+/*
+fn should_i_go(current_dir: &mut Direction, memory_request_tx: Sender<mem::MemoryMessage>, my_state: mem::State) -> bool {
+    let my_floor = my_state.last_floor;
+    let calls: Vec<_> = my_state.call_list.iter()
+        .filter(|(_, state)| **state == mem::CallState::Confirmed)
+        .map(|(call, _)| call)
+        .collect();
+
+    if calls.is_empty() {
+        memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed))
+            .expect("Error sending movement state to memory");
         return false;
     }
 
-    return memory.am_i_closest(my_id, call_floor);
+    // Find the closest call in either direction
+    let closest_call = calls.iter().min_by_key(|call| (call.floor as i32 - my_floor as i32).abs());
+
+    match closest_call {
+        Some(call) => {
+            let target_direction = if call.floor > my_floor { Direction::Up } else { Direction::Down };
+
+            if *current_dir != target_direction {
+                println!("Brain: Switching direction to {:?}", target_direction);
+                *current_dir = target_direction;
+            }
+
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(*current_dir)))
+                .expect("Error sending movement state to memory");
+            true
+        }
+        None => false,
+    }
 }
+ */
+/* I like this one better (bellow)
+fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::MemoryMessage>, my_state: &mem::State) -> bool {
+    if matches!(my_state.move_state, elevint::MovementState::Obstructed) {
+        return false;
+    }
+
+    let my_floor = my_state.last_floor;
+    let mut has_calls_ahead = false;
+    let mut has_any_calls = false;
+
+    for (call, state) in &my_state.call_list {
+        if *state == mem::CallState::Confirmed {
+            has_any_calls = true;
+            if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
+                || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
+            {
+                has_calls_ahead = true;
+                break;
+            }
+        }
+    }
+
+    match (has_any_calls, has_calls_ahead) {
+        (false, _) => {
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).unwrap();
+            false
+        }
+        (true, true) => {
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(*current_dir))).unwrap();
+            true
+        }
+        (true, false) => {
+            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).unwrap();
+            *current_dir = match *current_dir {
+                Direction::Up => Direction::Down,
+                Direction::Down => Direction::Up,
+            };
+            true
+        }
+    }
+}
+
+ */
+// This function checks if the current elevator is the best one to respond to a call based on its state and the call's properties.
+fn am_i_best_elevator_to_respond(call: mem::Call, memory: mem::Memory, current_dir: Direction) -> bool {
+    let my_id = memory.my_id;
+    let my_state = memory.state_list.get(&my_id).unwrap();
+    let my_floor = my_state.last_floor;
+    let my_calls = my_state.call_list.len();
+    
+    let call_floor = call.floor;
+    let is_moving_towards = match my_state.move_state {
+        elevint::MovementState::Moving(Direction::Up) => call_floor >= my_floor,
+        elevint::MovementState::Moving(Direction::Down) => call_floor <= my_floor,
+        _ => false,
+    };
+
+    // Compute a simple heuristic score
+    let my_score = (call_floor as i32 - my_floor as i32).abs() as u32 // Distance weight
+        + if is_moving_towards { 0 } else { 10 } // Favor elevators already moving in the right direction
+        + (my_calls as u32 * 2); // Load balancing: Prefer elevators with fewer calls
+
+    // Compare against all other elevators
+    for (elev_id, elev_state) in &memory.state_list {
+        if *elev_id == my_id {
+            continue; // Skip self
+        }
+
+        let other_floor = elev_state.last_floor;
+        let other_calls = elev_state.call_list.len();
+        let other_is_moving_towards = match elev_state.move_state {
+            elevint::MovementState::Moving(Direction::Up) => call_floor >= other_floor,
+            elevint::MovementState::Moving(Direction::Down) => call_floor <= other_floor,
+            _ => false,
+        };
+
+        let other_score = (call_floor as i32 - other_floor as i32).abs() as u32
+            + if other_is_moving_towards { 0 } else { 10 }
+            + (other_calls as u32 * 2);
+
+        if other_score < my_score {
+            return false; // Another elevator is a better choice
+        }
+    }
+
+    true
+}
+
 
 /*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
     // TODO
