@@ -47,7 +47,7 @@ pub fn elevator_logic(
                 let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
                 if going {}  
             }
-            _ => {}
+            //_ => {}
         }
     }
 }
