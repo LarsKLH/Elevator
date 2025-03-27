@@ -98,7 +98,7 @@ impl Memory {
 }
 
 impl State {
-    fn new (id_of_new: Ipv4Addr, n: u8) -> Self {
+    pub fn new (id_of_new: Ipv4Addr, n: u8) -> Self {
         let mut new_me = Self {  id: id_of_new,
                 timed_out: false,
                 move_state: elevint::MovementState::StopDoorClosed,

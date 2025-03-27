@@ -346,8 +346,89 @@ fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx
 }
 
 fn testing_function() -> bool {
+    let mut memory = mem::Memory::new(Ipv4Addr::new(0, 0, 0, 0), 8);
 
-    return true;
+    let mut state1 = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
+
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 2 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 3 }, mem::CallState::Nothing);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 4 }, mem::CallState::New);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 5 }, mem::CallState::New);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 6 }, mem::CallState::New);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 7 }, mem::CallState::New);
+
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 0 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 1 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 3 }, mem::CallState::Confirmed);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 4 }, mem::CallState::PendingRemoval);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 5 }, mem::CallState::PendingRemoval);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 6 }, mem::CallState::PendingRemoval);
+    state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::PendingRemoval);
+
+
+    let mut state2 = mem::State::new(Ipv4Addr::new(0, 0, 0, 1), 8);
+
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 2 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 3 }, mem::CallState::PendingRemoval);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 4 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 5 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 6 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 7 }, mem::CallState::PendingRemoval);
+
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 0 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 1 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 3 }, mem::CallState::PendingRemoval);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 4 }, mem::CallState::Nothing);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 5 }, mem::CallState::New);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 6 }, mem::CallState::Confirmed);
+    state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::PendingRemoval);
+
+
+    memory.state_list.insert(state1.id, state2);
+    let mut test_calls = cyclic_counter(state1.call_list.clone(), &memory.state_list.clone());
+
+    let expected_state = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
+    let mut expected_calls = expected_state.call_list.clone();
+
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 2 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 3 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 4 }, mem::CallState::New);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 5 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 6 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 7 }, mem::CallState::New);
+
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 0 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 1 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 2 }, mem::CallState::Confirmed);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 3 }, mem::CallState::PendingRemoval);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 4 }, mem::CallState::Nothing);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 5 }, mem::CallState::PendingRemoval);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 6 }, mem::CallState::PendingRemoval);
+    expected_calls.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::Nothing);
+
+    let wrong_answers = difference(test_calls, expected_calls);
+
+    println!("Sanity: Wrong calls:");
+    for mistake in wrong_answers.clone() {
+        println!("Sanity: {:?} {:?}", mistake.0, mistake.1);
+    }
+
+
+    if wrong_answers.is_empty() {
+        println!("Sanity: All good!");
+        return true;
+    } else {
+        println!("Sanity: Something went wrong!");
+        return false;
+    }
 }
 
 // Sanity check and state machine function. Only does something when a new state is received from another elevator
