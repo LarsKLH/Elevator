@@ -159,15 +159,28 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
             }
             mem::CallState::PendingRemoval => {
 
-                let mut others_agree = false;
-                for state in state_list_with_changes.values() {
-                    if state.call_list.get(&change.0).expect("Incorrect call state found") != &mem::CallState::New {
-                        others_agree = true;
+                let mut other_was_first = false;
+                let mut others_set_wrong = false;
+
+                let mut confirmed = 0;
+                let mut pending = 0;
+                let mut total = 0;
+                for state in state_list_with_changes.clone() {
+                    total += 1;
+                    if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::Confirmed {
+                        confirmed += 1;
                     }
+                    else if *state.1.call_list.get(&change.0).expect("Incorrect call state found") == mem::CallState::PendingRemoval {
+                        pending += 1;
+                        other_was_first = true;
+                    }
+                }
+                if (pending + confirmed) != total {
+                    others_set_wrong = true;
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if received_last_floor != change.0.floor && !others_agree {
+                if (received_last_floor != change.0.floor && !other_was_first) || others_set_wrong {
                     new_differences.remove(&change.0);
                 }
             }
@@ -300,7 +313,7 @@ fn testing_function() -> bool {
     memory.state_list.get_mut(&state2.id).expect("Sanity: Wrong state in test").call_list.extend(test_filter_calls.clone());
 
     for call in state1.call_list.clone().iter().sorted() {
-        println!("Direction: {:?} Floor: {:?} - State before: {:?}, Attempted: {:?}, State after {:?}", call.0.call_type, call.0.floor, call.1, differences_inserted.get(call.0).expect("Sanity: Wrong call in test"), memory.state_list.get(&state2.id).expect("Sanity: Wrong state in test").call_list.get(call.0).expect("Sanity: Wrong call in test"));
+        println!("Direction: {:?} Floor: {:?} - Other state: {:?}, Attempted: {:?}, State after {:?}", call.0.call_type, call.0.floor, call.1, differences_inserted.get(call.0).expect("Sanity: Wrong call in test"), memory.state_list.get(&state2.id).expect("Sanity: Wrong state in test").call_list.get(call.0).expect("Sanity: Wrong call in test"));
     }
 
     let expected_state = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
@@ -392,13 +405,14 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
     cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     let cab_calls_filtered = filter_changes(cab_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, cab_calls_for_comparison.clone());
 
     let cab_calls_difference = difference(cab_calls.clone(), cab_calls_filtered.clone());
 
     let mut hall_calls_for_comparison = old_memory.state_list.clone();
-    hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    hall_calls_for_comparison.remove(&received_memory.my_id);
     let hall_calls_filtered = filter_changes(hall_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, hall_calls_for_comparison.clone());
 
     let hall_calls_difference = difference(hall_calls.clone(), hall_calls_filtered.clone());
