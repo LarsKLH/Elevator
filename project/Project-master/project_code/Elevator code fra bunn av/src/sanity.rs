@@ -434,7 +434,7 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
     let mut dealt_with = false;
 
-    if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state received").timed_out {
+    if old_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state received").timed_out {
         println!("Sanity: Received memory from timed out elevator");
         let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
         .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
