@@ -13,6 +13,8 @@ use crate::elevator_interface as elevint;
 
 use log;
 
+use itertools::Itertools;
+
 // Basics of our cyclic counter:
 // - It only goes one way, from Nothing to new to confirmed to pendingremoval and then back around
 // - To go from nothing to new or from confirmed to pendingremoval only one elevator needs to be in the previous state, ie. we do not need the others to agree
@@ -476,7 +478,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
                         }
                     }
-                    }
+                }
                 else if !old_memory.state_list.contains_key(&received_memory.my_id) {
 
                     // Sending the data for the new elevator to memory
@@ -553,7 +555,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                         last_received.insert(received_state.id.clone(), SystemTime::now());
                     }
 
-                    println!("Sanity: Received state with only accepted changes: {:?}", received_state_with_only_accepted);
+                    println!("Sanity: Received state with only accepted changes: {:?}", received_state_with_only_accepted.call_list.clone().iter().sorted());
 
                     // Sending the new state to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_with_only_accepted)).expect("Could not update memory");
