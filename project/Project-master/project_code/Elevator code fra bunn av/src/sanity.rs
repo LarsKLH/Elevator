@@ -454,7 +454,9 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 //println!("Sanity: Received state: {:?}", received_state);
 
                 if received_memory.my_id == old_memory.my_id {
-                    // Do same as default if we get our own state back
+                    // Do nothing
+                    
+                    /*same as default if we get our own state back
 
                     // Getting old memory and extracting my own call list
                     let my_call_list = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list;
@@ -474,7 +476,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                         for change in changed_calls {
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Could not update memory");
                         }
-                    }
+                    }*/
                 }
                 else if !old_memory.state_list.contains_key(&received_memory.my_id) {
 
@@ -568,15 +570,28 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
                 // Getting old memory and extracting my own call list
                 let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
-                let my_call_list = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list;
+                let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list.into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
 
                 old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
 
                 // Running the state machine on my own calls
-                let new_call_list = cyclic_counter(my_call_list.clone(), &old_memory.state_list);
+                let new_hall_calls = cyclic_counter(old_hall_calls.clone(), &old_memory.state_list);
 
                 // Extracting the calls that were actually changed to minimize memory changing and avoid errors
-                let changed_calls = difference(my_call_list, new_call_list);
+                let changed_hall_calls = difference(old_hall_calls, new_hall_calls);
+
+
+                let old_cab_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list.into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+
+                let mut state_for_comparison: HashMap<Ipv4Addr, mem::State> = HashMap::new();
+                state_for_comparison.insert(0.into(), old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone());
+
+                let updated_cab_calls = cyclic_counter(old_cab_calls.clone(), &state_for_comparison);
+
+                let updated_cab_calls_only_changes = difference(old_cab_calls, updated_cab_calls);
+
+                let mut changed_calls = changed_hall_calls.clone();
+                changed_calls.extend(updated_cab_calls_only_changes);
 
                 // No need to print that there is nothing to change 
                 if !changed_calls.is_empty() {
