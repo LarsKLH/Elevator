@@ -483,6 +483,8 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::
 
     if !old_memory.state_list.contains_key(&received_memory.my_id) {
         if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") != &mem::State::new(received_memory.my_id, (received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.len()/3) as u8) {
+            received_memory.state_list.insert(old_memory.my_id, old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+            old_memory.state_list.insert(received_memory.my_id, received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
             merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
 
         }
