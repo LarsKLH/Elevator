@@ -142,7 +142,7 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::Memo
     let mut has_any_calls = false;
 
     // Collect confirmed calls where this elevator is the best responder
-    let mut best_calls: Vec<mem::Call> = Vec::new();
+    let mut best_calls: Vec<&mem::Call> = Vec::new();
     for (call, state) in &my_state.call_list {
         if *state == mem::CallState::Confirmed {
             if call.call_type != mem::CallType::Cab { // Only check hall calls for load balancing
