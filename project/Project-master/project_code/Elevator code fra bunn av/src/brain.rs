@@ -114,8 +114,6 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
 
 // Clear the call from the memory
 fn clear_call(my_state: mem::State,  memory_request_tx: Sender<mem::MemoryMessage>, prev_dir: Direction) -> () {
-    use std::collections::HashMap;
-
     let current_floor = my_state.last_floor;
 
     let cab_call_to_check = mem::Call { call_type: mem::CallType::Cab, floor: current_floor };
