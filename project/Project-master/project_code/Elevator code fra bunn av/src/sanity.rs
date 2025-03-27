@@ -368,8 +368,10 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
 
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
-    cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    if received_memory.my_id != old_memory.my_id {
+        cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     //cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    }
     println!("Sanity: Cab calls for comparison: {:?}", cab_calls_for_comparison.clone());
     let cab_calls_cycled = cyclic_counter(cab_calls.clone(), &cab_calls_for_comparison.clone());
 
