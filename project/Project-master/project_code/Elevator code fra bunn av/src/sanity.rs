@@ -453,7 +453,7 @@ fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, acc
 }
 
 fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
-    new_calls = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone();
+    let new_calls = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone();
 
     println!("Sanity: New calls: {:?}", new_calls.clone());
 
