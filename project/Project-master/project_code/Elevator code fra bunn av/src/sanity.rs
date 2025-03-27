@@ -359,6 +359,8 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
 
     for change in calls_difference_assembled {
         memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Sanity: Could not send call update");
+        println!("Sanity: Sent call update for {:?}", change.0);
+        println!("Sanity: New call state: {:?}", change.1);
     }
 }
 
