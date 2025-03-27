@@ -144,23 +144,35 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::Memo
     // Collect confirmed calls where this elevator is the best responder
     let mut best_calls: Vec<mem::Call> = Vec::new();
     for (call, state) in &my_state.call_list {
-        match *state {
-            mem::CallState::Confirmed => {
-                has_any_calls = true;
-                if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
-                    || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
-                        {
-                            has_calls_ahead = true;
-                        }
-            },
-            mem::CallState::PendingRemoval => {
-                if call.floor == my_floor && (call.call_type == CallType::Cab || call.call_type == CallType::Hall(*current_dir)) {
-                    //there is a call that has not been removed yet, cannot leave untill that is the case
-                    return  false;
+        if *state == mem::CallState::Confirmed {
+            if call.call_type != mem::CallType::Cab { // Only check hall calls for load balancing
+                if !am_i_best_elevator_to_respond(*call, memory.clone(), *current_dir) {
+                    continue; // Skip if another elevator is better suited
                 }
-            },
-            _ => {}
-        }  
+            }
+            best_calls.push(call);
+        }
+    }
+
+    // Check if any calls remain after filtering
+    if best_calls.is_empty() {
+        memory_request_tx
+            .send(mem::MemoryMessage::UpdateOwnMovementState(
+                elevint::MovementState::StopDoorClosed,
+            ))
+            .unwrap();
+        return false;
+    }
+
+    // Determine direction based on remaining calls
+    for call in best_calls {
+        has_any_calls = true;
+        if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
+            || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
+        {
+            has_calls_ahead = true;
+            break;
+        }
     }
 
     match (has_any_calls, has_calls_ahead) {
