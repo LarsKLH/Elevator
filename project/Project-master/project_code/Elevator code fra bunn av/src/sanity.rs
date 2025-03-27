@@ -251,7 +251,6 @@ fn handle_cab_calls_for_other(old_memory: mem::Memory, received_memory: mem::Mem
 
     // Getting a state list with only cab calls from the other elevator
     let mut others_states_for_comparison: HashMap<Ipv4Addr, mem::State> = HashMap::new();
-    others_states_for_comparison.insert(received_memory.my_id, received_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone());
     others_states_for_comparison.insert(0.into(), old_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").clone());
 
     // Check whether the changed cab calls are valid or not
@@ -277,17 +276,15 @@ fn handle_cab_calls_for_me(old_memory: mem::Memory, received_memory: mem::Memory
     .filter(|x| x.0.call_type == mem::CallType::Cab)
     .collect();
 
-    // Getting only the cab calls that have changed to minimize overwriting of memory
-    let my_differences_cab = difference(my_old_cab_calls.clone(), my_new_cab_calls.clone());
+    let mut received_state_for_comparison: HashMap<Ipv4Addr, mem::State> = HashMap::new();
+    received_state_for_comparison.insert(0.into(), received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone());
 
-    let mut my_states_for_comparison: HashMap<Ipv4Addr, mem::State> = HashMap::new();
-    my_states_for_comparison.insert(old_memory.my_id, old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone());
-    my_states_for_comparison.insert(0.into(), received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone());
+    let my_modified_cab_calls = cyclic_counter(my_old_cab_calls.clone(), &received_state_for_comparison);
 
-    let my_differences_cab_changed = cyclic_counter(my_differences_cab, &my_states_for_comparison);
+    let my_modified_cab_calls_only_changes = difference(my_old_cab_calls.clone(), my_modified_cab_calls);
 
     // Sending the changes to memory one after the other
-    for change in my_differences_cab_changed {
+    for change in my_modified_cab_calls_only_changes {
         memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Error sending memory message");
     }
 }
