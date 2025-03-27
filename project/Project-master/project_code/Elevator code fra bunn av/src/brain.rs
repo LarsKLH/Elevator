@@ -76,7 +76,7 @@ fn should_i_stop(
                             return true;
                         }
                     }
-                    _ => {}
+                    //_ => {}
                 }
             }
             if (my_direction == elevint::Direction::Up && call.floor > floor)
