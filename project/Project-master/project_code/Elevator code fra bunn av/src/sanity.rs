@@ -221,6 +221,8 @@ fn handle_hall_calls(old_memory: mem::Memory, received_state: mem::State, memory
      // Extracting the calls that were actually changed to minimize memory changing and avoid errors
      let changed_calls = difference(my_old_calls, my_diff_changed);
 
+    println!("Hall changes: {:?}", changed_calls);
+
      // Sending the changes to memory one after the other
      for change in changed_calls {
          memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Error sending memory request");
