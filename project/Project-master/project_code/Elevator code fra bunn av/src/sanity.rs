@@ -456,6 +456,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 //println!("Sanity: Received state: {:?}", received_state);
 
                 if received_memory.my_id == old_memory.my_id {
+                    println!("Sanity: Got my own state back");
                     // Do same as default if we get our own state back
 
                     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list.into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
@@ -480,6 +481,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     }
                 }
                 else if !old_memory.state_list.contains_key(&received_memory.my_id) {
+                    println!("Sanity: New elevator found");
 
                     // Sending the data for the new elevator to memory
                     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state.clone())).expect("Could not update memory");
@@ -488,6 +490,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     last_received.insert(received_state.id.clone(), SystemTime::now());
                 }
                 else if old_memory.state_list.get(&received_memory.my_id).expect("Incorrect state found").timed_out {
+                    println!("Sanity: Message from timed out elevator");
                     
                     let my_new_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
                     let my_old_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").call_list.clone().into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
@@ -511,7 +514,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                     last_received.insert(received_state.id.clone(), SystemTime::now());
                 }
                 else {
-
+                    println!("Sanity: Message from known elevator");
                     // Getting a new state list with the changes added
                     let mut state_list_with_changes: HashMap<Ipv4Addr, mem::State> = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
                     state_list_with_changes.insert(received_state.id, received_state.clone());
@@ -567,6 +570,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
             // If we don't get a new state within 100 ms
             default(Duration::from_millis(1000)) => {
+                println!("Sanity: Default case");
                 timeout_check(last_received.clone(), memory_request_tx.clone());
 
                 // Getting old memory and extracting my own call list
