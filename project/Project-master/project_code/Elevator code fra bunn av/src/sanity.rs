@@ -478,7 +478,7 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
         memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
 }
 
-fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
+fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
     let mut dealt_with = false;
 
     if !old_memory.state_list.contains_key(&received_memory.my_id) {
