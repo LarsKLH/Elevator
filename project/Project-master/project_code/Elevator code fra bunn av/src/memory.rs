@@ -28,7 +28,7 @@ pub struct Memory {
 }
 
 
-#[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct State {
     pub id: Ipv4Addr,
     pub timed_out: bool,
@@ -98,7 +98,7 @@ impl Memory {
 }
 
 impl State {
-    fn new (id_of_new: Ipv4Addr, n: u8) -> Self {
+    pub fn new (id_of_new: Ipv4Addr, n: u8) -> Self {
         let mut new_me = Self {  id: id_of_new,
                 timed_out: false,
                 move_state: elevint::MovementState::StopDoorClosed,
@@ -141,6 +141,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                     MemoryMessage::UpdateOwnCall(call, call_state) => {
                         // This works becouase the call is a cyclic counter, so it can only advance around
 
+                        println!("Updating call: {:?} {:?}", call, call_state);
                         // Update a single call in memory
                         memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test, sanity check?
                     }
@@ -167,6 +168,9 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
     loop {
         let memory = Memory::get(memory_request_channel.clone(), memory_recieve_channel.clone());
+        println!("-----------------------------------------------------------------------------------------------");
+        println!("my_id: {}", memory.my_id);
+
         for state in memory.state_list.values() {
             println!("Elevator: {}", state.id);
             println!("Timed out: {}", state.timed_out);
@@ -175,7 +179,7 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
             for (call, call_state) in state.call_list.iter().sorted() {
                 println!("Call: {:?} {:?} {:?}", call.call_type, call.floor, call_state);
             }
+            thread::sleep(time::Duration::from_millis(500));
         }
-       thread::sleep(time::Duration::from_millis(1000));
     }
 }

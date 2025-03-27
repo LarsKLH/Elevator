@@ -5,7 +5,7 @@
 // note should probebly be a submodule of memory
 
 
-use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
+use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4, SocketAddr};
 
 use std::thread::sleep;
 use std::time::Duration;
@@ -76,8 +76,24 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
         println!("NetWork: Recieved message of {} bytes from {}", number_of_bytes_recieved, address_of_sender);
 
-        let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
-    
+        let mut recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
+        
+        let address_of_sender_ipv4 = match address_of_sender {
+            SocketAddr::V4(v4) => *v4.ip(),
+            _ => panic!("NetWork: Recieved a non ipv4 address")
+        };
+
+        /*
+        recieved_memory.state_list.get_mut(&recieved_memory.my_id).expect("Network: Could not get state").id = address_of_sender_ipv4;
+        let state_get = recieved_memory.state_list.remove(&recieved_memory.my_id).expect("Network: Could not remove state");
+        recieved_memory.state_list.insert(address_of_sender_ipv4, state_get);
+
+        recieved_memory.my_id = address_of_sender_ipv4;
+        */
+
+        //println!("Network: Received memory from {}", recieved_memory.my_id);
+        //println!("Network: Received state list: {:?}", recieved_memory.state_list);
+
         rx_sender_to_memory.send(recieved_memory).expect("NetWork: Failed to send message to memory");
     }
 
