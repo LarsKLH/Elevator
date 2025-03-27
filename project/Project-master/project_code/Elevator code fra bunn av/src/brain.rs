@@ -25,27 +25,22 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
 
             elevint::MovementState::Moving(dirn) => {
                 prev_direction = dirn;
-                //println!("Brain: Moving in direction {:?} and updating previous direction to {:?}", dirn, prev_direction);
-                // If the elevator is moving, we should check if we should stop using the floor sensor
                 cbc::select! { 
                     recv(floor_sensor_rx) -> a => {
-
-                        //println!("New floor received, checking whether or not to stop");
                         if should_i_stop(a.expect("Error reading from floor sensor"), my_state.clone()) {
-                            println!("Brain: Stopping and opening door");
+                            //println!("Brain: Stopping and opening door");
                             my_state.last_floor = a.expect("Error reading from floor sensor");
                             my_state.move_state = elevint::MovementState::StopAndOpen;
                             brain_stop_direct_link.send(my_state).expect("Error sending stop and open to brain");
-                            // Send StopAndOpen to memory to stop the elevator and open the door
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory");
-                            println!("Brain: Stopped elevator with door open");
+                            //println!("Brain: Stopped elevator with door open");
                             
                         }
                         else {
-                            println!("Brain: Continuing in same direction");
+                            //println!("Brain: Continuing in same direction");
                             // If we should continue, send the current movement state to memory
                             // Jens : is this neccescary, if we want to continue in the same direction do we send the same back aggain?
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
+                            //memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::Moving(dirn))).expect("Error sending movement state to memory");
                         }
                     }
                     default(Duration::from_millis(1000)) => {
@@ -55,7 +50,7 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
             elevint::MovementState::StopDoorClosed => {
                 let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
-                    println!("Brain: Moving again after stoped with closed door");
+                    //println!("Brain: Moving again after stoped with closed door");
                 }
             }
             elevint::MovementState::StopAndOpen => {
@@ -63,17 +58,15 @@ pub fn elevator_logic(memory_request_tx: Sender<mem::MemoryMessage>, memory_reci
                 clear_call(my_state.clone(),  memory_request_tx.clone(), prev_direction);    
                 let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
-                    println!("Brain: Moving again after stoped with open door");
+                    //println!("Brain: Moving again after stoped with open door");
                 }
             }
             elevint::MovementState::Obstructed => {
-                println!("Brain: Elevator is obstructed");
+                //println!("Brain: Elevator is obstructed");
                 let going = should_i_go(&mut prev_direction, memory_request_tx.clone(),my_state.clone());
                 if going {
-                    println!("Brain: Moving again after obstruction"); // dont allow for ANY movement until the obstruction is removed
+                    //println!("Brain: Moving again after obstruction");
                 }  
-                 
-                
             }
             _ => {}
         }
@@ -88,9 +81,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
 
     let my_direction: elevint::Direction = match my_state.move_state {
         elevint::MovementState::Moving(dirn) => dirn,
-        _ => //elevint::Direction::Up
-            // This should never happen
-            panic!("Error: Elevator is not moving, should not be checking if it should stop"),
+        _ => panic!("Error: Elevator is not moving, should not be checking if it should stop"),
     };
 
     // Check if my current floor is confirmed, if so we should stop -> return true
@@ -98,7 +89,7 @@ fn should_i_stop(floor_to_consider_stopping_at: u8, my_state: mem::State) -> boo
         .any(|(call, state)| *state == mem::CallState::Confirmed && call.floor == my_floor);
     
     if my_call_is_confirmed {
-        println!("Brain: There is a confirmed order on this floor, currently at floor: {} , stopping", my_floor);
+        //println!("Brain: There is a confirmed order on this floor, currently at floor: {} , stopping", my_floor);
         return true;
     }
 
