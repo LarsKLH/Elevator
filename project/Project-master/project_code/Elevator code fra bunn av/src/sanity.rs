@@ -438,6 +438,12 @@ fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, acc
     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
 
+    let changes_to_do = difference(old_hall_calls.clone(), received_hall_calls.clone());
+    let changes_done = difference(old_hall_calls.clone(), accepted_changes.clone());
+
+    if changes_to_do == changes_done {
+        did_i_deal_with_it = true;
+    }
 
     return did_i_deal_with_it;
 }
