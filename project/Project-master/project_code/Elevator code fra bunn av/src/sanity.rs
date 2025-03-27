@@ -478,8 +478,9 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::
         if !accepted_changes.is_empty() {
             dealt_with = true;
         }
-        if !difference(old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()).is_empty() {
-            dealt_with = false;
+        else if difference(old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()).is_empty() {
+            println!("Sanity: No changes to deal with");
+            dealt_with = true;
         }
     }
     
