@@ -144,15 +144,23 @@ fn should_i_go(current_dir: &mut Direction, memory_request_tx: &Sender<mem::Memo
     // Collect confirmed calls where this elevator is the best responder
     let mut best_calls = Vec::new();
     for (call, state) in &my_state.call_list {
-        if *state == mem::CallState::Confirmed {
-            has_any_calls = true;
-            if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
-                || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
-            {
-                has_calls_ahead = true;
-                break;
-            }
-        }
+        match *state {
+            mem::CallState::Confirmed => {
+                has_any_calls = true;
+                if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
+                    || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
+                        {
+                            has_calls_ahead = true;
+                        }
+            },
+            mem::CallState::PendingRemoval => {
+                if call.floor == my_floor && (call.call_type == CallType::Cab || call.call_type == CallType::Hall(*current_dir)) {
+                    //there is a call that has not been removed yet, cannot leave untill that is the case
+                    return  false;
+                }
+            },
+            _ => {}
+        }  
     }
 
     match (has_any_calls, has_calls_ahead) {
