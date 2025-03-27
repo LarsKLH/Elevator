@@ -109,7 +109,7 @@ fn difference(old_calls: HashMap<mem::Call, mem::CallState>, new_calls: HashMap<
 
 // Checks whether the changes follow the rules for the cyclic counter
 fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last_floor: u8, state_list_with_changes: HashMap<Ipv4Addr, mem::State>) -> HashMap<mem::Call, mem::CallState> {
-    let mut new_differences = differences.clone();
+    let mut new_differences = HashMap::new();
     for change in differences {
         match change.1 {
             mem::CallState::Nothing => {
@@ -131,12 +131,13 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
                         new += 1;
                     }
                 }
-                if (pending + none + new) != total {
-                    new_differences.remove(&change.0);
+                if (pending + none + new) == total {
+                    new_differences.insert(change.0, change.1);
                 }
             }
             mem::CallState::New => {
-                // Do nothing, new button presses are always legit
+                // Always add, new button presses are always legit
+                new_differences.insert(change.0, change.1);
             }
             mem::CallState::Confirmed => {
                 // If the others don't agree, then we cannot update the order to confirmed
@@ -153,14 +154,14 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
                         confirmed += 1;
                     }
                 }
-                if (new + confirmed) != total {
-                    new_differences.remove(&change.0);
+                if (new + confirmed) == total {
+                    new_differences.insert(change.0, change.1);
                 }
             }
             mem::CallState::PendingRemoval => {
 
                 let mut other_was_first = false;
-                let mut others_set_wrong = false;
+                let mut others_set_correct = false;
 
                 let mut confirmed = 0;
                 let mut pending = 0;
@@ -175,13 +176,13 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
                         other_was_first = true;
                     }
                 }
-                if (pending + confirmed) != total {
-                    others_set_wrong = true;
+                if (pending + confirmed) == total {
+                    others_set_correct = true;
                 }
 
                 // If the others don't agree or we aren't on the correct floor, we cannot accept the changes
-                if (received_last_floor != change.0.floor && !other_was_first) || others_set_wrong {
-                    new_differences.remove(&change.0);
+                if (received_last_floor == change.0.floor || other_was_first) && others_set_correct {
+                    new_differences.insert(change.0, change.1);
                 }
             }
         }
@@ -431,9 +432,8 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 
     let mut hall_calls_for_comparison = old_memory.state_list.clone();
     //hall_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    //hall_calls_for_comparison.remove(&received_memory.my_id);
+    hall_calls_for_comparison.remove(&received_memory.my_id);
     let hall_calls_filtered = filter_changes(hall_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, hall_calls_for_comparison.clone());
-    println!("Sanity: Hall calls filtered: {:?}", hall_calls_filtered.clone());
 
     let hall_calls_difference = difference(hall_calls.clone(), hall_calls_filtered.clone());
 
