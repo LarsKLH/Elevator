@@ -399,7 +399,7 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_state_to_commit)).expect("Sanity: Could not send state update");
 }
 
-fn deal_with_received_orders(received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
+fn deal_with_received_orders(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
     let mut dealt_with = false;
 
     if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state received").timed_out {
@@ -416,7 +416,7 @@ fn deal_with_received_orders(received_memory: mem::Memory, old_memory: mem::Memo
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
         let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
-    
+
         let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
         let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
 
@@ -426,6 +426,8 @@ fn deal_with_received_orders(received_memory: mem::Memory, old_memory: mem::Memo
         for change in merged_calls_difference {
             memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Sanity: Could not send call update");
         }
+
+        received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").timed_out = false;
 
         memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
         dealt_with = true;
