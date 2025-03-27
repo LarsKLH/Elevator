@@ -141,6 +141,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                     MemoryMessage::UpdateOwnCall(call, call_state) => {
                         // This works becouase the call is a cyclic counter, so it can only advance around
 
+                        println!("Updating call: {:?} {:?}", call, call_state);
                         // Update a single call in memory
                         memory.state_list.get_mut(&memory.my_id).unwrap().call_list.insert(call, call_state); // todo add aceptence test, sanity check?
                     }
