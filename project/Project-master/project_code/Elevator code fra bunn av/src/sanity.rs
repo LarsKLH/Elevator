@@ -576,8 +576,10 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 timeout_check(last_received.clone(), memory_request_tx.clone());
 
                 // Getting old memory and extracting my own call list
-                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
                 let my_call_list = old_memory.state_list.get(&old_memory.my_id).expect("Incorrect state found").clone().call_list;
+
+                old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| x.1.timed_out == false).collect();
 
                 // Running the state machine on my own calls
                 let new_call_list = cyclic_counter(my_call_list.clone(), &old_memory.state_list);
