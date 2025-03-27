@@ -2,7 +2,7 @@ use std::time::Duration;
 use std::thread;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
-use crate::memory::{self as mem, CallType};
+use crate::memory::{self as mem, Call, CallState, CallType};
 use crate::elevator_interface::{self as elevint, Direction};
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
@@ -115,9 +115,18 @@ fn should_i_go(
         return false;
     }
 
+    
     let my_floor = my_state.last_floor;
     let mut has_calls_ahead = false;
     let mut has_any_calls = false;
+    
+    if my_state.call_list.get(&Call { call_type: CallType::Cab, floor: my_state.last_floor}) == Some(&CallState::PendingRemoval)
+        || my_state.call_list.get(&Call { call_type: CallType::Hall(*current_dir), floor: my_state.last_floor}) == Some(&CallState::PendingRemoval) {
+            // There is a call that still needs top be removed so we cant move further untill it is
+            return false;
+        }
+
+
 
     // Collect confirmed calls where this elevator is the best responder
     let mut best_calls: Vec<&mem::Call> = Vec::new();
