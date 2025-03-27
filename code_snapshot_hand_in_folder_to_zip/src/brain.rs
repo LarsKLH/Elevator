@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::net::Ipv4Addr;
 use std::time::Duration;
 use std::thread;
 
@@ -9,8 +7,6 @@ use crossbeam_channel as cbc;
 
 use crate::memory as mem;
 use crate::elevator_interface::{self as elevint, Direction};
-
-use driver_rust::elevio::{self, elev::{self, Elevator}};
 
 // The symbol # is used where the code is not yet implemented and needs to be done later, or i have questions about the code
 
@@ -107,7 +103,7 @@ fn should_i_stop(new_floor: u8, my_state: &mem::State) -> bool {
     
     // Check if there are no confirmed floors in the direction the elevator is moving -> stop
     let no_confirmed_calls_in_direction = calls.iter()
-        .filter(|(call, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
+        .filter(|(___, state)| *state == mem::CallState::Confirmed) // Keep only confirmed calls
         .any(|(call, _)| match my_direction {                   // #should maybe use .any() instead of .all() here
             elevint::Direction::Up => call.floor <= my_floor,
             elevint::Direction::Down => call.floor >= my_floor,
