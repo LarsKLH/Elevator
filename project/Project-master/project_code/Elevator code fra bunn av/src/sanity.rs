@@ -161,7 +161,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
 
                 let mut others_agree = true;
                 for state in state_list_with_changes.values() {
-                    if state.call_list.get(&change.0.clone()).expect("Incorrect call state found").clone() == mem::CallState::New {
+                    if state.call_list.get(&change.0).expect("Incorrect call state found") == &mem::CallState::New {
                         others_agree = false;
                     }
                 }
@@ -239,7 +239,7 @@ fn timeout_check(last_received: HashMap<Ipv4Addr, SystemTime>, memory_request_tx
 fn testing_function() -> bool {
     let mut memory = mem::Memory::new(Ipv4Addr::new(0, 0, 0, 0), 8);
 
-    let mut state1 = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
+    let mut state1 = mem::State::new(Ipv4Addr::new(0, 0, 0, 1), 8);
 
     state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
     state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::Nothing);
@@ -260,7 +260,7 @@ fn testing_function() -> bool {
     state1.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::PendingRemoval);
 
 
-    let mut state2 = mem::State::new(Ipv4Addr::new(0, 0, 0, 1), 8);
+    let mut state2 = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
 
     state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 0 }, mem::CallState::Nothing);
     state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Up), floor: 1 }, mem::CallState::New);
@@ -281,8 +281,27 @@ fn testing_function() -> bool {
     state2.call_list.insert(Call { call_type: mem::CallType::Hall(elevint::Direction::Down), floor: 7 }, mem::CallState::PendingRemoval);
 
 
-    memory.state_list.insert(state1.id, state2);
+    memory.state_list.insert(state2.id.clone(), state2.clone());
     let mut test_calls = cyclic_counter(state1.call_list.clone(), &memory.state_list.clone());
+
+    memory.state_list.insert(state2.id.clone(), state1.clone());
+
+    let differences = difference(memory.state_list.get(&memory.my_id).expect("Sanity: Wrong state in test").call_list.clone(), state2.call_list.clone());
+
+    println!("Sanity: Unfiltered differences: {:?}", differences.clone().iter().sorted());
+
+    let mut differences_inserted = memory.state_list.get(&memory.my_id).expect("Sanity: Wrong state in test").call_list.clone();
+    differences_inserted.extend(differences.clone());
+
+    let test_filter_calls = filter_changes(differences.clone(), 7, memory.state_list.clone());
+
+    println!("Sanity: Filtered calls: {:?}", test_filter_calls.clone().iter().sorted());
+
+    memory.state_list.get_mut(&state2.id).expect("Sanity: Wrong state in test").call_list.extend(test_filter_calls.clone());
+
+    for call in state1.call_list.clone().iter().sorted() {
+        println!("Direction: {:?} Floor: {:?} - State before: {:?}, Attempted: {:?}, State after {:?}", call.0.call_type, call.0.floor, call.1, differences_inserted.get(call.0).expect("Sanity: Wrong call in test"), memory.state_list.get(&state2.id).expect("Sanity: Wrong state in test").call_list.get(call.0).expect("Sanity: Wrong call in test"));
+    }
 
     let expected_state = mem::State::new(Ipv4Addr::new(0, 0, 0, 0), 8);
     let mut expected_calls = expected_state.call_list.clone();
