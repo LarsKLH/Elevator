@@ -22,6 +22,8 @@ use std::env;
 use local_ip_address::local_ip;
 
 
+
+
 // TODO: change all intences of unwrap to expect with sensible error messages
 
 
@@ -33,8 +35,10 @@ fn main() -> std::io::Result<()> {
 
     let my_local_ip = match local_ip().unwrap() {
         IpAddr::V4(v4) => v4,
-        _ => panic!("NetWork: Recieved a non ipv4 address")
+        _ => panic!("Main: Recieved a non ipv4 local address")
     };
+
+    println!("Main: Found local adress {:?}", my_local_ip, );
     
 
     //print!("arguments are: arg 1 = {}, arg 2 = {}, arg 3 = {}", args[1], args[2], args[3]);
