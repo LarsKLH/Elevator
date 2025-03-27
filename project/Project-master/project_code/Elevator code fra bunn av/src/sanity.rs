@@ -159,10 +159,10 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
             }
             mem::CallState::PendingRemoval => {
 
-                let mut others_agree = true;
+                let mut others_agree = false;
                 for state in state_list_with_changes.values() {
-                    if state.call_list.get(&change.0).expect("Incorrect call state found") == &mem::CallState::New {
-                        others_agree = false;
+                    if state.call_list.get(&change.0).expect("Incorrect call state found") != &mem::CallState::New {
+                        others_agree = true;
                     }
                 }
 
@@ -356,7 +356,7 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
     // Getting the old and received interpretations of our cab calls
     let mut cab_calls_for_comparison = HashMap::new();
     cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
-    cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
+    //cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
     let cab_calls_cycled = cyclic_counter(cab_calls.clone(), &cab_calls_for_comparison.clone());
 
     let cab_calls_difference = difference(cab_calls.clone(), cab_calls_cycled.clone());
