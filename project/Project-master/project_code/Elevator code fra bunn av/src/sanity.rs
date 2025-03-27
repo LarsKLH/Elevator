@@ -454,33 +454,34 @@ fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, acc
 
 fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> () {
     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
-        .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
-        let new_hall_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
-        .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
+    .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
+    let new_hall_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
 
-        let merged_hall_calls = merge_calls(old_hall_calls.clone(), new_hall_calls.clone());
-        let merged_hall_difference = difference(old_hall_calls.clone(), merged_hall_calls.clone());
+    let merged_hall_calls = merge_calls(old_hall_calls.clone(), new_hall_calls.clone());
+    let merged_hall_difference = difference(old_hall_calls.clone(), merged_hall_calls.clone());
 
-        let old_cab_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
-        .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
-        let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
-        .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+    let old_cab_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+    let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+    println!("Sanity: New cab calls: {:?}", new_cab_calls.clone());
 
-        let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
-        println!("Sanity: Merged cab calls: {:?}", merged_cab_calls.clone());
-        let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
+    let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
+    println!("Sanity: Merged cab calls: {:?}", merged_cab_calls.clone());
+    let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
 
-        let mut merged_calls_difference = merged_hall_difference.clone();
-        merged_calls_difference.extend(merged_cab_difference.clone());
+    let mut merged_calls_difference = merged_hall_difference.clone();
+    merged_calls_difference.extend(merged_cab_difference.clone());
 
-        for change in merged_calls_difference {
-            memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Sanity: Could not send call update");
-        }
-        received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.extend(merged_hall_difference.clone());
+    for change in merged_calls_difference {
+        memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Sanity: Could not send call update");
+    }
+    received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.extend(merged_hall_difference.clone());
 
-        received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").timed_out = false;
+    received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").timed_out = false;
 
-        memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
+    memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
 }
 
 fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: mem::Memory, memory_request_tx: Sender<mem::MemoryMessage>) -> bool {
