@@ -257,11 +257,3 @@ fn am_i_best_elevator_to_respond(
     }
     true
 }
-
-/*fn restart(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, motor_controller_send: Sender<motcon::MotorMessage>) -> () {
-    // TODO
-    println!("Restarting elevator");
-    memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
-    let memory = memory_recieve_rx.recv().unwrap();
-    let my_state = memory.state_list.get(&memory.my_id).unwrap();
-}*/
