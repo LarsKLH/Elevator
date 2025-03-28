@@ -582,16 +582,24 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
                 let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
 
                 // Getting new state from rx, extracting both old and new calls for comparison
-                let received_memory = rx.expect("Invalid memory found");
+                match rx {
+                    Ok(rx) => {
+                        let received_memory = rx;
+                        let dealt_with = deal_with_received_orders(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
 
-                let dealt_with = deal_with_received_orders(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
+                        if dealt_with {
+                            last_received.insert(received_memory.my_id, SystemTime::now());
+                        }
+                        else {
+                            println!("Sanity: Received memory was not dealt with");
+                        }
+                    }
+                    Err(e) => {
+                        println!("Sanity: Error receiving memory: {:?}", e);
+                    }
+                }
 
-                if dealt_with {
-                    last_received.insert(received_memory.my_id, SystemTime::now());
-                }
-                else {
-                    println!("Sanity: Received memory was not dealt with");
-                }
+                
                 timeout_check(last_received.clone(), memory_request_tx.clone());
                 
             }
