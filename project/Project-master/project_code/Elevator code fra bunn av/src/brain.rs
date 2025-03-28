@@ -6,7 +6,7 @@ use crate::memory::{self as mem, Call, CallState, CallType};
 use crate::elevator_interface::{self as elevint, Direction};
 
 
-const PRINT_EVERY_N_COULD_NOT_SEND: u16 = 50;
+const PRINT_EVERY_N_PENDING_REMOVAL: u16 = 500;
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
@@ -16,7 +16,7 @@ pub fn elevator_logic(
     let stalled_timeout = Duration::from_secs_f32(3.5);
     let mut motor_stalled = false;
 
-    let mut counter_for_printing_pending_removal = PRINT_EVERY_N_COULD_NOT_SEND;
+    let mut counter_for_printing_pending_removal = PRINT_EVERY_N_PENDING_REMOVAL;
 
     println!("Brain: Done with Initialization");
 
@@ -185,17 +185,17 @@ fn should_i_go(
 
             // if we havent printed recently print that we dont move, we do it this way to be able to print the first time
             *print_counter_pending_rem -= 1;
-            if *print_counter_pending_rem == PRINT_EVERY_N_COULD_NOT_SEND || *print_counter_pending_rem == 0 {
+            if *print_counter_pending_rem == PRINT_EVERY_N_PENDING_REMOVAL || *print_counter_pending_rem == 0 {
                 println!("Brain: Cannot leave floor {} in direction {:?} as there are calls that are pending removal here", my_floor, current_dir);
 
-                *print_counter_pending_rem = PRINT_EVERY_N_COULD_NOT_SEND-1;
+                *print_counter_pending_rem = PRINT_EVERY_N_PENDING_REMOVAL-1;
             }
 
             return false;
         }
     else {
         // Reset it so we at least print once every time
-        *print_counter_pending_rem = PRINT_EVERY_N_COULD_NOT_SEND+1;
+        *print_counter_pending_rem = PRINT_EVERY_N_PENDING_REMOVAL+1;
     }
 
 
