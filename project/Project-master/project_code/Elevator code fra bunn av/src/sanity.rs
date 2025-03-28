@@ -506,6 +506,12 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
         for change in merged_cab_calls {
             merged_calls_difference.insert(change.0, change.1);
         }
+    } else {
+        let old_cab_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+        .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+        for call in old_cab_calls {
+            merged_calls_difference.insert(call.0, call.1);
+        }
     }
 
     for change in merged_calls_difference {
