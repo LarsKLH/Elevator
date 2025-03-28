@@ -521,10 +521,11 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
     let mut dealt_with = false;
 
     if !old_memory.state_list.contains_key(&received_memory.my_id) {
+        println!("Sanity: Received memory from new elevator");
         if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") != old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") {
             merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
+            println!("Sanity: Differences detected, merging calls");
         }
-        println!("Sanity: Received memory from new elevator");
         memory_request_tx.send(mem::MemoryMessage::UpdateOthersState(received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone())).expect("Sanity: Could not send state update");
         dealt_with = true;
     }
@@ -537,6 +538,7 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
     }
     else {
         println!("Sanity: Received memory from elevator that isn't timed out");
+        old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| !x.1.timed_out).collect();
         let accepted_changes = deal_with_calls_for_other(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.extend(accepted_changes.clone());
         deal_with_calls_for_me(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
@@ -559,7 +561,6 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
             recv(rx_get) -> rx => {
                 // Getting old memory
                 let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
-                old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| !x.1.timed_out).collect();
 
                 // Getting new state from rx, extracting both old and new calls for comparison
                 let received_memory = rx.expect("Invalid memory found");
