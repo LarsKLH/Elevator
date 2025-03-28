@@ -167,6 +167,9 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
 
 pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator) -> () {
 
+    // We need to remember what we ware at so we dont prematurly change state when handling an order
+    let mut movement_state_before_prev_obstruction = MovementState::StopDoorClosed; 
+
 
     // Initialize button sensors
     let (call_button_tx, call_button_rx) = cbc::unbounded::<elevio::poll::CallButton>(); // Initialize call buttons
@@ -245,6 +248,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 let stop_button_pressed = stop_button_notif.unwrap();
 
                 // Do we want to do anything here?
+                // Dont think so
             }
 
             recv(obstruction_rx) -> obstruction_notif => {
@@ -253,12 +257,16 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let current_memory = memory_recieve_rx.recv().unwrap();
 
-                // state obstructed that wil force us to do nothing, but check we need to ckheck if obstructed gets removed
+                let current_movement_state = current_memory.state_list.get(&current_memory.my_id).unwrap().move_state;
+
+                // state obstructed that wil force us to do nothing, but check we need to check if obstructed gets removed
                 if obstruction_sensed {
+                    movement_state_before_prev_obstruction = current_movement_state;
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
                 }
-                else if current_memory.state_list.get(&current_memory.my_id).unwrap().move_state == MovementState::Obstructed {
-                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::StopDoorClosed)).unwrap(); // LK: Changed MovementState::StopDoorClosed from MovementState::Obstructed
+                else if current_movement_state == MovementState::Obstructed {
+                    // obstruction is over, return to the preceedign movement state
+                    memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(movement_state_before_prev_obstruction)).unwrap();
                 }
             }
         }
