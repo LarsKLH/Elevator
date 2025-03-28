@@ -7,7 +7,7 @@ use crate::elevator_interface::{self as elevint, Direction};
 
 
 const PRINT_EVERY_N_PENDING_REMOVAL: u16 = 50;
-const DURATION_WAIT_AFTER_PENDING_REM_BLOCK: Duration = Duration::from_millis(200);
+const DURATION_WAIT_AFTER_PENDING_REM_BLOCK: Duration = Duration::from_millis(100);
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
