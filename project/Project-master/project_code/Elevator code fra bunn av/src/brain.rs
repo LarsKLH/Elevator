@@ -6,7 +6,7 @@ use crate::memory::{self as mem, Call, CallState, CallType};
 use crate::elevator_interface::{self as elevint, Direction};
 
 
-const PRINT_EVERY_N_PENDING_REMOVAL: u16 = 500;
+const PRINT_EVERY_N_PENDING_REMOVAL: u16 = 50000;
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
