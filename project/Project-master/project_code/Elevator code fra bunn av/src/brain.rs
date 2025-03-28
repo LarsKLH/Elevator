@@ -13,6 +13,8 @@ pub fn elevator_logic(
     let stalled_timeout = Duration::from_secs_f32(3.5);
     let mut motor_stalled = false;
 
+    println!("Brain: Done with Initialization");
+
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
         let memory = memory_recieve_rx.recv().expect("Error receiving memory");

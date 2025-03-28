@@ -58,6 +58,8 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
 
     let mut prev_state = original_memory.state_list.get(&original_memory.my_id).expect("ElevInt: could not extract my memory from memory").clone();
 
+    println!("ElevInt: Done with Initialization of Outputs");
+
     // Infinite loop checking for elevator controller messages
     loop {
         cbc::select! {
@@ -198,6 +200,8 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
         let elevator = elevator.clone();
         spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, POLLING_PERIOD));
     } 
+
+    println!("ElevInt: Done with Initialization of Inputs");
 
     loop {
 

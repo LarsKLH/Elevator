@@ -118,6 +118,8 @@ impl State {
 
 pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<MemoryMessage>, ipv4: Ipv4Addr, number_of_floors: u8) -> () {
     let mut memory = Memory::new(ipv4, number_of_floors);
+
+    println!("Memory: Done with Initialization");
     
     loop {
         cbc::select! {
@@ -174,6 +176,9 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
 // Jens: I really dont like this one
 
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
+
+    println!("Printout: Done with Initialization");
+
     loop {
         let memory = Memory::get(memory_request_channel.clone(), memory_recieve_channel.clone());
         println!("-----------------------------------------------------------------------------------------------");

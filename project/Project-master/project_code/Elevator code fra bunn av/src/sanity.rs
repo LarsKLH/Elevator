@@ -598,6 +598,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
     println!("Sanity: Starting sanity check");
     println!("Sanity: Testing function returned: {}", testing_function());
 
+    println!("Sanity: Done with Initialization");
+
     loop {
         cbc::select! {
             recv(rx_get) -> rx => {

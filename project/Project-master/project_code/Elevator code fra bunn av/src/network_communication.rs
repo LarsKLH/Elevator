@@ -73,6 +73,8 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
     recv_socket.set_nonblocking(false).expect("NetWork: Failed to set the recv socket to non-blocking");
 
+    println!("NetWork: Done with Initialization of Rx reciever");
+
     loop{
         let (number_of_bytes_recieved, address_of_sender) = recv_socket.recv_from(&mut recieve_buffer).expect("NetWork: Failed to recv packet, if this is ever a problem add error handling");
 
@@ -105,6 +107,9 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
     let mut card_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
     let from_socket = net_config.sending_socket;
     let to_socket = net_config.target_socket;
+
+
+    println!("NetWork: Done with Initialization of Tx transmitter");
 
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
