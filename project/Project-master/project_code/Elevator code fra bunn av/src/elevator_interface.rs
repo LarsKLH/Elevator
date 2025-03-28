@@ -1,6 +1,7 @@
 
 
 
+use core::num;
 use std::time::*;
 use std::thread::*;
 
@@ -92,24 +93,32 @@ fn mirror_movement_state (new_move_state: MovementState, elevator: &Elevator, nu
     const GROUND_FLOOR: u8 = 0;
 
     match new_move_state {
-        MovementState::Moving(Direction::Down) if last_floor == GROUND_FLOOR => return, // TODO: NOWDO!: JENS: Check if this is correct and prohibits the elevator from going below ground floor or above top floor
-        MovementState::Moving(Direction::Up) if last_floor == num_floors-1 => return, // THIS IS AFFECTED IN MAIN AS WELL, CHECK EVERY INSTANCE OF num_floors IN main.rs and elevator_interface.rs
         MovementState::Moving(dirn) => {
             match dirn {
                 Direction::Down => {
                     // Turn off elevator light before starting
                     elevator.door_light(false);
                     
-
-                    // Change direction
-                    elevator.motor_direction(elevio::elev::DIRN_DOWN);
+                    if last_floor == GROUND_FLOOR {
+                        // Do nothing, this is wrong
+                    }
+                    else {
+                        // Follow direction
+                        elevator.motor_direction(elevio::elev::DIRN_DOWN);
+                    }
+                    
                 }
                 Direction::Up => {
                     // Turn off elevator light before starting
                     elevator.door_light(false);
 
-                    // Change direction
-                    elevator.motor_direction(elevio::elev::DIRN_UP);
+                    if last_floor == num_floors - 1 {
+                        // Do nothing, this is wrong
+                    }
+                    else {
+                        // Follow direction
+                        elevator.motor_direction(elevio::elev::DIRN_UP);
+                    }
                 }
             }
         }
