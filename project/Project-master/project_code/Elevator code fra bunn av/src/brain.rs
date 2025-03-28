@@ -72,8 +72,12 @@ pub fn elevator_logic(
                 if going {}
             }
             elevint::MovementState::StopAndOpen => {
-                thread::sleep(Duration::from_secs(3));
-                clear_call(&mut my_state,  &memory_request_tx, prev_direction);    
+
+                if is_there_call_to_clear(&my_state, prev_direction) {
+                    thread::sleep(Duration::from_secs(3));
+                    clear_call(&mut my_state,  &memory_request_tx, prev_direction);
+                }
+                
                 let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state, &memory);
                 if going {}
             }
@@ -124,7 +128,23 @@ fn should_i_stop(
     !has_call_ahead
 }
 
-// Clear the call from the memory
+fn is_there_call_to_clear (my_state: &mem::State, prev_dir: Direction) -> bool {
+    let floor = my_state.last_floor;
+    let cab_call = mem::Call { call_type: mem::CallType::Cab, floor };
+    let hall_call = mem::Call { call_type: mem::CallType::Hall(prev_dir), floor };
+
+    for &call in &[cab_call, hall_call] {
+        if my_state.call_list.get(&call) == Some(&mem::CallState::Confirmed) {
+            // there is a call that we can clear at this floor
+            return true;
+        }
+    }
+
+    // if not there is not a call we can clear
+    return false;
+}
+
+// Clear the call from the memory, this is much the sam as above but we need to find them all agian
 fn clear_call(my_state: &mut mem::State, memory_request_tx: &Sender<mem::MemoryMessage>, prev_dir: Direction) {
     let floor = my_state.last_floor;
     let cab_call = mem::Call { call_type: mem::CallType::Cab, floor };
