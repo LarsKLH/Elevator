@@ -239,7 +239,7 @@ fn am_i_best_elevator_to_respond(
     let my_calls = my_state.call_list.len();
     
     if my_state.move_state == elevint::MovementState::Obstructed || my_state.is_stalled == true
-        || (my_state.timed_out && memory.state_list.clone().into_iter().filter(|state| state.1.timed_out).count() > 0)  {
+        || (my_state.timed_out && memory.state_list.clone().into_iter().filter(|state| state.1.timed_out).count() > 1)  {
         return false;
     }
 
