@@ -578,7 +578,8 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
         dealt_with = true;
     }
     else {
-        println!("Sanity: Received memory from elevator that isn't timed out");
+        // This one was a bit to much
+        // println!("Sanity: Received memory from elevator that isn't timed out");
         old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| !x.1.timed_out).collect();
         let accepted_changes = deal_with_calls_for_other(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.extend(accepted_changes.clone());
