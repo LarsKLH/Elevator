@@ -64,7 +64,7 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
                 
                 mirror_lights(received_state_to_mirror, &elevator);
                 
-                sleep(Duration::from_secs(1));
+                sleep(Duration::from_millis(500));
 
             }
             default(Duration::from_millis(50))  => {

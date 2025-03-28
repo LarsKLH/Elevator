@@ -7,7 +7,7 @@ use crate::elevator_interface::{self as elevint, Direction};
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
-    memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>) -> () {
+    memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>, num_floors: u8) -> () {
     let mut prev_direction = elevint::Direction::Down;
     let mut last_floor_detection = Instant::now();
     let stalled_timeout = Duration::from_secs_f32(3.5);
@@ -33,6 +33,15 @@ pub fn elevator_logic(
                 prev_direction = dirn;
                 cbc::select! { 
                     recv(floor_sensor_rx) -> detected_floor => {
+                        if detected_floor.is_err() {
+                            println!("Brain: Error receiving floor sensor data: {:?}", detected_floor.err().unwrap());
+                            continue;
+                        }
+                        if detected_floor.unwrap() == num_floors || detected_floor.unwrap() == 0 {
+                            brain_stop_direct_link.send(my_state.clone()).expect("Error sending stop and open to brain");
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory"); 
+
+                        }
                         last_floor_detection = Instant::now();
                         if motor_stalled {
                             memory_request_tx.send(mem::MemoryMessage::IsStalled(memory.my_id, false)).unwrap();
@@ -73,7 +82,7 @@ pub fn elevator_logic(
     }
 }
 
-// Check if the elevator should stop or not | Todo: Maybe turn if into a match statement
+// Check if the elevator should stop or not
 fn should_i_stop(
     floor: u8, my_state: &mem::State) -> bool {
     let my_direction = match my_state.move_state {
