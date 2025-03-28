@@ -245,15 +245,20 @@ fn am_i_best_elevator_to_respond(
         _ => 10,
     };
 
+    let is_stalled_score = if memory.state_list.get(&my_id).expect("is_stalled does not exist").is_stalled { 100 } else { 0 };
+
+
     // --- Distance + Load ---
     let my_score = (call_floor as i32 - my_floor as i32).abs() as u32  // Distance penalty
         + direction_score                                             // Movement penalty
-        + (my_calls as u32 * 2);                                     // Load penalty
+        + (my_calls as u32 * 2)                                     // Load penalty
+        + is_stalled_score;                                   // Stalled penalty
 
     for (elev_id, elev_state) in &memory.state_list {
         if *elev_id == my_id || matches!(elev_state.move_state, elevint::MovementState::Obstructed) {
             continue;
         }
+
 
         let other_floor = elev_state.last_floor;
         let other_calls = elev_state.call_list.len();
@@ -268,9 +273,13 @@ fn am_i_best_elevator_to_respond(
             _ => 10,
         };
 
+        let is_stalled_score = if memory.state_list.get(&my_id).expect("is_stalled does not exist").is_stalled { 100 } else { 0 };
+
+
         let other_score = (call_floor as i32 - other_floor as i32).abs() as u32
             + other_direction_score
-            + (other_calls as u32 * 2);
+            + (other_calls as u32 * 2)
+            + is_stalled_score;
         println!("Brain: My score: {}, Other score: {}", my_score, other_score);
         thread::sleep(Duration::from_millis(500));
 
