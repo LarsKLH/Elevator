@@ -22,6 +22,8 @@ const BROADCAST_ADDRESS_BYTES: [u8;4] = [255,255,255,255];
 
 const TIME_INBETWEEN_NETWORK_SENDING: Duration = Duration::from_millis(20);
 
+const PRINT_EVERY_N_COULD_NOT_SEND: u16 = 50;
+
 
 pub struct NetWorkConfig {
     sending_socket: UdpSocket,
@@ -108,6 +110,8 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
     let from_socket = net_config.sending_socket;
     let to_socket = net_config.target_socket;
 
+    let mut failed_send_counter = 0;
+
 
     println!("NetWork: Done with Initialization of Tx transmitter");
 
@@ -125,7 +129,13 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
 
         match could_i_send {
             Ok(_) => (),
-            Err(e) => println!("NetWork: Failed to send message, error: {}", e)
+            Err(e) => {
+                failed_send_counter += 1;
+                if failed_send_counter == PRINT_EVERY_N_COULD_NOT_SEND {
+                    println!("NetWork: Failed to send message, error: {}", e);
+                    failed_send_counter = 0;
+                }
+            }
         }
 
         sleep(TIME_INBETWEEN_NETWORK_SENDING); // The devil made me do it
