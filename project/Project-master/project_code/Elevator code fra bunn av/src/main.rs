@@ -41,7 +41,7 @@ fn main() -> std::io::Result<()> {
     println!("Main: Found local adress {:?}", my_local_ip, );
     
     if args.len() != 6 {
-        panic!("5 arguments are required but {} were provided", args.len())
+        panic!("5 arguments are required but {} were provided", args.len()-1)
     }
 
     let num_floors: u8 = args[1].parse().expect("could not convert the first argument to a u8, could i recomend '4'");
