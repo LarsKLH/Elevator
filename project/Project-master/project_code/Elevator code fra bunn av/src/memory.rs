@@ -17,6 +17,8 @@ use crossbeam_channel as cbc;
 use crate::{elevator_interface::MovementState, memory as mem};
 use crate::elevator_interface as elevint;
 
+const PRINT_STATUS_INTERVAL: time::Duration = time::Duration::from_millis(1000);
+
 
 #[derive(Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Memory {
@@ -180,12 +182,13 @@ pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_ch
         for state in memory.state_list.values() {
             println!("Elevator: {}", state.id);
             println!("Timed out: {}", state.timed_out);
+            println!("Is stalled: {}", state.is_stalled);
             println!("Movement state: {:?}", state.move_state);
             println!("Last floor: {}", state.last_floor);
             for (call, call_state) in state.call_list.iter().sorted() {
                 println!("Call: {:?} {:?} {:?}", call.call_type, call.floor, call_state);
             }
-            thread::sleep(time::Duration::from_millis(500));
+            thread::sleep(PRINT_STATUS_INTERVAL);
         }
     }
 }
