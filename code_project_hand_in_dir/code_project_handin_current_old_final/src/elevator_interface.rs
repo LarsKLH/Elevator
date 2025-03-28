@@ -1,6 +1,7 @@
 
 
 
+use core::num;
 use std::time::*;
 use std::thread::*;
 
@@ -11,7 +12,7 @@ use crossbeam_channel as cbc;
 
 use serde::{Serialize, Deserialize};
 
-use driver_rust::elevio::{self, elev::Elevator};
+use driver_rust::elevio::{self, elev::{self, Elevator}};
 use crate::memory::CallState;
 use crate::memory::State;
 use crate::memory as mem;
@@ -45,6 +46,9 @@ pub enum MovementState {
 // Motor controller function. Takes controller messages and sends them to the elevator
 // controller. Also updates the memory with the current direction of the elevator
 pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, brain_stop_direct_link: Receiver<mem::State>, elevator: Elevator, num_floors: u8) -> () {
+    
+    
+    // TODO: jens want to remove the next two lines
     
     // Create direction variable and send elevator down until it hits a floor
     elevator.motor_direction(elevio::elev::DIRN_DOWN);
@@ -203,7 +207,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
         spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, POLLING_PERIOD));
     } 
 
-    sleep(INPUT_SLEEP_TIME_ON_STARTUP);
+    sleep(OUTPUT_SLEEP_TIME_ON_STARTUP);
 
     println!("ElevInt: Done with Initialization of Inputs");
 
@@ -216,7 +220,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
             recv(call_button_rx) -> call_button_notif => {
                 let button_pressed = call_button_notif.expect("Failed to unpack what putton was pressed");
 
-                // "have to update the cyclic counter for this floor"
+                //todo! done I think - Jens ("have to update the cyclic counter for this floor");
                 // juct check if the current state is nothing then chnage to new, if else do nothing
 
                 memory_request_tx.send(mem::MemoryMessage::Request).expect("Failed to send request to memory");
@@ -253,7 +257,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
             }
 
             recv(stop_button_rx) -> stop_button_notif => {
-                let _stop_button_pressed = stop_button_notif.unwrap();
+                let stop_button_pressed = stop_button_notif.unwrap();
 
                 // Do we want to do anything here?
                 // Dont think so
