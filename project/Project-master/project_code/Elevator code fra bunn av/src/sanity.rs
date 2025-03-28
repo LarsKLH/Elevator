@@ -549,7 +549,7 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
         dealt_with = true;
     }
     else if old_memory.state_list.get(&received_memory.my_id).expect("Sanity: wrong state already").timed_out
-    || received_memory.state_list.get(&old_memory.my_id).expect("Sanity: wrong state received").timed_out {
+    || if received_memory.state_list.contains_key(&old_memory.my_id) { received_memory.state_list.get(&old_memory.my_id).expect("Sanity: wrong state received").timed_out } else { false } {
         println!("Sanity: Received memory from timed out elevator");
         merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         
