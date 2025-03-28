@@ -38,8 +38,9 @@ pub fn elevator_logic(
                             continue;
                         }
                         if detected_floor.unwrap() == num_floors || detected_floor.unwrap() == 0 {
+                            my_state.move_state = elevint::MovementState::StopDoorClosed;
                             brain_stop_direct_link.send(my_state.clone()).expect("Error sending stop and open to brain");
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory"); 
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending stop and open to memory"); 
 
                         }
                         last_floor_detection = Instant::now();
