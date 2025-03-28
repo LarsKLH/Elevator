@@ -38,6 +38,7 @@ pub fn elevator_logic(
                             continue;
                         }
                         if detected_floor.unwrap() == num_floors || detected_floor.unwrap() == 0 {
+                            my_state.last_floor = detected_floor.expect("Error reading from floor sensor");
                             my_state.move_state = elevint::MovementState::StopDoorClosed;
                             brain_stop_direct_link.send(my_state.clone()).expect("Error sending stop and open to brain");
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending stop and open to memory"); 
