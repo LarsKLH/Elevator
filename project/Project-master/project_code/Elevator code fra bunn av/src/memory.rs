@@ -28,7 +28,7 @@ pub struct Memory {
 pub struct State {
     pub id: Ipv4Addr,
     pub timed_out: bool,
-    pub move_state: elevint::MovementState, // Jens: alle u8 i denne burde endres til typer tror jeg
+    pub move_state: elevint::MovementState,
     pub last_floor: u8,
     pub call_list: HashMap<Call, CallState>,
     pub is_stalled: bool,
@@ -161,7 +161,7 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
     }
 }
 
-// Jens: I really dont like this one
+// I really dont like this one
 
 pub fn printout(memory_request_channel: Sender<MemoryMessage>, memory_recieve_channel: Receiver<Memory>) -> () {
 

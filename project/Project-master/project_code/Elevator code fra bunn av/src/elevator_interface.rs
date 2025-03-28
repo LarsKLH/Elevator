@@ -46,9 +46,6 @@ pub enum MovementState {
 // controller. Also updates the memory with the current direction of the elevator
 pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, brain_stop_direct_link: Receiver<mem::State>, elevator: Elevator, num_floors: u8) -> () {
     
-    
-    // TODO: jens want to remove the next two lines
-    
     // Create direction variable and send elevator down until it hits a floor
     elevator.motor_direction(elevio::elev::DIRN_DOWN);
 
@@ -219,7 +216,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
             recv(call_button_rx) -> call_button_notif => {
                 let button_pressed = call_button_notif.expect("Failed to unpack what putton was pressed");
 
-                //todo! done I think - Jens ("have to update the cyclic counter for this floor");
+                // "have to update the cyclic counter for this floor"
                 // juct check if the current state is nothing then chnage to new, if else do nothing
 
                 memory_request_tx.send(mem::MemoryMessage::Request).expect("Failed to send request to memory");
