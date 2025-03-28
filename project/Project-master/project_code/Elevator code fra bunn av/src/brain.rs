@@ -260,7 +260,7 @@ fn am_i_best_elevator_to_respond(
         _ => 10,
     };
 
-    let is_stalled_score = if memory.state_list.get(&my_id).expect("is_stalled does not exist").is_stalled { 100 } else { 0 };
+    let is_stalled_score = if memory.state_list.get(&my_id).expect("elevator does not exist in memory").is_stalled { 100 } else { 0 };
 
 
     // --- Distance + Load ---
@@ -270,7 +270,7 @@ fn am_i_best_elevator_to_respond(
         + is_stalled_score;                                   // Stalled penalty
 
     for (elev_id, elev_state) in &memory.state_list {
-        if *elev_id == my_id || elev_state.timed_out || matches!(elev_state.move_state, elevint::MovementState::Obstructed) {
+        if *elev_id == my_id || elev_state.timed_out || matches!(elev_state.move_state, elevint::MovementState::Obstructed) || elev_state.is_stalled == true {
             continue;
         }
 

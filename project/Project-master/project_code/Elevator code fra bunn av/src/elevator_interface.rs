@@ -18,6 +18,10 @@ use crate::memory::State;
 use crate::memory as mem;
 
 
+// Set poll period for buttons and sensors
+const POLLING_PERIOD: Duration = Duration::from_millis(50);
+
+
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug, Ord, PartialOrd)]
 pub enum Direction {
@@ -163,35 +167,33 @@ fn mirror_lights(state_to_mirror: State, elevator: &Elevator) {
 
 pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_to_brain_tx: Sender<u8>, elevator: Elevator) -> () {
 
-    // Set poll period for buttons and sensors
-    let poll_period = Duration::from_millis(25);
 
     // Initialize button sensors
     let (call_button_tx, call_button_rx) = cbc::unbounded::<elevio::poll::CallButton>(); // Initialize call buttons
     {
         let elevator = elevator.clone();
-        spawn(move || elevio::poll::call_buttons(elevator, call_button_tx, poll_period));
+        spawn(move || elevio::poll::call_buttons(elevator, call_button_tx, POLLING_PERIOD));
     }
 
      // Initialize floor sensor
      let (floor_sensor_tx, floor_sensor_rx) = cbc::unbounded::<u8>(); 
     {
         let elevator = elevator.clone();
-        spawn(move || elevio::poll::floor_sensor(elevator, floor_sensor_tx, poll_period));
+        spawn(move || elevio::poll::floor_sensor(elevator, floor_sensor_tx, POLLING_PERIOD));
     }
     
     // Initialize stop button
     let (stop_button_tx, stop_button_rx) = cbc::unbounded::<bool>(); 
     {
         let elevator = elevator.clone();
-        spawn(move || elevio::poll::stop_button(elevator, stop_button_tx, poll_period));
+        spawn(move || elevio::poll::stop_button(elevator, stop_button_tx, POLLING_PERIOD));
     }
     
     // Initialize obstruction switch
     let (obstruction_tx, obstruction_rx) = cbc::unbounded::<bool>(); 
     {
         let elevator = elevator.clone();
-        spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, poll_period));
+        spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, POLLING_PERIOD));
     } 
 
     loop {
@@ -251,8 +253,7 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
                 memory_request_tx.send(mem::MemoryMessage::Request).unwrap();
                 let current_memory = memory_recieve_rx.recv().unwrap();
 
-                // todo! done i think - jens ("we need to figure out how to do here");
-                // add new move state obstructed that wil force us to do nothing, but check if obstr gets remove
+                // state obstructed that wil force us to do nothing, but check we need to ckheck if obstructed gets removed
                 if obstruction_sensed {
                     memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(MovementState::Obstructed)).unwrap();
                 }
