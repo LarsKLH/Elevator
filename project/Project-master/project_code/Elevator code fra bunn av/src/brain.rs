@@ -5,6 +5,9 @@ use crossbeam_channel as cbc;
 use crate::memory::{self as mem, Call, CallState, CallType};
 use crate::elevator_interface::{self as elevint, Direction};
 
+
+const PRINT_EVERY_N_COULD_NOT_SEND: u16 = 50;
+
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
     memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>, num_floors: u8) -> () {
@@ -12,6 +15,8 @@ pub fn elevator_logic(
     let mut last_floor_detection = Instant::now();
     let stalled_timeout = Duration::from_secs_f32(3.5);
     let mut motor_stalled = false;
+
+    let mut counter_for_printing_pending_removal = PRINT_EVERY_N_COULD_NOT_SEND;
 
     println!("Brain: Done with Initialization");
 
@@ -68,7 +73,7 @@ pub fn elevator_logic(
                 }
             } 
             elevint::MovementState::StopDoorClosed => {
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory, &mut counter_for_printing_pending_removal);
                 if going {}
             }
             elevint::MovementState::StopAndOpen => {
@@ -78,11 +83,11 @@ pub fn elevator_logic(
                     clear_call(&mut my_state,  &memory_request_tx, prev_direction);
                 }
                 
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state, &memory);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state, &memory, &mut counter_for_printing_pending_removal);
                 if going {}
             }
             elevint::MovementState::Obstructed => {
-                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory);
+                let going = should_i_go(&mut prev_direction, &memory_request_tx ,&my_state , &memory, &mut counter_for_printing_pending_removal);
                 if going {}  
             }
             //_ => {}
@@ -164,7 +169,7 @@ fn clear_call(my_state: &mut mem::State, memory_request_tx: &Sender<mem::MemoryM
 // Check if the elevator should go or not
 fn should_i_go(
     current_dir: &mut Direction, memory_request_tx: &Sender<mem::MemoryMessage>,
-    my_state: &mem::State, memory: &mem::Memory) -> bool {
+    my_state: &mem::State, memory: &mem::Memory, print_counter_pending_rem: &mut u16) -> bool {
     if my_state.move_state == elevint::MovementState::Obstructed {
         return false;
     }
@@ -177,10 +182,21 @@ fn should_i_go(
     if my_state.call_list.get(&Call { call_type: CallType::Cab, floor: my_state.last_floor}) == Some(&CallState::PendingRemoval)
         || my_state.call_list.get(&Call { call_type: CallType::Hall(*current_dir), floor: my_state.last_floor}) == Some(&CallState::PendingRemoval) {
             // There is a call that still needs top be removed so we cant move further untill it is
-            
-            println!("Brain: Cannot leave floor {} in direction {:?} as there are calls that are pending removal here", my_floor, current_dir);
+
+            // if we havent printed recently print that we dont move, we do it this way to be able to print the first time
+            *print_counter_pending_rem -= 1;
+            if *print_counter_pending_rem == PRINT_EVERY_N_COULD_NOT_SEND || *print_counter_pending_rem == 0 {
+                println!("Brain: Cannot leave floor {} in direction {:?} as there are calls that are pending removal here", my_floor, current_dir);
+
+                *print_counter_pending_rem = PRINT_EVERY_N_COULD_NOT_SEND-1;
+            }
+
             return false;
         }
+    else {
+        // Reset it so we at least print once every time
+        *print_counter_pending_rem = PRINT_EVERY_N_COULD_NOT_SEND+1;
+    }
 
 
 
