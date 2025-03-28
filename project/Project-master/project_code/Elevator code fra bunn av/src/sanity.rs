@@ -379,7 +379,6 @@ fn deal_with_calls_for_me(received_memory: mem::Memory, old_memory: mem::Memory,
     else if received_memory.my_id == old_memory.my_id && received_memory.state_list.clone().into_iter().filter(|state| !state.1.timed_out).count() == 1 {
         cab_calls_cycled = cyclic_counter(cab_calls.clone(), &received_memory.state_list.clone()
         .into_iter().filter(|state| !state.1.timed_out).collect());
-
     }
         
     

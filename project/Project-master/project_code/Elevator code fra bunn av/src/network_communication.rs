@@ -114,7 +114,12 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
 
         // println!("NetWork: Trying to send post out over the net from {:?} to {:?}", from_socket, to_socket);
         
-        from_socket.send_to(&written_card, to_socket).expect("was not able to transmit to target socket");
+        let could_i_send = from_socket.send_to(&written_card, to_socket);
+
+        match could_i_send {
+            Ok(_) => (),
+            Err(e) => println!("NetWork: Failed to send message, error: {}", e)
+        }
 
         sleep(Duration::from_millis(69)); // The devil made me do it
 
