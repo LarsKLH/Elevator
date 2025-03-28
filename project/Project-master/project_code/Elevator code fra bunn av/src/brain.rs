@@ -39,9 +39,9 @@ pub fn elevator_logic(
                         }
                         if detected_floor.unwrap() == num_floors || detected_floor.unwrap() == 0 {
                             my_state.last_floor = detected_floor.expect("Error reading from floor sensor");
-                            my_state.move_state = elevint::MovementState::StopDoorClosed;
+                            my_state.move_state = elevint::MovementState::StopAndOpen;
                             brain_stop_direct_link.send(my_state.clone()).expect("Error sending stop and open to brain");
-                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopDoorClosed)).expect("Error sending stop and open to memory"); 
+                            memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory"); 
 
                         }
                         last_floor_detection = Instant::now();
@@ -239,7 +239,7 @@ fn am_i_best_elevator_to_respond(
     let my_calls = my_state.call_list.len();
     
     if my_state.move_state == elevint::MovementState::Obstructed || my_state.is_stalled == true
-        || (my_state.timed_out && memory.state_list.clone().into_iter().filter(|state| state.1.timed_out).count() > 1)  {
+        || (my_state.timed_out && memory.state_list.clone().into_iter().filter(|state| !state.1.timed_out).count() == 0)  {
         return false;
     }
 
