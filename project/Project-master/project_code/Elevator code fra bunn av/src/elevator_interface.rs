@@ -21,6 +21,10 @@ use crate::memory as mem;
 // Set poll period for buttons and sensors
 const POLLING_PERIOD: Duration = Duration::from_millis(50);
 
+// Just to make sure the rest of the system gets time to wake up before we start sendeing
+const OUTPUT_SLEEP_TIME_ON_STARTUP: Duration = Duration::from_millis(400);
+const INPUT_SLEEP_TIME_ON_STARTUP: Duration = Duration::from_millis(200);
+
 
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Serialize, Deserialize, Debug, Ord, PartialOrd)]
@@ -57,6 +61,8 @@ pub fn elevator_outputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_re
     let original_memory = memory_recieve_rx.recv().expect("ElevInt: Could not recieve memory");
 
     let mut prev_state = original_memory.state_list.get(&original_memory.my_id).expect("ElevInt: could not extract my memory from memory").clone();
+
+    sleep(OUTPUT_SLEEP_TIME_ON_STARTUP);
 
     println!("ElevInt: Done with Initialization of Outputs");
 
@@ -200,6 +206,8 @@ pub fn elevator_inputs(memory_request_tx: Sender<mem::MemoryMessage>, memory_rec
         let elevator = elevator.clone();
         spawn(move || elevio::poll::obstruction(elevator, obstruction_tx, POLLING_PERIOD));
     } 
+
+    sleep(OUTPUT_SLEEP_TIME_ON_STARTUP);
 
     println!("ElevInt: Done with Initialization of Inputs");
 
