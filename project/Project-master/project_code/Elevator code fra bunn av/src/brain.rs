@@ -149,8 +149,8 @@ fn should_i_go(
 
     
     let my_floor = my_state.last_floor;
-    let mut has_calls_ahead = false;
-    let mut has_any_calls = false;
+    let mut has_best_calls_ahead = false;
+    let mut has_any_best_calls = false;
     
     if my_state.call_list.get(&Call { call_type: CallType::Cab, floor: my_state.last_floor}) == Some(&CallState::PendingRemoval)
         || my_state.call_list.get(&Call { call_type: CallType::Hall(*current_dir), floor: my_state.last_floor}) == Some(&CallState::PendingRemoval) {
@@ -185,16 +185,18 @@ fn should_i_go(
     }
 
     for call in best_calls {
-        has_any_calls = true;
+        //This is strictly unneccisary as we can just check if it is non-empty, but we are so we might as well
+        has_any_best_calls = true;
+
         if (matches!(current_dir, elevint::Direction::Up) && call.floor > my_floor)
             || (matches!(current_dir, elevint::Direction::Down) && call.floor < my_floor)
         {
-            has_calls_ahead = true;
+            has_best_calls_ahead = true;
             break;
         }
     }
 
-    match (has_any_calls, has_calls_ahead) {
+    match (has_any_best_calls, has_best_calls_ahead) {
         (false, _) => {
             memory_request_tx
                 .send(mem::MemoryMessage::UpdateOwnMovementState(

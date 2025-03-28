@@ -20,6 +20,8 @@ use postcard;
 const MAXIMUM_BYTES_IN_PACKAGE: usize = 65_000;
 const BROADCAST_ADDRESS_BYTES: [u8;4] = [255,255,255,255];
 
+const TIME_INBETWEEN_NETWORK_SENDING: Duration = Duration::from_millis(10);
+
 
 pub struct NetWorkConfig {
     sending_socket: UdpSocket,
@@ -121,7 +123,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
             Err(e) => println!("NetWork: Failed to send message, error: {}", e)
         }
 
-        sleep(Duration::from_millis(69)); // The devil made me do it
+        sleep(TIME_INBETWEEN_NETWORK_SENDING); // The devil made me do it
 
 
         // Dersom vi er obstructed burde vi kanskje ikke sende noe så de andre heisene antar at vi er døde
