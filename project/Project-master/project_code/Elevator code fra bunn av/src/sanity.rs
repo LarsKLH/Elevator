@@ -448,10 +448,11 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     let mut calls_difference_assembled = hall_calls_difference.clone();
     calls_difference_assembled.extend(cab_calls_difference.clone());
 
-    let mut received_state_to_commit = old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
+    let mut received_state_to_commit = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
 
-    for change in calls_difference_assembled.clone() {
-        received_state_to_commit.call_list.insert(change.0, change.1);
+    let change_not_accepted = difference(calls_difference_assembled.clone(), received_state_to_commit.call_list.clone());
+    for change in change_not_accepted.clone() {
+        received_state_to_commit.call_list.insert(change.0, old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.get(&change.0).expect("Sanity: Wrong call, cannot deal with it").clone());
     }
 
     if calls_difference_assembled.is_empty() {
