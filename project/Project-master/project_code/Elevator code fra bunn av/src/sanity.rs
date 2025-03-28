@@ -498,6 +498,8 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
         let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+        println!("Old cab calls: {:?}", old_cab_calls.clone());
+        println!("New cab calls: {:?}", new_cab_calls.clone());
 
         let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
     
