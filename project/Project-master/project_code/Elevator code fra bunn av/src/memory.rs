@@ -1,8 +1,5 @@
 use core::hash;
-use std::{  net::Ipv4Addr,
-            hash::{Hash,Hasher},
-            collections::{HashMap, HashSet},
-            ops::Deref};
+use std::{  collections::{HashMap, HashSet}, hash::{Hash,Hasher}, net::Ipv4Addr, ops::Deref, time::Instant};
 
 use driver_rust::elevio;
 use postcard;
@@ -34,7 +31,8 @@ pub struct State {
     pub timed_out: bool,
     pub move_state: elevint::MovementState, // Jens: alle u8 i denne burde endres til typer tror jeg
     pub last_floor: u8,
-    pub call_list: HashMap<Call, CallState>
+    pub call_list: HashMap<Call, CallState>,
+    pub is_stalled: bool,
 }
 
 #[derive(Eq, PartialEq, Clone, Copy, Serialize, Deserialize, Debug, Ord, PartialOrd)]
@@ -66,7 +64,8 @@ pub enum MemoryMessage {
     UpdateOwnFloor(u8),
     UpdateOwnCall(Call, CallState),
     UpdateOthersState(State),
-    DeclareDead(Ipv4Addr)
+    DeclareDead(Ipv4Addr),
+    IsStalled(Ipv4Addr, bool),  
     // TODO krangle om hvordan endre state med update
     // TODO gjøre requests av memory til immutable referanser og update til mutable referanser slik at compileren blir sur om vi ikke gj;r ting riktig
     
@@ -103,7 +102,8 @@ impl State {
                 timed_out: false,
                 move_state: elevint::MovementState::StopDoorClosed,
                 last_floor: 0,
-                call_list: HashMap::new() // need to intitialize with the required number of floors that requires we pass the number of floors 
+                call_list: HashMap::new(), // need to intitialize with the required number of floors that requires we pass the number of floors 
+                is_stalled: false
             };
         for floor_to_add in 0..n {
             new_me.call_list.insert(Call { call_type: CallType::Cab, floor: floor_to_add }, CallState::Nothing);
@@ -156,6 +156,12 @@ pub fn memory(memory_recieve_tx: Sender<Memory>, memory_request_rx: Receiver<Mem
                         // Declare the requested elevator dead
                         
                         memory.state_list.get_mut(&id).unwrap().timed_out = true;
+                    }
+                    MemoryMessage::IsStalled(id, stalled) => {
+                        
+                        // Update the heartbeat of the requested elevator
+                        
+                        memory.state_list.get_mut(&id).unwrap().is_stalled = stalled;
                     }
                 }
             }
