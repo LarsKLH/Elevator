@@ -232,7 +232,10 @@ fn should_i_go(
     elevators w/ different directions, uncomment in func,
     current_dir is then used as well*/
 fn am_i_best_elevator_to_respond(
-    call: mem::Call, memory: mem::Memory, current_dir: Direction) -> bool {
+    call: mem::Call, mut memory: mem::Memory, current_dir: Direction) -> bool {
+    // Removing timed out elevators
+    memory.state_list.retain(|_, state| !state.timed_out);
+
     let my_id = memory.my_id;
     let my_state = memory.state_list.get(&my_id).unwrap();
     let my_floor = my_state.last_floor;
