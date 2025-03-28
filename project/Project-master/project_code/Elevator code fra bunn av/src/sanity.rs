@@ -579,7 +579,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
         cbc::select! {
             recv(rx_get) -> rx => {
                 // Getting old memory
-                let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
 
                 // Getting new state from rx, extracting both old and new calls for comparison
                 match rx {
