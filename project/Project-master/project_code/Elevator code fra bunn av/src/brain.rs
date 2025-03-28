@@ -1,12 +1,13 @@
 use std::time::{Duration, Instant};
-use std::thread;
+use std::thread::{self, sleep};
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
 use crate::memory::{self as mem, Call, CallState, CallType};
 use crate::elevator_interface::{self as elevint, Direction};
 
 
-const PRINT_EVERY_N_PENDING_REMOVAL: u16 = 50000;
+const PRINT_EVERY_N_PENDING_REMOVAL: u16 = 50;
+const DURATION_WAIT_AFTER_PENDING_REM_BLOCK: Duration = Duration::from_millis(50);
 
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
@@ -189,6 +190,8 @@ fn should_i_go(
                 println!("Brain: Cannot leave floor {} in direction {:?} as there are calls that are pending removal here", my_floor, current_dir);
 
                 *print_counter_pending_rem = PRINT_EVERY_N_PENDING_REMOVAL-1;
+                // Wait or we just loop ad absurdum
+                sleep(DURATION_WAIT_AFTER_PENDING_REM_BLOCK);
             }
 
             return false;
