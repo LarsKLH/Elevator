@@ -141,7 +141,7 @@ fn main() -> std::io::Result<()> {
         let memory_recieve_channel = memory_recieve_channel.clone();
         let floor_sensor_rx = floor_sensor_rx.clone();
         let brain_stop_direct_link = brain_stop_direct_link_tx.clone();
-        spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx, brain_stop_direct_link));
+        spawn(move || brain::elevator_logic(memory_request_channel, memory_recieve_channel, floor_sensor_rx, brain_stop_direct_link, num_floors));
     }
 
     if do_the_printout {
