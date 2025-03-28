@@ -409,13 +409,13 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
         }
     }
 
-    for cab_call in cab_calls.clone() {
+    /* for cab_call in cab_calls.clone() {
         println!("Sanity: Cab call: {:?} {:?}", cab_call.0, cab_call.1);
     }
 
     for hall_call in hall_calls.clone() {
         println!("Sanity: Hall call: {:?} {:?}", hall_call.0, hall_call.1);
-    }
+    } */
 
     let mut cab_calls_difference = cab_calls.clone();
 
@@ -425,9 +425,12 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
         cab_calls_for_comparison.insert(old_memory.my_id,old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
         //cab_calls_for_comparison.insert(received_memory.my_id,received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone());
         let cab_calls_filtered = filter_changes(cab_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, cab_calls_for_comparison.clone());
-        println!("Sanity: Cab calls filtered: {:?}", cab_calls_filtered.clone());
+        //println!("Sanity: Cab calls filtered: {:?}", cab_calls_filtered.clone());
 
-        cab_calls_difference = difference(cab_calls.clone(), cab_calls_filtered.clone());
+        let cab_calls_to_remove = difference(cab_calls.clone(), cab_calls_filtered.clone());
+        for cab_call in cab_calls_to_remove {
+            cab_calls_difference.remove(&cab_call.0);
+        }
     }
 
     let mut hall_calls_for_comparison = old_memory.state_list.clone();
@@ -435,7 +438,11 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
     hall_calls_for_comparison.remove(&received_memory.my_id);
     let hall_calls_filtered = filter_changes(hall_calls.clone(), received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone().last_floor, hall_calls_for_comparison.clone());
 
-    let hall_calls_difference = difference(hall_calls.clone(), hall_calls_filtered.clone());
+    let mut hall_calls_difference = hall_calls.clone();
+    let hall_calls_to_remove = difference(hall_calls.clone(), hall_calls_filtered.clone());
+    for hall_call in hall_calls_to_remove {
+        hall_calls_difference.remove(&hall_call.0);
+    }
 
     let mut calls_difference_assembled = hall_calls_difference.clone();
     calls_difference_assembled.extend(cab_calls_difference.clone());
