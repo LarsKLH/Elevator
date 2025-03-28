@@ -465,17 +465,35 @@ fn deal_with_calls_for_other(received_memory: mem::Memory, old_memory: mem::Memo
 }
 
 fn did_i_deal_with_it(received_memory: mem::Memory, old_memory: mem::Memory, accepted_changes: HashMap<Call, mem::CallState>) -> bool {
-    let mut did_i_deal_with_it = false;
+    let mut did_i_deal_with_it = true;
+
+    let accepted_hall_changes: HashMap<Call, mem::CallState> = accepted_changes.clone()
+    .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
+    let accepted_cab_changes: HashMap<Call, mem::CallState> = accepted_changes.clone()
+    .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+
     let received_hall_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
     let old_hall_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
     .into_iter().filter(|x| x.0.call_type != mem::CallType::Cab).collect();
 
-    let changes_to_do = difference(old_hall_calls.clone(), received_hall_calls.clone());
-    let changes_done = difference(old_hall_calls.clone(), accepted_changes.clone());
+    let hall_changes_to_do = difference(old_hall_calls.clone(), received_hall_calls.clone());
+    let hall_changes_done = difference(old_hall_calls.clone(), accepted_hall_changes.clone());
 
-    if changes_to_do == changes_done {
-        did_i_deal_with_it = true;
+    if hall_changes_to_do != hall_changes_done {
+        did_i_deal_with_it = false;
+    }
+
+    let old_cab_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect(); 
+    let received_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
+    .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+
+    let cab_changes_to_do = difference(old_cab_calls.clone(), received_cab_calls.clone());
+    let cab_changes_done = difference(old_cab_calls.clone(), accepted_cab_changes.clone());
+
+    if hall_changes_to_do != hall_changes_done {
+        did_i_deal_with_it = false;
     }
 
     return did_i_deal_with_it;
