@@ -201,7 +201,6 @@ fn merge_calls(old_calls: HashMap<Call, mem::CallState>, new_calls: HashMap<Call
             match call.1 {
                 mem::CallState::Nothing => {
                     let old_call = old_calls.get(&call.0).expect("Incorrect call found in merging").clone();
-                    println!("Regarding call {:?} {:?}: Old call is: {:?}, New call is: {:?}", call.0.floor, call.0.call_type, old_call, call.1);
                     match old_call {
                         mem::CallState::Nothing => {
                             merged_calls.insert(call.0, call.1);
@@ -496,10 +495,10 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
     if received_memory.state_list.contains_key(&old_memory.my_id) {
         let old_cab_calls: HashMap<Call, mem::CallState> = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
+        println!("Old memory call list: {:?}", old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone());
+        println!("Received memory call list: {:?}", received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone());
         let new_cab_calls: HashMap<Call, mem::CallState> = received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone()
         .into_iter().filter(|x| x.0.call_type == mem::CallType::Cab).collect();
-        println!("Old cab calls: {:?}", old_cab_calls.clone());
-        println!("New cab calls: {:?}", new_cab_calls.clone());
 
         let merged_cab_calls = merge_calls(old_cab_calls.clone(), new_cab_calls.clone());
     
