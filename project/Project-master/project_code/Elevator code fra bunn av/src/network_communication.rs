@@ -116,7 +116,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
         
         from_socket.send_to(&written_card, to_socket).expect("was not able to transmit to target socket");
 
-        sleep(Duration::from_millis(1000)); // The devil made me do it
+        sleep(Duration::from_millis(69)); // The devil made me do it
 
 
         // Dersom vi er obstructed burde vi kanskje ikke sende noe så de andre heisene antar at vi er døde
