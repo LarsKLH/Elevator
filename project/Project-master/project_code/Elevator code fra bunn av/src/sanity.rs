@@ -519,7 +519,7 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
 
     if !old_memory.state_list.contains_key(&received_memory.my_id) {
         if received_memory.state_list.get(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") != old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it") {
-            let mut my_state_for_insertion = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
+            /* let mut my_state_for_insertion = old_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").clone();
             if received_memory.state_list.contains_key(&old_memory.my_id) {
                 for call in received_memory.state_list.get(&old_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.clone() {
                     if call.0.call_type == mem::CallType::Cab {
@@ -538,7 +538,7 @@ fn deal_with_received_orders(mut received_memory: mem::Memory, mut old_memory: m
                 }
             }
 
-            old_memory.state_list.insert(received_memory.my_id, others_state_for_insertion.clone());
+            old_memory.state_list.insert(received_memory.my_id, others_state_for_insertion.clone()); */
             merge_my_and_others_calls(received_memory.clone(), old_memory.clone(), memory_request_tx.clone());
         }
         println!("Sanity: Received memory from new elevator");
