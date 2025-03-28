@@ -269,13 +269,18 @@ fn should_i_go(
     }
 }
 
+
+
 /* Checks if the current elevator is the best one to respond
     to a call based on its state and the call's properties.
     NB! If you want want to differenciate between stopped 
     elevators w/ different directions, uncomment in func,
     current_dir is then used as well*/
+
+// This code is originally based on the handed out cost_func code, but has been heavily modified for our use case
 fn am_i_best_elevator_to_respond(
-    call: mem::Call, mut memory: mem::Memory, current_dir: Direction) -> bool {
+    call: mem::Call, memory: mem::Memory, _current_dir: Direction) -> bool {
+        // We have current_dir as an argument in case we want to use it later
 
     let my_id = memory.my_id;
     let my_state = memory.state_list.get(&my_id).unwrap();

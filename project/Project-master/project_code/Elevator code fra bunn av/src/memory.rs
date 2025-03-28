@@ -1,8 +1,5 @@
-use core::hash;
-use std::{  collections::{HashMap, HashSet}, hash::{Hash,Hasher}, net::Ipv4Addr, ops::Deref, time::Instant};
+use std::{  collections::HashMap, hash::Hash, net::Ipv4Addr};
 
-use driver_rust::elevio;
-use postcard;
 use serde::{Serialize, Deserialize};
 
 use std::thread;
@@ -14,7 +11,7 @@ use crossbeam_channel::{Receiver, Sender};
 
 use crossbeam_channel as cbc;
 
-use crate::{elevator_interface::MovementState, memory as mem};
+use crate::elevator_interface::MovementState;
 use crate::elevator_interface as elevint;
 
 const PRINT_STATUS_INTERVAL: time::Duration = time::Duration::from_millis(1000);
@@ -86,15 +83,6 @@ impl Memory {
         Self { my_id: received_memory.my_id,
             state_list: received_memory.state_list
         }
-    }
-
-    pub fn am_i_closest(&self, my_id: Ipv4Addr, call_floor: u8) -> bool {
-        self.state_list
-            .iter()
-            .filter(|(_, state)| !state.timed_out)
-            .min_by_key(|(_, state)| (state.last_floor as i8 - call_floor as i8).abs())
-            .map(|(id, _)| *id == my_id)
-            .unwrap_or(false)
     }
 }
 
