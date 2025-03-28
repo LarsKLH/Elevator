@@ -233,8 +233,6 @@ fn should_i_go(
     current_dir is then used as well*/
 fn am_i_best_elevator_to_respond(
     call: mem::Call, mut memory: mem::Memory, current_dir: Direction) -> bool {
-    // Removing timed out elevators
-    memory.state_list.retain(|_, state| !state.timed_out);
 
     let my_id = memory.my_id;
     let my_state = memory.state_list.get(&my_id).unwrap();
@@ -270,7 +268,7 @@ fn am_i_best_elevator_to_respond(
         + is_stalled_score;                                   // Stalled penalty
 
     for (elev_id, elev_state) in &memory.state_list {
-        if *elev_id == my_id || matches!(elev_state.move_state, elevint::MovementState::Obstructed) {
+        if *elev_id == my_id || elev_state.timed_out || matches!(elev_state.move_state, elevint::MovementState::Obstructed) {
             continue;
         }
 
