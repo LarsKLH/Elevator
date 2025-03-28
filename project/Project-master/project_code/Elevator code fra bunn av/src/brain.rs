@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::thread;
 use crossbeam_channel::{Receiver, Sender};
 use crossbeam_channel as cbc;
@@ -8,28 +8,49 @@ use crate::elevator_interface::{self as elevint, Direction};
 // The main elevator logic. Determines where to go next and sends commands to the elevator interface
 pub fn elevator_logic(
     memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: Receiver<mem::Memory>, floor_sensor_rx: Receiver<u8>, brain_stop_direct_link: Sender<mem::State>) -> () {
-
     let mut prev_direction = elevint::Direction::Down;
+    let mut last_floor_detection = Instant::now();
+    let stalled_timeout = Duration::from_secs_f32(3.5);
+    let mut motor_stalled = false;
+
     loop {
         memory_request_tx.send(mem::MemoryMessage::Request).expect("Error requesting memory");
         let memory = memory_recieve_rx.recv().expect("Error receiving memory");
         let mut my_state = memory.state_list.get(&memory.my_id).expect("Error getting own state").clone();
         let my_movementstate = my_state.move_state;
+
+        if !(my_state.move_state == elevint::MovementState::Moving(Direction::Up) || my_state.move_state == elevint::MovementState::Moving(Direction::Down)) {
+            last_floor_detection = Instant::now();
+            if motor_stalled {
+                memory_request_tx.send(mem::MemoryMessage::IsStalled(memory.my_id, false)).expect("Error sending is_stalled to memory");
+                motor_stalled = false;
+            }
+        }
+
         match my_movementstate {
 
             elevint::MovementState::Moving(dirn) => {
                 prev_direction = dirn;
                 cbc::select! { 
-                    recv(floor_sensor_rx) -> a => {
-                        if should_i_stop(a.expect("Error reading from floor sensor"), &my_state) {
-                            my_state.last_floor = a.expect("Error reading from floor sensor");
+                    recv(floor_sensor_rx) -> detected_floor => {
+                        last_floor_detection = Instant::now();
+                        if motor_stalled {
+                            memory_request_tx.send(mem::MemoryMessage::IsStalled(memory.my_id, false)).unwrap();
+                            motor_stalled = false;
+                        }
+                        if should_i_stop(detected_floor.expect("Error reading from floor sensor"), &my_state) {
+                            my_state.last_floor = detected_floor.expect("Error reading from floor sensor");
                             my_state.move_state = elevint::MovementState::StopAndOpen;
                             brain_stop_direct_link.send(my_state).expect("Error sending stop and open to brain");
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory"); 
                         }
                         else {}
                     }
-                    default(Duration::from_millis(1000)) => {
+                    default(Duration::from_millis(100)) => {
+                        if last_floor_detection.elapsed() > stalled_timeout && !motor_stalled {
+                            memory_request_tx.send(mem::MemoryMessage::IsStalled(memory.my_id, true)).unwrap();
+                            motor_stalled = true;
+                        }
                     }
                 }
             } 
@@ -206,7 +227,7 @@ fn am_i_best_elevator_to_respond(
     let my_floor = my_state.last_floor;
     let my_calls = my_state.call_list.len();
     
-    if matches!(my_state.move_state, elevint::MovementState::Obstructed) {
+    if my_state.move_state == elevint::MovementState::Obstructed || my_state.timed_out || my_state.is_stalled == true {
         return false;
     }
 
