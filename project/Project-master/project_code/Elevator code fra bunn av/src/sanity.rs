@@ -601,7 +601,8 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
         cbc::select! {
             recv(rx_get) -> rx => {
                 // Getting old memory
-                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                old_memory.state_list.get_mut(&old_memory.my_id).expect("Sanity: Wrong state in default").timed_out = false;
 
                 // Getting new state from rx, extracting both old and new calls for comparison
                 match rx {
@@ -632,6 +633,7 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
 
                 // Getting old memory
                 let mut old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+                old_memory.state_list.get_mut(&old_memory.my_id).expect("Sanity: Wrong state in default").timed_out = false;
                 old_memory.state_list = old_memory.state_list.clone().into_iter().filter(|x| !x.1.timed_out).collect();
 
                 deal_with_calls_for_me(old_memory.clone(), old_memory.clone(), memory_request_tx.clone());
