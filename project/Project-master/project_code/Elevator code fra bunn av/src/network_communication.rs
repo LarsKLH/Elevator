@@ -121,7 +121,7 @@ pub fn net_tx(memory_request_tx: Sender<mem::MemoryMessage>, memory_recieve_rx: 
             Err(e) => println!("NetWork: Failed to send message, error: {}", e)
         }
 
-        sleep(Duration::from_millis(169)); // The devil made me do it
+        sleep(Duration::from_millis(69)); // The devil made me do it
 
 
         // Dersom vi er obstructed burde vi kanskje ikke sende noe så de andre heisene antar at vi er døde
