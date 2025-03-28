@@ -20,7 +20,7 @@ use postcard;
 const MAXIMUM_BYTES_IN_PACKAGE: usize = 65_000;
 const BROADCAST_ADDRESS_BYTES: [u8;4] = [255,255,255,255];
 
-const TIME_INBETWEEN_NETWORK_SENDING: Duration = Duration::from_millis(10);
+const TIME_INBETWEEN_NETWORK_SENDING: Duration = Duration::from_millis(20);
 
 
 pub struct NetWorkConfig {
