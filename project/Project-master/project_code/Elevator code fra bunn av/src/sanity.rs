@@ -629,6 +629,11 @@ pub fn sanity_check_incomming_message(memory_request_tx: Sender<mem::MemoryMessa
             // If we don't get a new state within 100 ms
             default(Duration::from_millis(1000)) => {
                 println!("Sanity: Default case");
+
+                // Getting old memory
+                let old_memory = mem::Memory::get(memory_request_tx.clone(), memory_recieve_rx.clone());
+
+                deal_with_calls_for_me(old_memory.clone(), old_memory.clone(), memory_request_tx.clone());
                 timeout_check(last_received.clone(), memory_request_tx.clone());
 
                 
