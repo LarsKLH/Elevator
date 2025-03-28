@@ -24,11 +24,8 @@ pub fn elevator_logic(
                         if should_i_stop(a.expect("Error reading from floor sensor"), &my_state) {
                             my_state.last_floor = a.expect("Error reading from floor sensor");
                             my_state.move_state = elevint::MovementState::StopAndOpen;
-                            println!("Brain: Stopping at floor {}", my_state.last_floor);
                             brain_stop_direct_link.send(my_state).expect("Error sending stop and open to brain");
-                            println!("Brain: Sending stop and open to memory");
                             memory_request_tx.send(mem::MemoryMessage::UpdateOwnMovementState(elevint::MovementState::StopAndOpen)).expect("Error sending stop and open to memory"); 
-                            println!("Brain: Stopped at floor");                    
                         }
                         else {}
                     }
@@ -254,6 +251,7 @@ fn am_i_best_elevator_to_respond(
             + other_direction_score
             + (other_calls as u32 * 2);
         println!("Brain: My score: {}, Other score: {}", my_score, other_score);
+        thread::sleep(Duration::from_millis(500));
 
         if other_score < my_score {
             return false;
