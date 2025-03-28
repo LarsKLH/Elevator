@@ -201,6 +201,7 @@ fn merge_calls(old_calls: HashMap<Call, mem::CallState>, new_calls: HashMap<Call
             match call.1 {
                 mem::CallState::Nothing => {
                     let old_call = old_calls.get(&call.0).expect("Incorrect call found in merging").clone();
+                    println!("Regarding call {:?} {:?}: Old call is: {:?}, New call is: {:?}", call.0.floor, call.0.call_type, old_call, call.1);
                     match old_call {
                         mem::CallState::Nothing => {
                             merged_calls.insert(call.0, call.1);
