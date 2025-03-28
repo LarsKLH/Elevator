@@ -1,6 +1,7 @@
 
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::io::Chain;
 use std::net::Ipv4Addr;
 
 use crossbeam_channel::{Receiver, Sender};
@@ -194,7 +195,7 @@ fn filter_changes(differences: HashMap<mem::Call, mem::CallState>, received_last
 
 // This function merges two call lists, always accepting the one with the "highest" callstate
 fn merge_calls(old_calls: HashMap<Call, mem::CallState>, new_calls: HashMap<Call, mem::CallState>) -> HashMap<Call, mem::CallState> {
-    let mut merged_calls = old_calls.clone();
+    let mut merged_calls = HashMap::new();
     for call in new_calls {
         if old_calls.contains_key(&call.0) {
             match call.1 {
@@ -498,12 +499,14 @@ fn merge_my_and_others_calls(mut received_memory: mem::Memory, old_memory: mem::
     let merged_cab_difference = difference(old_cab_calls.clone(), merged_cab_calls.clone());
 
     let mut merged_calls_difference = merged_hall_difference.clone();
-    merged_calls_difference.extend(merged_cab_difference.clone());
+    for change in merged_cab_difference {
+        merged_calls_difference.insert(change.0, change.1);
+    }
 
     for change in merged_calls_difference {
         memory_request_tx.send(mem::MemoryMessage::UpdateOwnCall(change.0, change.1)).expect("Sanity: Could not send call update");
+        received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.insert(change.0, change.1);
     }
-    received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").call_list.extend(merged_hall_difference.clone());
 
     received_memory.state_list.get_mut(&received_memory.my_id).expect("Sanity: Wrong in state, cannot deal with it").timed_out = false;
 
