@@ -68,7 +68,7 @@ pub fn net_init_udp_socket(ipv4: Ipv4Addr, wanted_port: u16) -> NetWorkConfig {
 }
 
 
-pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfig) -> () {
+pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfig, my_ip: Ipv4Addr) -> () {
     let mut recieve_buffer: [u8; MAXIMUM_BYTES_IN_PACKAGE] = [0; MAXIMUM_BYTES_IN_PACKAGE];
 
     let recv_socket = net_config.listning_socket;
@@ -84,7 +84,7 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
         let recieved_memory: mem::Memory  = postcard::from_bytes(&recieve_buffer).expect("NetWork: Failed to unpack network message, this needs to be handled in a better way");
         
-        let _address_of_sender_ipv4 = match address_of_sender {
+        let address_of_sender_ipv4 = match address_of_sender {
             SocketAddr::V4(v4) => *v4.ip(),
             _ => panic!("NetWork: Recieved a non ipv4 address")
         };
@@ -99,8 +99,9 @@ pub fn net_rx(rx_sender_to_memory: Sender<mem::Memory>, net_config: NetWorkConfi
 
         //println!("Network: Received memory from {}", recieved_memory.my_id);
         //println!("Network: Received state list: {:?}", recieved_memory.state_list);
-
-        rx_sender_to_memory.send(recieved_memory).expect("NetWork: Failed to send message to memory");
+        if address_of_sender_ipv4 != my_ip {
+            rx_sender_to_memory.send(recieved_memory).expect("NetWork: Failed to send message to memory");
+        }
     }
 
 }
