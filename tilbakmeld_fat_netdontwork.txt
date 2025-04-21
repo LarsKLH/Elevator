@@ -1,0 +1,10 @@
+Hei,
+
+Vi fikk ikke det nye packet-loss scriptet til å fungere orginalt og fikk dermed ikke testet koden med dette før vi leverte. Under FATen i dag fikk vi en del problemer som vi aldri hadde sett før, men vi har nå funnet ut at alt stammer fra at heisen mottar sine egne meldinger med en liten forsinkelse når den sender ut pga. hvordan vi satte opp nettverkingen. Dette var ikke et problem når vi testet før da det ikke er noen forsinkelse på de andre skripten, når vi derimot har fått testet med det nye skriptet gjør de såvidt delayed meldingene at heisen øyeblikkelig får veldig rar oppførsell. Når vi derimot har fått observert problemene fikset vi det på tre minutter med en enkel if-setning som ignorerer meldinger fra seg selv og ut ifra det vi ser fjerner alle problemene vi opplevde under FAT'en.
+
+Vi er litt usikkre på hva vi skal gjøre nå, iom at når vi gjorde debugging fungerte alt helt fint og så føler vi at vi såvidt sto FAT'en. Når vi i tilleg finner ut at til vår viten kommer hovedsaken av at vi valgte å brukte feil skript og buggen hadde blitt enkelt løst om vi bare hadde brukt den riktige blir det bare mer surt. Vi vet ikke om det overhode er mulig å ta det med i betraktning når ting veklegges siden feilene som oppsto var veldig gjennomgående dog det er veldig kjipt at hele FAT'en blir torpedert av at vi ikke hadde en "if incomming_id != my_id {[accept]}". Vi snakket med Svein og ble anbefalt å sende en mail om dette.
+
+Hadde det vært mulig å få gjennomført en ny FAT med samme kode og det gamle packet loss skriptet, eller eventuellt hvor vi bare får lov til å legge til denne ene if-setningen?
+
+Mvh.
+Jens
