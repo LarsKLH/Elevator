@@ -113,7 +113,7 @@ fn main() -> std::io::Result<()> {
     {
         let rx_send = rx_send.clone();
         let rx_net_config = net_config.try_clone();
-        spawn(move || network_communication::net_rx(rx_send, rx_net_config, my_local_ip));
+        spawn(move || network_communication::net_rx(rx_send, rx_net_config));
     }
 
     // Run sanity check thread
