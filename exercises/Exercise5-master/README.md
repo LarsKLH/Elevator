@@ -256,12 +256,12 @@ The problem is that there is no way to prioritize the cases, as Go will [choose 
 - Condition variables, Java monitors, and Ada protected objects are quite similar in what they do (temporarily yield execution so some other task can unblock us).
   - But in what ways do these mechanisms differ?
   Condition variables is a more flexible solution, implementable in any programming language and with self defined conditions. This also means it is more work to implement and it's susceptible to user error both in use and implementation.
-  Java monitors and Ada protected objects are both inate functions that come as part of a programming language, which means that we can trust the implementation, but this also means that we cannot modify the implementation if we need it to work in specialized cases.
+  Java monitors and Ada protected objects are both native functions that come as part of a programming language, which means that we can trust the implementation, but this also means that we cannot modify the implementation if we need it to work in specialized cases.
 
 - Bugs in this kind of low-level synchronization can be hard to spot.
   - Which solutions are you most confident are correct?
   - Why, and what does this say about code quality?
-  The Ada protected objects solution should be bulletproof as long as the implementation follows the guidelines of the ada language. The request solution is also the simplest to understand, with no possibility for race conditions and a more intuitive structure.
+  The Ada protected objects solution should be bulletproof as long as our use follows the guidelines of the ada language. The request solution is also the simplest to understand, with no possibility for race conditions and a more intuitive structure.
 
   As for the code quality, i think the solutions that are native to a language always would be more easily understood since they are professionally developed.
   Meanwhile message passing can suffer in this regard depending on implementation, since the different threads will need to deal with the messages differently, which can become messy.
@@ -273,6 +273,7 @@ The problem is that there is no way to prioritize the cases, as Go will [choose 
 
 - In D's standard library, `getValue` for semaphores is not even exposed (probably because it is not portable – Windows semaphores don't have `getValue`, though you could hack it together with `ReleaseSemaphore()` and `WaitForSingleObject()`).
   - A leading question: Is using `getValue` *ever* appropriate?
+    Probably not, as I struggle to see when you would want to know the number of threads waiting, and also makes it a bit to easy to make the kind of bugs as in the introduction 
   - Explain your intuition: What is it that makes `getValue` so dubious?
 
 - Which one(s) of these different mechanisms do you prefer, both for this specific task and in general? (This is a matter of taste – there are no "right" answers here)
