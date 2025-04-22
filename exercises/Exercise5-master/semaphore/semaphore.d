@@ -38,7 +38,7 @@ class Resource(T) {
             numWaiting[priority]++;
             mtx.notify();
             sems[priority].wait();
-            mtx.wait();
+            //mtx.wait();
             numWaiting[priority]--;
         }
         busy = true;
